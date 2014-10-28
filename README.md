@@ -11,7 +11,7 @@ Extensible web page builder proxy with client browser environment for express.
    or png, cache and synchronize using websockets, and more...
 
 
-# Synopsys
+# Synopsis
 
 ```js
 var app = require('express')();
