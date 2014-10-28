@@ -1,0 +1,32 @@
+{
+  "name": "express-dom",
+  "version": "0.0.0",
+  "description": "express template engine that hosts a web browser to render client page on server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kapouer/express-dom.git"
+  },
+  "keywords": [
+    "template",
+    "DOM",
+    "browser",
+    "client",
+    "hosted",
+    "express",
+    "mvc"
+  ],
+  "author": "Jérémy Lal <kapouer@melix.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kapouer/express-dom/issues"
+  },
+  "dependencies": {
+    "generic-pool": "^2.1.1",
+    "queue-async": "^1.0.7",
+    "webkitgtk": "^1.5.1"
+  }
+}
