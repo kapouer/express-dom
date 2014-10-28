@@ -97,7 +97,8 @@ function processMw(list, req, res, next) {
 	var q = queue(1);
 	var self = this;
 	list.forEach(function(mw) {
-		q.defer(mw, self, req, res);
+		if (mw.length == 2) q.defer(mw, self.page);
+		else q.defer(mw, self, req, res);
 	});
 	q.await(next);
 }

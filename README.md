@@ -3,11 +3,11 @@ express-dom
 
 Extensible web page builder proxy with client browser environment for express.
 
-1) design an empty web page that builds itself using javascript and backends,
+1. design an empty web page that builds itself using javascript and backends,
    in a full browser environment.
-2) express-dom acts as a proxy that runs the page in a browser and returns
+2. express-dom acts as a proxy that runs the page in a browser and returns
    the formed html to user agents.
-3) combine with plugins to optimize, modify, get error reports, convert to pdf
+3. combine with plugins to optimize, modify, get error reports, convert to pdf
    or png, cache and synchronize using websockets, and more...
 
 
@@ -21,8 +21,8 @@ app.get('/mypage', dom('myview'));
 
 # Gotchas
 
-* It also allows transformation of any legacy website on the fly - it also
-allows ad-hoc improvement of any existing CMS.
+* allows transformation of any legacy website on the fly - public or admin, like
+ad-hoc improvement of any existing CMS.
 
 * User authentication and permissions are managed by backends (typically by a
 users backend).
@@ -30,11 +30,13 @@ users backend).
 * Server code can be written for a given web page route, but the right way is
 to only write client code that runs in the browser web page.
 
-* The server only deals with choosing which url loads which initial html, and
-which plugins are activated on a given route.
+* The server mainly deals with choosing which url loads which initial html, 
+which plugins are activated on a given route, and in which format the web page
+is outputed (html, pdf, png).
 
 * The proxy doesn't destroy web pages that have xhr or ws connections open,
-in a configurable limit. This allows instantaneous updates of generated content.
+in a configurable limit. This allows instantaneous updates of generated content,
+and efficient hot caching.
 
 
 # API
@@ -50,7 +52,7 @@ Pages represent browser instances (and are webkitgtk views for now).
 	web page that is going to be modified.
 
 * dom.use(mw)  
-	where `mw(handler, req, res, next)` or `mw(handler, next)` if `mw.length == 2`  
+	where `mw(handler, req, res, next)` or `mw(page, next)` if `mw.length == 2`  
 	sets up a plugin that will be called before every page loads its content.
 
 * handler.use(mw)  
@@ -80,7 +82,7 @@ app.get('/mypage', dom('myview').use(routePlugin).open().use(function(page, next
 			node.src = null;
 		});
 	}, function(err, obj) {
-		// calls last dom middleware, which in turn calls res.send with the page html string
+		// proceed to usual html outpu
 		next(err);
 	});
 }));
