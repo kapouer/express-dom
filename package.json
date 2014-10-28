@@ -4,7 +4,7 @@
   "description": "Extensible web page builder proxy with client browser environment for express.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -R spec"
   },
   "repository": {
     "type": "git",
@@ -31,5 +31,9 @@
     "generic-pool": "^2.1.1",
     "queue-async": "^1.0.7",
     "webkitgtk": "^1.5.1"
+  },
+  "devDependencies": {
+    "express": "^4.10.0",
+    "mocha": "^2.0.1"
   }
 }
