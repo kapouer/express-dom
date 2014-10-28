@@ -51,9 +51,6 @@ Handler.prototype.init = function(url, settings, cb) {
 };
 
 Handler.prototype.middleware = function(req, res, next) {
-	if (this.view) {
-		return next(new Error("dom middleware not supposed to be called twice"));
-	}
 	if (!Dom.pool) Dom.pool = initPool(req.app.settings);
 
 	var q = queue(1)
@@ -63,6 +60,10 @@ Handler.prototype.middleware = function(req, res, next) {
 	.defer(processMw.bind(this), this.after, req, res)
 	.defer(processMw.bind(this), [lastMiddleware], req, res)
 	.await(next);
+};
+
+Handler.prototype.openmw = function(h, req, res, next) {
+	load.call(h, req, next);
 };
 
 function load(req, cb) {
@@ -84,8 +85,8 @@ function acquire(cb) {
 	}.bind(this));
 }
 
-function lastMiddleware(page, req, res, next) {
-	page.html(function(err, html) {
+function lastMiddleware(h, req, res, next) {
+	h.page.html(function(err, html) {
 		if (err) return next(err);
 		res.send(html);
 	});
@@ -94,9 +95,9 @@ function lastMiddleware(page, req, res, next) {
 function processMw(list, req, res, next) {
 	if (!list.length) return next();
 	var q = queue(1);
-	var page = this.page;
+	var self = this;
 	list.forEach(function(mw) {
-		q.defer(mw, page, req, res);
+		q.defer(mw, self, req, res);
 	});
 	q.await(next);
 }

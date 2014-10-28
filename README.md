@@ -1,50 +1,78 @@
 express-dom
 ===========
 
-The basic idea is that all the web page is built on client browser,
-but we want servers to be able to produce indexable, readable without javascript,
-documents (in html but also png, pdf formats).
+Extensible web page builder proxy with client browser environment for express.
 
-`express-dom` is a simple, secure, fast, and extensible way of building
-html pages on server, with client code.
+1) design an empty web page that builds itself using javascript and backends,
+   in a full browser environment.
+2) express-dom acts as a proxy that runs the page in a browser and returns
+   the formed html to user agents.
+3) combine with plugins to optimize, modify, get error reports, convert to pdf
+   or png, cache and synchronize using websockets, and more...
+
 
 # Synopsys
 
 ```js
 var app = require('express')();
 var dom = require('express-dom');
-
 app.get('/mypage', dom('myview'));
 ```
+
+# Gotchas
+
+* It also allows transformation of any legacy website on the fly - it also
+allows ad-hoc improvement of any existing CMS.
+
+* User authentication and permissions are managed by backends (typically by a
+users backend).
+
+* Server code can be written for a given web page route, but the right way is
+to only write client code that runs in the browser web page.
+
+* The server only deals with choosing which url loads which initial html, and
+which plugins are activated on a given route.
+
+* The proxy doesn't destroy web pages that have xhr or ws connections open,
+in a configurable limit. This allows instantaneous updates of generated content.
 
 
 # API
 
-dom.use(middleware) return dom
-dom(view) return instance
-instance.open() loads the view into DOM, return instance
-instance.use(middleware) chains middleware, return instance
+The API is chainable.
 
-dom.open(view) is the same as dom(view).open()
+Three objects: dom, route handlers, pages.
 
-when open() is omitted, it is implicitely called
-`dom(view).use(mw)` is equivalent to `dom(view).use(mw).open()`
+Pages represent browser instances (and are webkitgtk views for now).
 
-middleware(req, res, next) where req.page is the (webkitgtk) client.
-when use(mw).open(), mw can set req.page.options, which will be used to load
-the client page:
-page.load(req.url, page.options)
-when open().use(mw), mw can act upon req.page and call itself res.send.
+* dom(view name or url)  
+	create an handler instance that will use the view or url to load the initial
+	web page that is going to be modified.
 
-If res.send is not called (this implies that `next` is called instead)
-the last dom middleware output the page's inner html.
+* dom.use(mw)  
+	where `mw(handler, req, res, next)` or `mw(handler, next)` if `mw.length == 2`  
+	sets up a plugin that will be called before every page loads its content.
+
+* handler.use(mw)  
+  sets up a plugin that will be called before or after this page loads its content,
+	depending on the position of the call w.r.t. handler.open()
+
+* handler.open()  
+	tells to actually load the content into the page.
+
+* handler.page  
+	the actual browser page instance (a `webkitgtk` instance).
+
+handler.open can be omitted, it is implied after the last call to handler.use.
 
 
-# Middleware
+# Usage
 
 ```js
-app.get('/mypage', dom('myview').open().use(function(req, res, next) {
-	req.page.run(function(done) {
+dom.use(expressDomMinify);
+
+app.get('/mypage', dom('myview').use(routePlugin).open().use(function(page, next) {
+	page.run(function(done) {
 		// manipulate the DOM. Mind that this function must be serializable,
 		// in particular its parent scope will be the window object in the page
 		$("img").forEach(function(node) {
@@ -58,11 +86,6 @@ app.get('/mypage', dom('myview').open().use(function(req, res, next) {
 }));
 ```
 
-
-# Plugins
-
-`dom.use(myplugin)` declares that `myplugin(req, res, next)` is going to be
-called as soon as an uninitialized view is available for the current request.
 
 ```js
 dom.use(minify);
@@ -85,11 +108,11 @@ var archive = require('express-dom-archive');
 
 dom({display: '1024x768x24:99'}).use(minify);
 
-app.get('/mypage', dom.open('myview').use(procrastify));
-app.get('/mypage.png', dom.open('myview').use(function(page, next) {
-	req.page.png(res);
+app.get('/mypage', dom('myview').open().use(procrastify));
+app.get('/mypage.png', dom('myview').open().use(function(handler, req, res, next) {
+	handler.page.png(res);
 }));
-app.get('/mypage.tar.gz', dom.open('myview').use(archive));
+app.get('/mypage.tar.gz', dom('myview').open().use(archive));
 
 ```
 
@@ -97,22 +120,28 @@ app.get('/mypage.tar.gz', dom.open('myview').use(archive));
 # MVC done right
 
 * Model  
-  the HTTP Backend, which is called only authentication and by XHR requests made
+  the HTTP Backends, called by authentication and XHR requests made
   from inside the web pages.
 
 * View  
-	the HTML/CSS chosen by server to be rendered to the client.  
-	In particular, there is no server code to develop for any given view, only client code.
+	HTML, CSS, and JS that populates the view are all running on the web page.  
+	Only client code.
 
 * Controller  
-	JavaScript on client.
+	The logic that binds routes to views and plugins, manages how output is
+	cached, send messages to views and so on.
 
 This architecture works all right as long as your tools allow this workflow:
 
-1. open view
-2. modify view
-3. serialize view
+1. open page
+2. run page in express-dom
+3. output to string
 4. cache and transmit to clients
-5. deserialize view
-6. update view
+5. run page in client
+6. update page with new data received in the client
+
+
+# License
+
+MIT License, see LICENSE file.
 
