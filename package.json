@@ -30,7 +30,7 @@
   "dependencies": {
     "generic-pool": "^2.1.1",
     "queue-async": "^1.0.7",
-    "webkitgtk": "^1.5.1"
+    "webkitgtk": "^1.5.7"
   },
   "devDependencies": {
     "express": "^4.10.0",

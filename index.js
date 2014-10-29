@@ -3,36 +3,38 @@ var Pool = require('generic-pool').Pool;
 var fs = require('fs');
 var queue = require('queue-async');
 
-var Dom = module.exports = function open(url) {
+var Dom = module.exports = function(url) {
 	var h = new Handler(url, this.plugins);
-	return h.middleware.bind(h);
+	return h.chainable;
 };
 Dom.plugins = [];
-Dom.open = open;
 
 Dom.use = function(fn) {
 	this.plugins.push(fn);
+	return Dom;
 };
 
 
 function Handler(url, plugins) {
 	this.url = url;
-	this.middleware.open = this.open.bind(this);
-	this.middleware.use = this.use.bind(this);
-	this.before = plugins.slice(0);
+	this.chainable = this.middleware.bind(this);
+	this.chainable.open = this.open.bind(this);
+	this.chainable.use = this.use.bind(this);
+	this.before = Dom.plugins.slice(0);
 }
 
 Handler.prototype.init = function(url, settings, cb) {
 	if (/https?:/.test(url)) {
 		request(url, function(err, res, body) {
 			if (body) this.html = body;
+			else err = new Error("Empty initial html in " + url);
 			cb(err);
 		}.bind(this));
 	} else {
 		var view = new (settings.view)(url, {
 			defaultEngine: 'html',
 			root: settings.views,
-			engines: {html: function() {}}
+			engines: {".html": function() {}}
 		});
 		if (!view.path) {
 			var root = view.root;
@@ -45,6 +47,7 @@ Handler.prototype.init = function(url, settings, cb) {
 		}
 		fs.readFile(view.path, function(err, body) {
 			if (body) this.html = body;
+			else err = new Error("Empty initial html in " + view.path);
 			cb(err);
 		}.bind(this));
 	}
@@ -55,7 +58,7 @@ Handler.prototype.middleware = function(req, res, next) {
 
 	var q = queue(1)
 	.defer(acquire.bind(this))
-	.defer(processMw.bind(this), this.before, req, res);
+	.defer(processMw.bind(this), this.before, req, res)
 	.defer(load.bind(this), req)
 	.defer(processMw.bind(this), this.after, req, res)
 	.defer(processMw.bind(this), [lastMiddleware], req, res)
@@ -86,14 +89,14 @@ function acquire(cb) {
 }
 
 function lastMiddleware(h, req, res, next) {
-	h.page.html(function(err, html) {
+	h.page.wait('idle').html(function(err, html) {
 		if (err) return next(err);
 		res.send(html);
 	});
 }
 
 function processMw(list, req, res, next) {
-	if (!list.length) return next();
+	if (!list || !list.length) return next();
 	var q = queue(1);
 	var self = this;
 	list.forEach(function(mw) {
@@ -105,12 +108,12 @@ function processMw(list, req, res, next) {
 
 Handler.prototype.use = function(mw) {
 	(this.after || this.before).push(mw);
-	return this.middleware.bind(this);
+	return this.chainable;
 };
 Handler.prototype.open = function() {
 	if (this.after) throw new Error("already opened");
 	this.after = [];
-	return this.middleware.bind(this);
+	return this.chainable;
 };
 
 
