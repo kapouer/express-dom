@@ -16,7 +16,7 @@ Extensible web page builder proxy with client browser environment for express.
 ```js
 var app = require('express')();
 var dom = require('express-dom');
-app.get('/mypage', dom('myview'));
+app.get('/mypage', dom('myview').edit(minify).use(absolutify));
 ```
 
 # Gotchas
@@ -45,27 +45,49 @@ The API is chainable.
 
 Three objects: dom, route handlers, pages.
 
-Pages represent browser instances (and are webkitgtk views for now).
+A page is (url, html string) loaded in a browser instance.
+Middlewares can modify the page's DOM in two different ways:
 
-* dom(view name or url)  
-	create an handler instance that will use the view or url to load the initial
-	web page that is going to be modified.
+1. editor - only the DOM is loaded - no scripts and no external resources
+   page.run() is available and can be used to modify the html before actually
+   loading the page.
+2. user - the html obtained from previous step is loaded as a web page
+   and middleware is called somewhere between loading and interactive states.
 
-* dom.use(mw)  
-	where `mw(handler, req, res, next)` or `mw(page, next)` if `mw.length == 2`  
-	sets up a plugin that will be called before every page loads its content.
+
+* dom(view name or url, options)  
+  create an handler instance that will use the view or url to load the initial
+  web page that is going to be modified.  
+  Options are passed to the user webkitgtk instance, and can be modified by
+  user plugins. The editor instance has no configurable options.
+
+* dom.edit(mw), dom.use(mw)  
+  where `mw(handler, req, res, next)` or `mw(page, next)` if `mw.length == 2`  
+  it adds middlewares that will be installed on every handlers.
+
+* dom.edits, dom.uses  
+  the arrays populated by previous methods.
 
 * handler.use(mw)  
-  sets up a plugin that will be called before or after this page loads its content,
-	depending on the position of the call w.r.t. handler.open()
+  adds a user middleware.
 
-* handler.open()  
-	tells to actually load the content into the page.
+* handler.edit(mw)  
+  adds an editor middleware  
+  if there are none, the DOM is directly loaded as user.
+
+* handler.edits, handler.uses  
+  the arrays populated by previous methods.
 
 * handler.page  
-	the actual browser page instance (a `webkitgtk` instance).
+  the actual browser page instance (a `webkitgtk` instance).
 
-handler.open can be omitted, it is implied after the last call to handler.use.
+* handler.options  
+  the user page loading options (see `webkitgtk` load options).
+
+By default, only *.js files from the same domain (in a broad sense) are
+loaded.
+To load any *.js files, simply set `options.allow = "all";`.
+To load any files, just remove the first middleware in handler.uses.
 
 
 # Usage
@@ -73,7 +95,7 @@ handler.open can be omitted, it is implied after the last call to handler.use.
 ```js
 dom.use(expressDomMinify);
 
-app.get('/mypage', dom('myview').use(routePlugin).open().use(function(page, next) {
+app.get('/mypage', dom('myview').use(function(page, next) {
 	page.run(function(done) {
 		// manipulate the DOM. Mind that this function must be serializable,
 		// in particular its parent scope will be the window object in the page
@@ -90,14 +112,14 @@ app.get('/mypage', dom('myview').use(routePlugin).open().use(function(page, next
 
 
 ```js
-dom.use(minify);
+dom.use(translate);
 app.get('/mypage', dom('myview'));
 app.get('/myotherpage', dom('myotherview'));
 ```
 is the same as
 ```js
-app.get('/mypage', dom('myview').use(minify));
-app.get('/myotherpage', dom('myotherview').use(minify));
+app.get('/mypage', dom('myview').use(translate));
+app.get('/myotherpage', dom('myotherview').use(translate));
 ```
 
 Real world example
@@ -108,13 +130,13 @@ var minify = require('express-dom-minify');
 var procrastify = require('express-dom-procrastify');
 var archive = require('express-dom-archive');
 
-dom({display: '1024x768x24:99'}).use(minify);
+dom({display: '1024x768x24:99'}).edit(minify);
 
-app.get('/mypage', dom('myview').open().use(procrastify));
-app.get('/mypage.png', dom('myview').open().use(function(handler, req, res, next) {
-	handler.page.png(res);
+app.get('/mypage', dom('myview').use(procrastify));
+app.get('/mypage.png', dom('myview').use(function(h, req, res, next) {
+	h.page.png(res);
 }));
-app.get('/mypage.tar.gz', dom('myview').open().use(archive));
+app.get('/mypage.tar.gz', dom('myview').use(archive));
 
 ```
 
@@ -141,6 +163,14 @@ This architecture works all right as long as your tools allow this workflow:
 4. cache and transmit to clients
 5. run page in client
 6. update page with new data received in the client
+
+
+# Authentication and autorizations
+
+In this kind of MVC, authentication is done as usual by interacting with
+the HTTP backend, a user session is established and a session cookie can
+be obtained by the client.
+
 
 
 # License
