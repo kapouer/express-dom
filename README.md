@@ -43,17 +43,21 @@ and efficient hot caching.
 
 The API is chainable.
 
-Three objects: dom, route handlers, pages.
+Three objects: route handlers, plugins, pages.
 
 A page is (url, html string) loaded in a browser instance.
-Middlewares can modify the page's DOM in two different ways:
+Plugins can modify the page's DOM in two different ways:
 
 1. editor - only the DOM is loaded - no scripts and no external resources
    page.run() is available and can be used to modify the html before actually
    loading the page.
 2. user - the html obtained from previous step is loaded as a web page
-   and middleware is called somewhere between loading and interactive states.
+   and the plugin is called as soon as the page starts populating its DOM.
 
+* dom.settings  
+  object passed to webkitgtk init(settings) function, of particular
+  interest are the `display` and `debug` options. See *webkitgtk* docs.  
+  It can also set webkitgtk instances pool settings, see *generic-pool* docs.
 
 * dom(view name or url, options)  
   create an handler instance that will use the view or url to load the initial
@@ -61,18 +65,18 @@ Middlewares can modify the page's DOM in two different ways:
   Options are passed to the user webkitgtk instance, and can be modified by
   user plugins. The editor instance has no configurable options.
 
-* dom.edit(mw), dom.use(mw)  
-  where `mw(handler, req, res, next)` or `mw(page, next)` if `mw.length == 2`  
-  it adds middlewares that will be installed on every handlers.
+* dom.edit(plugin), dom.use(plugin)  
+  where `plugin(handler, req, res)` returns immediately.  
+  sets plugins on all future handler instances.
 
 * dom.edits, dom.uses  
   the arrays populated by previous methods.
 
-* handler.use(mw)  
-  adds a user middleware.
+* handler.use(plugin)  
+  adds a user plugin.
 
-* handler.edit(mw)  
-  adds an editor middleware  
+* handler.edit(plugin)  
+  adds an editor plugin  
   if there are none, the DOM is directly loaded as user.
 
 * handler.edits, handler.uses  
@@ -84,10 +88,13 @@ Middlewares can modify the page's DOM in two different ways:
 * handler.options  
   the user page loading options (see `webkitgtk` load options).
 
+Important: plugins make use of webkitgtk API to change the page.
+
+They return immediately, but the final plugin that actually outputs something
+to express response is supposed to be called on 'ready' or 'idle' page events.
+
 By default, only *.js files from the same domain (in a broad sense) are
 loaded.
-To load any *.js files, simply set `options.allow = "all";`.
-To load any files, just remove the first middleware in handler.uses.
 
 
 # Usage
@@ -95,23 +102,21 @@ To load any files, just remove the first middleware in handler.uses.
 ```js
 dom.use(expressDomMinify);
 
-app.get('/mypage', dom('myview').use(function(page, next) {
-	page.run(function(done) {
+app.get('/mypage', dom('myview').use(function(h) {
+	h.page.wait('ready').run(function(done) {
 		// manipulate the DOM. Mind that this function must be serializable,
 		// in particular its parent scope will be the window object in the page
 		$("img").forEach(function(node) {
 			node.setAttribute('data-src', node.src);
 			node.src = null;
 		});
-	}, function(err, obj) {
-		// proceed to usual html outpu
-		next(err);
 	});
 }));
 ```
 
 
 ```js
+dom.settings.display = 99;
 dom.use(translate);
 app.get('/mypage', dom('myview'));
 app.get('/myotherpage', dom('myotherview'));
@@ -130,15 +135,29 @@ var minify = require('express-dom-minify');
 var procrastify = require('express-dom-procrastify');
 var archive = require('express-dom-archive');
 
-dom({display: '1024x768x24:99'}).edit(minify);
+dom.edit(minify);
 
 app.get('/mypage', dom('myview').use(procrastify));
-app.get('/mypage.png', dom('myview').use(function(h, req, res, next) {
-	h.page.png(res);
+app.get('/mypage.png', dom('myview').use(function(h, req, res) {
+	h.page.wait('idle').png(res);
 }));
 app.get('/mypage.tar.gz', dom('myview').use(archive));
 
 ```
+
+# Plugins
+
+Some plugins are available by default in dom.plugins, others as separate
+node modules.
+Note that `dom.plugins.nomedia` is enabled by default - it should be removed
+when calling page.png, page.pdf, or when acting upon any request that is not
+html or javascript.
+
+
+# Debugging
+
+Before any other call, set `dom.debug = true` and future webkitgtk will open a window
+containing the spawned webkit instances, with the inspector already opened.
 
 
 # MVC done right
@@ -157,12 +176,15 @@ app.get('/mypage.tar.gz', dom('myview').use(archive));
 
 This architecture works all right as long as your tools allow this workflow:
 
-1. open page
-2. run page in express-dom
-3. output to string
-4. cache and transmit to clients
-5. run page in client
-6. update page with new data received in the client
+0. load initial html
+1. install js modules, make global DOM modifications
+2. cache resulting model
+3. load model
+4. run it
+5. output to string
+6. cache and transmit to clients
+7. run page in client
+8. update page with new data received in the client
 
 
 # Authentication and autorizations
@@ -170,7 +192,6 @@ This architecture works all right as long as your tools allow this workflow:
 In this kind of MVC, authentication is done as usual by interacting with
 the HTTP backend, a user session is established and a session cookie can
 be obtained by the client.
-
 
 
 # License

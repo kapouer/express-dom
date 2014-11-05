@@ -10,9 +10,18 @@ var Dom = module.exports = function(url, options) {
 	return h.chainable;
 };
 
-//Dom.plugins = require('./plugins');
+Dom.settings = {
+	min: 1,
+	max: 8,
+	idleTimeoutMillis: 30000,
+	refreshIdle: false,
+	display: 0,
+	debug: !!process.env.DEBUG
+};
+Dom.plugins = require('./plugins');
+
 Dom.edits = [];
-Dom.uses = [];
+Dom.uses = [Dom.plugins.nomedia];
 
 
 function Handler(remote, options) {
@@ -25,17 +34,47 @@ function Handler(remote, options) {
 	this.uses = Dom.uses.slice(0);
 }
 
-Handler.prototype.init = function(settings, cb) {
-	if (/https?:/.test(this.remote)) {
-		this.url = this.remote;
-		request(this.remote, function(err, res, body) {
-			if (body) this.html = body;
+Handler.prototype.middleware = function(req, res, next) {
+	if (!Dom.pool) Dom.pool = initPool(Dom.settings);
+	var q = queue(2)
+	.defer(acquire, this)
+	.defer(init, this, req.app.settings)
+	.awaitAll(function(err) {
+		if (err) return next(err);
+		var q = queue(1);
+		if (this.edits.length) {
+			this.page.preload(this.url, {content: this.html});
+			processMw(this, this.edits, req, res);
+			q.defer(finishEdit, this);
+		}
+		q.awaitAll(function(err) {
+		console.log("never reached")
+			if (err) return next(err);
+			load(this, req);
+			processMw(this, this.uses, req, res);
+			finishUse(this, req, res, next);
+		}.bind(this));
+	}.bind(this));
+};
+
+function acquire(h, cb) {
+	Dom.pool.acquire(function(err, page) {
+		h.page = page;
+		cb(err);
+	});
+}
+
+function init(h, settings, cb) {
+	if (/https?:/.test(h.remote)) {
+		h.url = h.remote;
+		request(h.remote, function(err, res, body) {
+			if (body) h.html = body;
 			else err = new Error("Empty initial html in " + url);
 			cb(err);
-		}.bind(this));
+		});
 	} else {
-		this.url = req.protocol + '://' + req.headers.host + req.url;
-		var view = new (settings.view)(this.remote, {
+		h.url = req.protocol + '://' + req.headers.host + req.url;
+		var view = new (settings.view)(h.remote, {
 			defaultEngine: 'html',
 			root: settings.views,
 			engines: {".html": function() {}}
@@ -45,93 +84,26 @@ Handler.prototype.init = function(settings, cb) {
 			var dirs = Array.isArray(root) && root.length > 1
 			?	'directories "' + root.slice(0, -1).join('", "') + '" or "' + root[root.length - 1] + '"'
 			: 'directory "' + root + '"';
-			var err = new Error('Failed to lookup view "' + this.remote + '" in views ' + dirs);
+			var err = new Error('Failed to lookup view "' + h.remote + '" in views ' + dirs);
 			err.view = view;
 			return cb(err);
 		}
 		fs.readFile(view.path, function(err, body) {
-			if (body) this.html = body;
+			if (body) h.html = body;
 			else err = new Error("Empty initial html in " + view.path);
 			cb(err);
-		}.bind(this));
+		});
 	}
-};
-
-Handler.prototype.middleware = function(req, res, next) {
-	if (!Dom.pool) Dom.pool = initPool(req.app.settings);
-
-	var q = queue(2)
-	.defer(acquire.bind(this))
-	.defer(this.init.bind(this), req.app.settings)
-	.await(function() {
-		var q = queue(1);
-		if (this.edits.length) {
-			q.defer(prepare.bind(this))
-			.defer(processMw.bind(this), this.edits, req, res)
-			.defer(processMw.bind(this), [finishEdit], req, res);
-		}
-		q.defer(load.bind(this), req)
-		.defer(processMw.bind(this), this.uses, req, res)
-		.defer(processMw.bind(this), [finishUse], req, res)
-		.await(next);
-	}.bind(this));
-};
-
-function load(req, cb) {
-	var settings = req.app.settings;
-	this.init(settings, function(err) {
-		if (err) return cb(err);
-		var opts = {};
-		for (var key in this.options) {
-			opts[key] = this.options[key];
-		}
-		if (!opts.content) opts.content = this.html;
-		if (!opts.cookie) opts.cookie = req.get('Cookie');
-		this.page.load(this.url, opts, cb);
-	}.bind(this));
 }
 
-function prepare(next) {
-	this.page.load(this.url, {
-		content: this.html,
-		allow: "none",
-		script: disableAllScripts
-	}, next);
-}
-
-var disableAllScripts = '(' + function() {
-	var disableds = [];
-	var observer = new MutationObserver(function(mutations) {
-		var node, old, list
-		for (var m=0; m < mutations.length; m++) {
-			list = mutations[m].addedNodes;
-			if (!list) continue;
-			for (var i=0; i < list.length; i++) {
-				node = list[i];
-				if (node.nodeType != 1) continue;
-				old = node.type;
-				node.type = "disabled";
-				disableds.push([node, old]);
-			}
-		}
-	});
-	observer.observe(document, {
-		childList: true,
-		subtree: true
-	});
-	document.addEventListener('DOMContentLoaded', function() {
-		observer.disconnect();
-		for (var i=0, len=disableds.length; i < len; i++) {
-			disableds[i][0].type = disableds[i][1];
-		}
-	});
-}.toString() + ')();';
-
-function acquire(cb) {
-	Dom.pool.acquire(function(err, page) {
-		this.page = page;
-		cb(err);
-	}.bind(this));
+function load(h, req) {
+	var opts = {};
+	for (var key in h.options) {
+		opts[key] = h.options[key];
+	}
+	if (!opts.content) opts.content = h.html;
+	if (!opts.cookie) opts.cookie = req.get('Cookie');
+	h.page.load(h.url, opts);
 }
 
 function release(page) {
@@ -141,11 +113,13 @@ function release(page) {
 	});
 }
 
-function finishEdit(h, req, res, next) {
+function finishEdit(h, cb) {
 	h.page.wait('idle').html(function(err, html) {
-		if (err) return next(err);
+		if (Dom.settings.debug) return;
+		if (err) return cb(err);
 		h.html = html;
 		h.page.removeAllListeners();
+		cb();
 	});
 }
 
@@ -156,15 +130,16 @@ function finishUse(h, req, res, next) {
 	});
 }
 
-function processMw(list, req, res, next) {
-	if (!list || !list.length) return next();
-	var q = queue(1);
-	var self = this;
-	list.forEach(function(mw) {
-		if (mw.length == 2) q.defer(mw, self.page);
-		else q.defer(mw, self, req, res);
-	});
-	q.await(next);
+function processMw(h, list, req, res) {
+	if (!list || !list.length) return;
+	for (var i=0, mw; i < list.length; i++) {
+		mw = list[i];
+		if (!mw) {
+			console.error("Empty middleware");
+			continue;
+		}
+		mw(h, req, res);
+	}
 }
 
 Handler.prototype.use = function(mw) {
@@ -178,21 +153,26 @@ Handler.prototype.edit = function(mw) {
 
 
 function initPool(settings) {
-	return Pool({
-		name : 'webkit',
-		create : function(callback) {
-			callback(null, WebKit(settings.display));
-		},
-		destroy : function(client) {
-			client.destroy();
-			if (global.gc) {
-				global.gc();
-			}
-		},
-		max : 8,
-		min : 1,
-		idleTimeoutMillis : 30000,
-		refreshIdle: false
-	});
+	var opts = {};
+	for (var prop in settings) opts[prop] = settings[prop];
+	if (opts.debug) {
+		if (opts.display != 0) {
+			opts.display = 0;
+			console.info("debug is on - using default display 0");
+		}
+		opts.max = 1;
+		Dom.edits.push(Dom.plugins.debug);
+	}
+	if (!opts.name) opts.name = "webkitPool";
+	if (!opts.create) opts.create = function(cb) {
+		cb(null, WebKit(opts));
+	};
+	if (!opts.destroy) opts.destroy = function(client) {
+		client.destroy();
+		if (global.gc) {
+			global.gc();
+		}
+	};
+	return Pool(opts);
 }
 
