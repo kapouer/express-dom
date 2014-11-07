@@ -156,8 +156,8 @@ html or javascript.
 
 # Debugging
 
-Before any other call, set `dom.debug = true` and future webkitgtk will open a window
-containing the spawned webkit instances, with the inspector already opened.
+To show a webview with inspector, set environment variable DEBUG to something
+not empty, like `DEBUG=1 node app.js`, to set `dom.settings.debug` to true.
 
 
 # MVC done right

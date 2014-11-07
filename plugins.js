@@ -32,6 +32,3 @@ exports.nomedia = function(h) {
 	});
 };
 
-exports.debug = function(h) {
-	h.page.wait('unload');
-};

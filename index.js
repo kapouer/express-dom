@@ -48,7 +48,6 @@ Handler.prototype.middleware = function(req, res, next) {
 			q.defer(finishEdit, this);
 		}
 		q.awaitAll(function(err) {
-		console.log("never reached")
 			if (err) return next(err);
 			load(this, req);
 			processMw(this, this.uses, req, res);
@@ -115,7 +114,6 @@ function release(page) {
 
 function finishEdit(h, cb) {
 	h.page.wait('idle').html(function(err, html) {
-		if (Dom.settings.debug) return;
 		if (err) return cb(err);
 		h.html = html;
 		h.page.removeAllListeners();
@@ -161,7 +159,6 @@ function initPool(settings) {
 			console.info("debug is on - using default display 0");
 		}
 		opts.max = 1;
-		Dom.edits.push(Dom.plugins.debug);
 	}
 	if (!opts.name) opts.name = "webkitPool";
 	if (!opts.create) opts.create = function(cb) {
