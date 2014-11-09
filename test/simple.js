@@ -9,15 +9,18 @@ app.get(
 	express.static('public', {index: false, redirect: false})
 );
 
-// disables onlyScripts
-dom.plugins = [];
+app.get('/', dom('http://figaro-front-test.nsocket.com/fidji/live1')
+.edit(dom.plugins.absolutify)
+);
 
-app.get('/', dom('http://figaro-front-test.nsocket.com/fidji/live1', {allow: 'all'}).use(function(page, next) {
-	page.on('response', function(res) {
-		console.log(res.uri, res.status, res.mime);
-	});
-	next();
-}));
+app.use(function(err, req, res, next) {
+	if (err) {
+		console.error(err);
+		res.sendStatus(500);
+	} else {
+		next();
+	}
+});
 /*
 .use(function(h, req, res, next) {
 	var pt = require('stream').PassThrough();
