@@ -5,10 +5,12 @@ var queue = require('queue-async');
 var escapeStringRegexp = require('escape-string-regexp');
 var request = require('request');
 
-var Dom = module.exports = function(url, options) {
-	var h = new Handler(url, options);
+var Dom = module.exports = function(model, options) {
+	var h = new Handler(model, options);
 	return h.chainable;
 };
+
+Dom.Handler = Handler;
 
 Dom.settings = {
 	min: 1,
@@ -20,115 +22,125 @@ Dom.settings = {
 };
 Dom.plugins = require('./plugins');
 
-Dom.edits = [];
-Dom.uses = [Dom.plugins.nomedia];
+Dom.authors = [];
+Dom.users = [Dom.plugins.nomedia];
 
-
-function Handler(remote, options) {
-	this.remote = remote;
+function Handler(url, options) {
+	this.viewUrl = url;
 	this.options = options || {};
 	this.chainable = this.middleware.bind(this);
-	this.chainable.edit = this.edit.bind(this);
+	this.chainable.author = this.author.bind(this);
 	this.chainable.use = this.use.bind(this);
-	this.edits = Dom.edits.slice(0);
-	this.uses = Dom.uses.slice(0);
+	this.authors = Dom.authors.slice(0);
+	this.users = Dom.users.slice(0);
 }
 
 Handler.prototype.middleware = function(req, res, next) {
+	this.url = req.protocol + '://' + req.headers.host + req.url;
+	if (this.url == this.viewUrl) {
+		return next(new Error("The view has the same url as the requested page"));
+	}
 	if (!Dom.pool) Dom.pool = initPool(Dom.settings);
-	var q = queue(2)
-	.defer(acquire, this)
-	.defer(init, this, req.app.settings)
-	.awaitAll(function(err) {
+	queue(1)
+	.defer(this.acquire.bind(this))
+	.defer(this.getView.bind(this), req)
+	.defer(this.getAuthored.bind(this), req, res)
+	.defer(this.getUsed.bind(this), req, res)
+	.awaitAll(function(err, stack) {
 		if (err) return next(err);
-		var q = queue(1);
-		if (this.edits.length) {
-			this.page.preload(this.url, {content: this.html});
-			processMw(this, this.edits, req, res);
-			q.defer(finishEdit, this);
-		}
-		q.awaitAll(function(err) {
-			if (err) return next(err);
-			load(this, req);
-			processMw(this, this.uses, req, res);
-			finishUse(this, req, res, next);
-		}.bind(this));
+		res.send(this.html);
 	}.bind(this));
 };
 
-function acquire(h, cb) {
+Handler.prototype.acquire = function(cb) {
+	var h = this;
 	Dom.pool.acquire(function(err, page) {
 		h.page = page;
 		cb(err);
 	});
-}
+};
 
-function init(h, settings, cb) {
-	if (/https?:/.test(h.remote)) {
-		h.url = h.remote;
-		request(h.remote, function(err, res, body) {
-			if (body) h.html = body;
-			else err = new Error("Empty initial html in " + url);
+Handler.prototype.getView = function(req, cb) {
+	var h = this;
+	var settings = req.app.settings;
+	if (/https?:/.test(h.viewUrl)) {
+		request(h.viewUrl, function(err, res, body) {
+			if (body) h.viewHtml = body;
+			else err = new Error("Empty initial html in " + h.viewUrl);
 			cb(err);
 		});
 	} else {
-		h.url = req.protocol + '://' + req.headers.host + req.url;
-		var view = new (settings.view)(h.remote, {
+		var expressView = new (settings.view)(h.viewUrl, {
 			defaultEngine: 'html',
 			root: settings.views,
 			engines: {".html": function() {}}
 		});
-		if (!view.path) {
-			var root = view.root;
+		if (!expressView.path) {
+			var root = expressView.root;
 			var dirs = Array.isArray(root) && root.length > 1
 			?	'directories "' + root.slice(0, -1).join('", "') + '" or "' + root[root.length - 1] + '"'
 			: 'directory "' + root + '"';
-			var err = new Error('Failed to lookup view "' + h.remote + '" in views ' + dirs);
-			err.view = view;
+			var err = new Error('Failed to lookup view "' + h.viewUrl + '" in views ' + dirs);
+			err.view = expressView;
 			return cb(err);
 		}
-		fs.readFile(view.path, function(err, body) {
-			if (body) h.html = body;
-			else err = new Error("Empty initial html in " + view.path);
+		fs.readFile(expressView.path, function(err, body) {
+			if (body) h.viewHtml = body;
+			else err = new Error("Empty initial html in " + expressView.path);
 			cb(err);
 		});
 	}
-}
+};
 
-function load(h, req) {
+Handler.prototype.load = function(req, cb) {
+	var h = this;
 	var opts = {};
 	for (var key in h.options) {
 		opts[key] = h.options[key];
 	}
-	if (!opts.content) opts.content = h.html;
+	if (!opts.content) opts.content = h.authorHtml;
 	if (!opts.cookie) opts.cookie = req.get('Cookie');
-	h.page.load(h.url, opts);
-}
+	if (!cb) h.page.load(h.url, opts);
+	else if (cb) h.page.load(h.url, opts);
 
-function release(page) {
+};
+
+Handler.prototype.getAuthored = function(req, res, cb) {
+	var h = this;
+	if (h.authors.length) {
+		h.page.preload(h.url, {content: h.viewHtml});
+		h.processMw(h.authors, req, res);
+		h.page.wait('idle').html(function(err, html) {
+			if (err) return cb(err);
+			h.authorHtml = html;
+			h.page.removeAllListeners();
+			cb();
+		});
+	} else {
+		h.authorHtml = h.viewHtml;
+		cb();
+	}
+};
+
+Handler.prototype.getUsed = function(req, res, cb) {
+	this.load(req);
+	this.processMw(this.users, req, res);
+	this.page.wait('idle').html(function(err, html) {
+		if (err) return cb(err);
+		this.html = html;
+		cb();
+	}.bind(this));
+};
+
+Handler.prototype.release = function(cb) {
+	var page = this.page;
 	page.removeAllListeners();
 	page.unload(function() {
 		Dom.pool.release(page);
 	});
-}
+};
 
-function finishEdit(h, cb) {
-	h.page.wait('idle').html(function(err, html) {
-		if (err) return cb(err);
-		h.html = html;
-		h.page.removeAllListeners();
-		cb();
-	});
-}
-
-function finishUse(h, req, res, next) {
-	h.page.wait('idle').html(function(err, html) {
-		if (err) return next(err);
-		res.send(html);
-	});
-}
-
-function processMw(h, list, req, res) {
+Handler.prototype.processMw = function(list, req, res) {
 	if (!list || !list.length) return;
 	for (var i=0, mw; i < list.length; i++) {
 		mw = list[i];
@@ -136,16 +148,16 @@ function processMw(h, list, req, res) {
 			console.error("Empty middleware");
 			continue;
 		}
-		mw(h, req, res);
+		mw(this, req, res);
 	}
-}
+};
 
 Handler.prototype.use = function(mw) {
-	this.uses.push(mw);
+	this.users.push(mw);
 	return this.chainable;
 };
-Handler.prototype.edit = function(mw) {
-	this.edits.push(mw);
+Handler.prototype.author = function(mw) {
+	this.authors.push(mw);
 	return this.chainable;
 };
 

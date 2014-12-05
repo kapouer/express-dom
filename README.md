@@ -16,7 +16,7 @@ Extensible web page builder proxy with client browser environment for express.
 ```js
 var app = require('express')();
 var dom = require('express-dom');
-app.get('/mypage', dom('myview').edit(minify).use(absolutify));
+app.get('/mypage', dom('myview').author(minify).use(absolutify));
 ```
 
 # Gotchas
@@ -48,7 +48,7 @@ Three objects: route handlers, plugins, pages.
 A page is (url, html string) loaded in a browser instance.
 Plugins can modify the page's DOM in two different ways:
 
-1. editor - only the DOM is loaded - no scripts and no external resources
+1. author - only the DOM is loaded - no scripts and no external resources
    page.run() is available and can be used to modify the html before actually
    loading the page.
 2. user - the html obtained from previous step is loaded as a web page
@@ -63,23 +63,23 @@ Plugins can modify the page's DOM in two different ways:
   create an handler instance that will use the view or url to load the initial
   web page that is going to be modified.  
   Options are passed to the user webkitgtk instance, and can be modified by
-  user plugins. The editor instance has no configurable options.
+  user plugins. The author instance has no configurable options.
 
-* dom.edit(plugin), dom.use(plugin)  
+* dom.author(plugin), dom.use(plugin)  
   where `plugin(handler, req, res)` returns immediately.  
   sets plugins on all future handler instances.
 
-* dom.edits, dom.uses  
+* dom.authors, dom.users  
   the arrays populated by previous methods.
 
 * handler.use(plugin)  
   adds a user plugin.
 
-* handler.edit(plugin)  
-  adds an editor plugin  
+* handler.author(plugin)  
+  adds an author plugin  
   if there are none, the DOM is directly loaded as user.
 
-* handler.edits, handler.uses  
+* handler.authors, handler.users  
   the arrays populated by previous methods.
 
 * handler.page  
@@ -135,7 +135,7 @@ var minify = require('express-dom-minify');
 var procrastify = require('express-dom-procrastify');
 var archive = require('express-dom-archive');
 
-dom.edit(minify);
+dom.author(minify);
 
 app.get('/mypage', dom('myview').use(procrastify));
 app.get('/mypage.png', dom('myview').use(function(h, req, res) {
