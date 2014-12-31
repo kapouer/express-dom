@@ -25,6 +25,16 @@ Dom.plugins = require('./plugins');
 Dom.authors = [];
 Dom.users = [Dom.plugins.nomedia];
 
+Dom.author = function(mw) {
+	Dom.authors.push(mw);
+	return Dom;
+};
+
+Dom.use = function(mw) {
+	Dom.users.push(mw);
+	return Dom;
+};
+
 function Handler(url, options) {
 	this.viewUrl = url;
 	this.options = options || {};
