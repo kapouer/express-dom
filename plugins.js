@@ -1,14 +1,16 @@
 var URL = require('url');
 var Path = require('path');
 
-exports.absolutify = function(h) {
+exports.absolute = function(h) {
 	h.page.wait('ready').run(function() {
 		function absolut(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
 			for (var i=0, len=list.length; i < len; i++) {
 				node = list[i];
-				if (node[att]) node.attributes.getNamedItem(att).nodeValue = node[att];
+				var href = node[att];
+				if (href == null) continue;
+				node.attributes.getNamedItem(att).nodeValue = href;
 			}
 		}
 		absolut('a', 'href');
@@ -17,6 +19,31 @@ exports.absolutify = function(h) {
 		absolut('object', 'src');
 		absolut('link', 'href');
 		absolut('script', 'src');
+	});
+};
+
+exports.mount = function(h) {
+	h.page.wait('ready').run(function() {
+		var loc = document.location.protocol + '//' + document.location.host;
+		function mount(selector, att) {
+			var list = document.querySelectorAll(selector);
+			var node;
+			for (var i=0, len=list.length; i < len; i++) {
+				node = list[i];
+				var href = node[att];
+				if (href == null) continue;
+				var item = node.attributes.getNamedItem(att);
+				var val = item.nodeValue;
+				if (val && val[0] != '/' && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
+					item.nodeValue = '/' + val;
+				}
+			}
+		}
+		mount('img', 'src');
+		mount('video', 'src');
+		mount('object', 'src');
+		mount('link', 'href');
+		mount('script', 'src');
 	});
 };
 
