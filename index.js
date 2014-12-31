@@ -46,6 +46,7 @@ Handler.prototype.middleware = function(req, res, next) {
 	.defer(this.getView.bind(this), req)
 	.defer(this.getAuthored.bind(this), req, res)
 	.defer(this.getUsed.bind(this), req, res)
+	.defer(this.release.bind(this))
 	.awaitAll(function(err, stack) {
 		if (err) return next(err);
 		res.send(this.html);
