@@ -111,6 +111,7 @@ Handler.prototype.load = function(req, cb) {
 	}
 	if (!opts.content) opts.content = h.authorHtml;
 	if (!opts.cookie) opts.cookie = req.get('Cookie');
+	if (opts.console === undefined) opts.console = true;
 	if (!cb) h.page.load(h.url, opts);
 	else if (cb) h.page.load(h.url, opts);
 
@@ -119,7 +120,7 @@ Handler.prototype.load = function(req, cb) {
 Handler.prototype.getAuthored = function(req, res, cb) {
 	var h = this;
 	if (h.authors.length) {
-		h.page.preload(h.url, {content: h.viewHtml});
+		h.page.preload(h.url, {content: h.viewHtml, console: true});
 		h.processMw(h.authors, req, res);
 		h.page.wait('idle').html(function(err, html) {
 			if (err) return cb(err);
