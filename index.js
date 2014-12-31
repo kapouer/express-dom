@@ -146,8 +146,9 @@ Handler.prototype.getUsed = function(req, res, cb) {
 Handler.prototype.release = function(cb) {
 	var page = this.page;
 	page.removeAllListeners();
-	page.unload(function() {
+	page.unload(function(err) {
 		Dom.pool.release(page);
+		cb(err);
 	});
 };
 
