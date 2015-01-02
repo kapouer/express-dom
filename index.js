@@ -202,6 +202,12 @@ function initPool(settings) {
 			global.gc();
 		}
 	};
-	return Pool(opts);
+	var pool = Pool(opts);
+	process.on('exit', function() {
+		pool.drain(function() {
+			pool.destroyAllNow();
+		});
+	});
+	return pool;
 }
 
