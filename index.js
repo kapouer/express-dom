@@ -59,6 +59,7 @@ Handler.prototype.middleware = function(req, res, next) {
 	.defer(this.release.bind(this))
 	.awaitAll(function(err, stack) {
 		if (err) return next(err);
+		res.type('text/html');
 		res.send(this.html);
 	}.bind(this));
 };
