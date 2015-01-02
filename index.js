@@ -52,7 +52,6 @@ Handler.prototype.middleware = function(req, res, next) {
 	}
 	if (!Dom.pool) Dom.pool = initPool(Dom.settings);
 	queue(1)
-	.defer(this.acquire.bind(this))
 	.defer(this.getView.bind(this), req)
 	.defer(this.getAuthored.bind(this), req, res)
 	.defer(this.getUsed.bind(this), req, res)
@@ -66,6 +65,7 @@ Handler.prototype.middleware = function(req, res, next) {
 
 Handler.prototype.acquire = function(cb) {
 	var h = this;
+	if (h.page) return cb();
 	Dom.pool.acquire(function(err, page) {
 		h.page = page;
 		cb(err);
@@ -113,21 +113,26 @@ Handler.prototype.load = function(req, cb) {
 	if (!opts.content) opts.content = h.authorHtml;
 	if (!opts.cookie) opts.cookie = req.get('Cookie');
 	if (opts.console === undefined) opts.console = true;
-	if (!cb) h.page.load(h.url, opts);
-	else if (cb) h.page.load(h.url, opts);
-
+	this.acquire(function(err) {
+		if (err) return cb(err);
+		if (!cb) h.page.load(h.url, opts);
+		else if (cb) h.page.load(h.url, opts, cb);
+	});
 };
 
 Handler.prototype.getAuthored = function(req, res, cb) {
 	var h = this;
 	if (h.authors.length) {
-		h.page.preload(h.url, {content: h.viewHtml, console: true});
-		h.processMw(h.authors, req, res);
-		h.page.wait('idle').html(function(err, html) {
+		h.acquire(function(err) {
 			if (err) return cb(err);
-			h.authorHtml = html;
-			h.page.removeAllListeners();
-			cb();
+			h.page.preload(h.url, {content: h.viewHtml, console: true});
+			h.processMw(h.authors, req, res);
+			h.page.wait('idle').html(function(err, html) {
+				if (err) return cb(err);
+				h.authorHtml = html;
+				h.page.removeAllListeners();
+				cb();
+			});
 		});
 	} else {
 		h.authorHtml = h.viewHtml;
@@ -147,6 +152,7 @@ Handler.prototype.getUsed = function(req, res, cb) {
 
 Handler.prototype.release = function(cb) {
 	var page = this.page;
+	if (!page) return cb();
 	page.removeAllListeners();
 	page.unload(function(err) {
 		Dom.pool.release(page);
