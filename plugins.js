@@ -6,11 +6,13 @@ exports.absolute = function(h) {
 		function absolut(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
-			for (var i=0, len=list.length; i < len; i++) {
-				node = list[i];
+			for (var i=0; i < list.length; i++) {
+				node = list.item(i);
 				var href = node[att];
-				if (href == null) continue;
-				node.attributes.getNamedItem(att).nodeValue = href;
+				if (!href) continue;
+				var item = node.attributes.getNamedItem(att);
+				if (!item) continue;
+				item.nodeValue = href;
 			}
 		}
 		absolut('a', 'href');
@@ -28,13 +30,14 @@ exports.mount = function(h) {
 		function mount(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
-			for (var i=0, len=list.length; i < len; i++) {
-				node = list[i];
+			for (var i=0; i < list.length; i++) {
+				node = list.item(i);
 				var href = node[att];
-				if (href == null) continue;
+				if (!href) continue;
 				var item = node.attributes.getNamedItem(att);
+				if (!item) continue;
 				var val = item.nodeValue;
-				if (val && val[0] != '/' && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
+				if (val && val.toString()[0] != '/' && href && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
 					item.nodeValue = '/' + val;
 				}
 			}
