@@ -102,12 +102,14 @@ Handler.prototype.instance = function(url, cb) {
 	};
 	inst.hits++;
 	inst.atime = Date.now();
+	inst.mtime = inst.atime;
 	inst.lock = true;
 	cb(null, inst);
 };
 
 Handler.prototype.finish = function(inst, res, cb) {
 	res.type('text/html');
+	res.set('Last-Modified', (new Date(inst.mtime)).toUTCString());
 	res.send(inst.html);
 	// call getUsed when requesting this url again
 	delete inst.html;
@@ -213,6 +215,7 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 		h.processMw(inst, h.users, req, res);
 		inst.page.wait('idle').html(function(err, html) {
 			if (err) return cb(err);
+			inst.mtime = Date.now();
 			inst.html = html;
 			cb();
 		});
