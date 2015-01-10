@@ -19,6 +19,7 @@ Dom.settings = {
 	idleTimeoutMillis: 30000,
 	refreshIdle: false,
 	display: 0,
+	style: "html,body { display:none !important; }",
 	debug: !!process.env.DEBUG
 };
 Dom.plugins = require('./plugins');
@@ -181,6 +182,7 @@ Handler.prototype.load = function(inst, req, cb) {
 	if (!opts.content) opts.content = inst.authorHtml;
 	if (!opts.cookie) opts.cookie = req.get('Cookie');
 	if (opts.console === undefined) opts.console = true;
+	if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
 	this.acquire(inst, function(err) {
 		if (err) return cb(err);
 		inst.page.load(inst.url, opts, cb);
@@ -193,7 +195,12 @@ Handler.prototype.getAuthored = function(inst, req, res, cb) {
 	if (h.authors.length) {
 		h.acquire(inst, function(err) {
 			if (err) return cb(err);
-			inst.page.preload(inst.url, {content: h.viewHtml, console: true});
+			var obj = {
+				content: h.viewHtml,
+				console: true
+			};
+			if (!Dom.settings.debug) obj.style = Dom.settings.style;
+			inst.page.preload(inst.url, obj);
 			h.processMw(inst, h.authors, req, res);
 			inst.page.wait('idle').html(function(err, html) {
 				if (err) return cb(err);

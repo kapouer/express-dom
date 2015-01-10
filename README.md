@@ -138,12 +138,22 @@ var archive = require('express-dom-archive');
 dom.author(minify);
 
 app.get('/mypage', dom('myview').use(procrastify));
-app.get('/mypage.png', dom('myview').use(function(h, req, res) {
-	h.page.wait('idle').png(res);
+app.get('/mypage.png', dom('myview', {
+  style:"html {width:800px;height:600px;overflow:hidden;}"
+}).use(function(h, req, res) {
+  h.page.wait('idle').png(res);
 }));
 app.get('/mypage.tar.gz', dom('myview').use(archive));
 
 ```
+
+Note that if png or pdf output is desired, the "style" option must be defined,
+because by default this user stylesheet is applied to prevent useless repaints:
+
+```
+html, body { display: none !important; }
+```
+
 
 # Plugins
 
