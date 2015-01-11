@@ -6,6 +6,7 @@ var escapeStringRegexp = require('escape-string-regexp');
 var request = require('request');
 
 var Dom = module.exports = function(model, options) {
+	// init pool later, allowing user to set pool settings
 	if (!Dom.pool) Dom.pool = Dom.initPool(Dom.settings);
 	var h = new Handler(model, options);
 	return h.chainable;
