@@ -14,7 +14,7 @@ var Dom = module.exports = function(model, options) {
 Dom.Handler = Handler;
 
 Dom.settings = {
-	min: 1,
+	min: 2,
 	max: 16,
 	idleTimeoutMillis: 30000,
 	refreshIdle: false,
