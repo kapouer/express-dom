@@ -50,15 +50,15 @@ exports.mount = function(h) {
 	});
 };
 
-exports.nomedia = function(h) {
+exports.nostylesheets = function(h) {
+	// <script> tags are loaded with request header Accept */*
+	// <link> tags are loaded with Accept 'text/css,*/*;q=0.1'
+	// Accept text/html is for the document
+	// loading images automatically is disabled by default in express-dom
+	// everything else is allowed
 	h.page.on('request', function(req) {
-		var obj = URL.parse(req.uri);
-		var ext = Path.extname((obj.pathname || '').split('/').pop());
-		if (!ext) return;
-		if (ext == ".js") return;
 		var accept = req.headers.Accept;
-		if (accept == "*/*" || accept == "text/html") return;
-		req.cancel = true;
+		if (accept && accept.split(',').shift() == "text/css") req.cancel = true;
 	});
 };
 

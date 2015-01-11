@@ -93,8 +93,10 @@ Important: plugins make use of webkitgtk API to change the page.
 They return immediately, but the final plugin that actually outputs something
 to express response is supposed to be called on 'ready' or 'idle' page events.
 
-By default, only *.js files from the same domain (in a broad sense) are
-loaded.
+To optimize loading of DOM, by default,
+- images are not loaded automatically, disable with {images: true}
+- document is not rendered, disable with {style: "" }
+- stylesheets are not loaded, disable with dom.users.shift()
 
 
 # Usage

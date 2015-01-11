@@ -25,7 +25,7 @@ Dom.settings = {
 Dom.plugins = require('./plugins');
 
 Dom.authors = [];
-Dom.users = [Dom.plugins.nomedia];
+Dom.users = [Dom.plugins.nostylesheets];
 
 Dom.author = function(mw) {
 	Dom.authors.push(mw);
@@ -182,6 +182,7 @@ Handler.prototype.load = function(inst, req, cb) {
 	if (!opts.content) opts.content = inst.authorHtml;
 	if (!opts.cookie) opts.cookie = req.get('Cookie');
 	if (opts.console === undefined) opts.console = true;
+	if (opts.images === undefined) opts.images = false;
 	if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
 	this.acquire(inst, function(err) {
 		if (err) return cb(err);
