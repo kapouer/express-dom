@@ -81,22 +81,27 @@ Handler.prototype.middleware = function(req, res, next) {
 	}
 	h.instance(url, function(err, inst) {
 		if (err) return next(err);
-		var q = queue(1);
-		if (!inst.html) {
-			if (!inst.authorHtml) {
-				if (!h.viewHtml) {
-					q.defer(h.getView.bind(h), req);
-				}
-				q.defer(h.getAuthored.bind(h), inst, req, res);
-			}
-			q.defer(h.getUsed.bind(h), inst, req, res);
-		}
-		q.defer(h.finish.bind(h), inst, res)
-		.defer(h.gc.bind(h))
-		.awaitAll(function(err, stack) {
+		h.build(inst, req, res, function(err) {
 			if (err) return next(err);
 		});
 	});
+};
+
+Handler.prototype.build = function(inst, req, res, cb) {
+	var h = this;
+	var q = queue(1);
+	if (!inst.html) {
+		if (!inst.authorHtml) {
+			if (!h.viewHtml) {
+				q.defer(h.getView.bind(h), req);
+			}
+			q.defer(h.getAuthored.bind(h), inst, req, res);
+		}
+		q.defer(h.getUsed.bind(h), inst, req, res);
+	}
+	q.defer(h.finish.bind(h), inst, res)
+	.defer(h.gc.bind(h))
+	.awaitAll(cb);
 };
 
 Handler.prototype.instance = function(url, cb) {
