@@ -294,6 +294,7 @@ function initPool(settings) {
 			global.gc();
 		}
 	};
+	if (!opts.max) opts.max = 1;
 	var pool = Pool(opts);
 	process.on('exit', function() {
 		pool.drain(function() {
