@@ -39,7 +39,7 @@ Dom.use = function(mw) {
 };
 
 function Handler(viewUrl, options) {
-	this.viewUrl = viewUrl;
+	this.initialViewUrl = viewUrl;
 	this.options = options || {};
 	this.chainable = this.middleware.bind(this);
 	this.chainable.author = this.author.bind(this);
@@ -52,24 +52,28 @@ function Handler(viewUrl, options) {
 
 Handler.prototype.middleware = function(req, res, next) {
 	var h = this;
-	if (!/https?:/.test(h.viewUrl)) {
-		// absolute path for h.viewUrl
-		var settings = req.app.settings;
-		var expressView = new (settings.view)(h.viewUrl, {
-			defaultEngine: 'html',
-			root: settings.views,
-			engines: {".html": function() {}}
-		});
-		if (!expressView.path) {
-			var root = expressView.root;
-			var dirs = Array.isArray(root) && root.length > 1
-			?	'directories "' + root.slice(0, -1).join('", "') + '" or "' + root[root.length - 1] + '"'
-			: 'directory "' + root + '"';
-			var err = new Error('Failed to lookup view "' + h.viewUrl + '" in views ' + dirs);
-			err.view = expressView;
-			return next(err);
+	if (h.initialViewUrl !== undefined) {
+		if (!/https?:/.test(h.initialViewUrl)) {
+			// absolute path for h.viewUrl
+			var settings = req.app.settings;
+			var expressView = new (settings.view)(h.initialViewUrl, {
+				defaultEngine: 'html',
+				root: settings.views,
+				engines: {".html": function() {}}
+			});
+			if (!expressView.path) {
+				var root = expressView.root;
+				var dirs = Array.isArray(root) && root.length > 1
+				?	'directories "' + root.slice(0, -1).join('", "') + '" or "' + root[root.length - 1] + '"'
+				: 'directory "' + root + '"';
+				var err = new Error('Failed to lookup view "' + h.initialViewUrl + '" in views ' + dirs);
+				err.view = expressView;
+				return next(err);
+			}
+			h.initialViewUrl = expressView.path;
 		}
-		h.viewUrl = expressView.path;
+		h.viewUrl = h.initialViewUrl;
+		delete h.initialViewUrl;
 	}
 	var url = h.url = req.protocol + '://' + req.headers.host + req.url;
 	if (url == h.viewUrl) {
