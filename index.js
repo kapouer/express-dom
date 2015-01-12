@@ -7,7 +7,7 @@ var request = require('request');
 
 var Dom = module.exports = function(model, options) {
 	// init pool later, allowing user to set pool settings
-	if (!Dom.pool) Dom.pool = Dom.initPool(Dom.settings);
+	if (!Dom.pool) Dom.pool = initPool(Dom.settings);
 	var h = new Handler(model, options);
 	return h.chainable;
 };
@@ -268,7 +268,7 @@ Handler.prototype.author = function(mw) {
 };
 
 
-Dom.initPool = function(settings) {
+function initPool(settings) {
 	var opts = {};
 	for (var prop in settings) opts[prop] = settings[prop];
 	if (opts.debug) {
@@ -295,5 +295,5 @@ Dom.initPool = function(settings) {
 		});
 	});
 	return pool;
-};
+}
 
