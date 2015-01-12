@@ -125,12 +125,11 @@ Handler.prototype.finish = function(inst, res, cb) {
 
 Handler.prototype.acquire = function(inst, cb) {
 	if (inst.page) return cb();
-	// before acquiring a new page, make sure we can - pool.availableObjectsCount() > 0
-	// if it's zero, release a non-locked page with lowest (hits, atime) pair
 	this.gc(function() {
 		Dom.pool.acquire(function(err, page) {
+			if (err) return cb(err);
 			inst.page = page;
-			cb(err);
+			cb();
 		});
 	});
 };
