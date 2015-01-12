@@ -158,6 +158,8 @@ Handler.prototype.gc = function(cb) {
 	}
 	if (minInst) {
 		this.release(minInst, cb);
+	} else {
+		cb();
 	}
 };
 
