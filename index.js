@@ -141,7 +141,9 @@ Handler.prototype.gc = function(cb) {
 	var minInst;
 	for (var url in this.pages) {
 		var inst = this.pages[url];
-		if (inst.lock) continue;
+		if (inst.lock || !inst.page) {
+			continue;
+		}
 		var score = 0;
 		if (inst.score !== undefined) {
 			// allow a score to be set by application
