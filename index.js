@@ -17,7 +17,7 @@ Dom.Handler = Handler;
 Dom.settings = {
 	min: 2,
 	max: 16,
-	idleTimeoutMillis: 30000,
+	idleTimeoutMillis: 300000,
 	refreshIdle: false,
 	display: 0,
 	style: "html,body { display:none !important; }",
