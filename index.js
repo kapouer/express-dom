@@ -242,9 +242,9 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 };
 
 Handler.prototype.release = function(inst, cb) {
-	delete this.pages[inst.url];
 	var page = inst.page;
 	if (!page) return cb();
+	delete inst.page;
 	page.removeAllListeners();
 	page.unload(function(err) {
 		Dom.pool.release(page);
