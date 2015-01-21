@@ -20,7 +20,7 @@ Dom.settings = {
 	idleTimeoutMillis: 300000,
 	refreshIdle: false,
 	display: 0,
-	style: "html,body { display:none !important; }",
+	style: "html { display:none !important; }",
 	debug: !!process.env.DEBUG
 };
 Dom.plugins = require('./plugins');
