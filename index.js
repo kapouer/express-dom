@@ -21,7 +21,7 @@ Dom.settings = {
 	idleTimeoutMillis: 300000,
 	refreshIdle: false,
 	display: 0,
-	style: "html { display:none !important; }",
+	style: fs.readFileSync(__dirname + '/index.css'),
 	debug: !!process.env.DEBUG
 };
 Dom.plugins = require('./plugins');
