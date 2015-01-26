@@ -4,6 +4,7 @@ var fs = require('fs');
 var queue = require('queue-async');
 var escapeStringRegexp = require('escape-string-regexp');
 var request = require('request');
+var Path = require('path');
 
 var Dom = module.exports = function(model, options) {
 	// init pool later, allowing user to set pool settings
@@ -54,23 +55,11 @@ Handler.prototype.middleware = function(req, res, next) {
 	var h = this;
 	if (h.initialViewUrl !== undefined) {
 		if (!/https?:/.test(h.initialViewUrl)) {
-			// absolute path for h.viewUrl
-			var settings = req.app.settings;
-			var expressView = new (settings.view)(h.initialViewUrl, {
-				defaultEngine: 'html',
-				root: settings.views,
-				engines: {".html": function() {}}
-			});
-			if (!expressView.path) {
-				var root = expressView.root;
-				var dirs = Array.isArray(root) && root.length > 1
-				?	'directories "' + root.slice(0, -1).join('", "') + '" or "' + root[root.length - 1] + '"'
-				: 'directory "' + root + '"';
-				var err = new Error('Failed to lookup view "' + h.initialViewUrl + '" in views ' + dirs);
-				err.view = expressView;
-				return next(err);
-			}
-			h.initialViewUrl = expressView.path;
+			var root = req.app.settings.statics;
+			if (!root) return next(new Error("Cannot find view, undefined 'statics' application setting"));
+			h.initialViewUrl = Path.resolve(root, h.initialViewUrl);
+			if (h.initialViewUrl.indexOf(root) !== 0) return next(new Error("Path outside statics dir\n" + h.initialViewUrl));
+			if (Path.extname(h.initialViewUrl) != ".html") h.initialViewUrl += ".html";
 		}
 		h.viewUrl = h.initialViewUrl;
 		delete h.initialViewUrl;
