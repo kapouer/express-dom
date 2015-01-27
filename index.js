@@ -20,7 +20,7 @@ Dom.settings = {
 	max: 16,
 	idleTimeoutMillis: 300000,
 	refreshIdle: false,
-	display: 0,
+	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
 	debug: !!process.env.DEBUG
 };
