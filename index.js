@@ -162,11 +162,12 @@ Handler.prototype.getView = function(req, cb) {
 	if (h.viewHtml) return cb();
 	var loader = /https?:/.test(h.viewUrl) ? h.loadRemote : h.loadLocal;
 	loader.call(h, h.viewUrl, function(err, body) {
-		if (body) {
+		if (!err || body) {
 			h.viewHtml = body;
 			h.mtime = Date.now();
 		}	else {
-			err = new Error("Empty initial html in " + h.viewUrl);
+			if (!err) err = new Error("Empty initial html in " + h.viewUrl);
+			if (!err.code) err.code = 404;
 		}
 		cb(err);
 	});
