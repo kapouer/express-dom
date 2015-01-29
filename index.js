@@ -59,6 +59,7 @@ Handler.prototype.middleware = function(req, res, next) {
 		if (!/https?:/.test(path)) {
 			var root = req.app.settings.statics;
 			if (!root) return next(new Error("Cannot find view, undefined 'statics' application setting"));
+			if (path == "") path = "index";
 			var path = Path.resolve(root, path);
 			if (path.indexOf(root) !== 0) return next(new Error("Path outside statics dir\n" + path));
 			if (path.slice(-1) == "/") path += "index";
