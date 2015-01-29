@@ -53,16 +53,18 @@ function Handler(viewUrl, options) {
 
 Handler.prototype.middleware = function(req, res, next) {
 	var h = this;
-	if (h.initialViewUrl !== undefined) {
-		if (!/https?:/.test(h.initialViewUrl)) {
+	var path = h.initialViewUrl;
+	if (path !== undefined) {
+		delete h.initialViewUrl;
+		if (!/https?:/.test(path)) {
 			var root = req.app.settings.statics;
 			if (!root) return next(new Error("Cannot find view, undefined 'statics' application setting"));
-			h.initialViewUrl = Path.resolve(root, h.initialViewUrl);
-			if (h.initialViewUrl.indexOf(root) !== 0) return next(new Error("Path outside statics dir\n" + h.initialViewUrl));
-			if (Path.extname(h.initialViewUrl) != ".html") h.initialViewUrl += ".html";
+			var path = Path.resolve(root, path);
+			if (path.indexOf(root) !== 0) return next(new Error("Path outside statics dir\n" + path));
+			if (path.slice(-1) == "/") path += "index";
+			if (Path.extname(path) != ".html") path += ".html";
 		}
-		h.viewUrl = h.initialViewUrl;
-		delete h.initialViewUrl;
+		h.viewUrl = path;
 	}
 	var url = h.url = req.protocol + '://' + req.headers.host + req.url;
 	if (url == h.viewUrl) {
