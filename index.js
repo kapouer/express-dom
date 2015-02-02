@@ -18,7 +18,8 @@ Dom.Handler = Handler;
 Dom.settings = {
 	min: 2,
 	max: 16,
-	idleTimeoutMillis: 300000,
+	busyTimeout: 0,
+	idleTimeoutMillis: 1000000,
 	refreshIdle: false,
 	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
@@ -42,6 +43,7 @@ Dom.use = function(mw) {
 function Handler(viewUrl, options) {
 	this.initialViewUrl = viewUrl;
 	this.options = options || {};
+	if (!this.options.busyTimeout) this.options.busyTimeout = Dom.settings.busyTimeout;
 	this.chainable = this.middleware.bind(this);
 	this.chainable.author = this.author.bind(this);
 	this.chainable.use = this.use.bind(this);
@@ -101,6 +103,7 @@ Handler.prototype.instance = function(url, cb) {
 	var inst = h.pages[url];
 	if (!inst) inst = h.pages[url] = {
 		hits: 0,
+		busyness: 0,
 		url: url
 	};
 	inst.hits++;
@@ -122,10 +125,17 @@ Handler.prototype.finish = function(inst, res, cb) {
 
 Handler.prototype.acquire = function(inst, cb) {
 	if (inst.page) return cb();
+	var busyTimeout = this.options.busyTimeout;
 	this.gc(function() {
 		Dom.pool.acquire(function(err, page) {
 			if (err) return cb(err);
 			inst.page = page;
+			if (busyTimeout) page.on('busy', function(inst) {
+				inst.busyness++;
+				setTimeout(function() {
+					inst.busyness--;
+				}, busyTimeout);
+			}.bind(null, inst));
 			cb();
 		});
 	});
@@ -135,10 +145,14 @@ Handler.prototype.gc = function(cb) {
 	if (Dom.pool.getPoolSize() < Dom.settings.max || Dom.pool.availableObjectsCount() > 0) return cb();
 	var minScore = +Infinity;
 	var minInst;
+	var busyPages = 0;
 	for (var url in this.pages) {
 		var inst = this.pages[url];
 		if (inst.lock || !inst.page) {
 			continue;
+		}
+		if (inst.busyness > 0) {
+			busyPages++;
 		}
 		var score = 0;
 		if (inst.score !== undefined) {
@@ -156,6 +170,9 @@ Handler.prototype.gc = function(cb) {
 	if (minInst) {
 		this.release(minInst, cb);
 	} else {
+		if (busyPages == Dom.settings.max) {
+			console.warn("Too many busy instances - lower busyTimeout of raise Dom.settings.max")
+		}
 		cb();
 	}
 };

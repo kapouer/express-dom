@@ -64,6 +64,10 @@ Plugins can modify the page's DOM in two different ways:
   web page that is going to be modified.  
   Options are passed to the user webkitgtk instance, and can be modified by
   user plugins. The author instance has no configurable options.
+  One option is specific to express-dom:
+  busyTimeout, milliseconds, defaults 0 - which disables it.
+  If a page instance emits `busy` events during that time period, it won't be
+  garbage collected. This allows an instance to stay loaded forever.
 
 * dom.author(plugin), dom.use(plugin)  
   where `plugin(handler, req, res)` returns immediately.  
