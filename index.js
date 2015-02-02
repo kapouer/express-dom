@@ -104,11 +104,11 @@ Handler.prototype.instance = function(url, cb) {
 	if (!inst) inst = h.pages[url] = {
 		hits: 0,
 		busyness: 0,
-		url: url
+		url: url,
+		mtime: Date.now()
 	};
 	inst.hits++;
 	inst.atime = Date.now();
-	inst.mtime = inst.atime;
 	inst.lock = true;
 	cb(null, inst);
 };
