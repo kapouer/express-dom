@@ -187,7 +187,8 @@ Handler.prototype.getView = function(req, cb) {
 			h.mtime = Date.now();
 		}	else {
 			if (!err) err = new Error("Empty initial html in " + h.viewUrl);
-			if (!err.code) err.code = 404;
+			if (!err.code || err.code == 'ENOENT') err.code = 404;
+			else err.code = 500;
 		}
 		cb(err);
 	});
