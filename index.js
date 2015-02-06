@@ -23,7 +23,8 @@ Dom.settings = {
 	refreshIdle: false,
 	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
-	debug: !!process.env.DEBUG
+	debug: !!process.env.DEBUG,
+	console: !!process.env.DEBUG
 };
 Dom.plugins = require('./plugins');
 
