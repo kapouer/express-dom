@@ -43,12 +43,15 @@ and efficient hot caching.
 
 The API is chainable.
 
-Three objects: route handlers, plugins, pages.
+Four objects: route handler, resource, page, plugins
 
-A page is (url, html string) loaded in a browser instance.
-Plugins can modify the page's DOM in two different ways:
+A resource is (url, html string) loaded in a page.
+For now only webkitgtk browser is supported, and jsdom support is planned.
+Plugins can modify the page loaded in the browser instance at two moments
+in the page lifecycle:
 
-1. author - only the DOM is loaded - no scripts and no external resources
+1. author - only the DOM is loaded - no scripts and no external resources are
+   loaded by default.
    page.run() is available and can be used to modify the html before actually
    loading the page.
 2. user - the html obtained from previous step is loaded as a web page
@@ -70,8 +73,9 @@ Plugins can modify the page's DOM in two different ways:
   garbage collected. This allows an instance to stay loaded forever.
 
 * dom.author(plugin), dom.use(plugin)  
-  where `plugin(handler, req, res)` returns immediately.  
-  sets plugins on all future handler instances.
+  where `plugin(resource, req, res)` returns immediately.  
+  sets plugins on all future handler instances, `resource.page` is the
+  browser instance.
 
 * dom.authors, dom.users  
   the arrays populated by previous methods.
@@ -106,16 +110,20 @@ To optimize loading of DOM, by default,
 # Usage
 
 ```js
-dom.use(expressDomMinify);
+dom.author(aGlobalAuthorPlugin);
 
-app.get('/mypage', dom('myview').use(function(h) {
-	h.page.wait('ready').run(function(done) {
-		// manipulate the DOM. Mind that this function must be serializable,
-		// in particular its parent scope will be the window object in the page
-		$("img").forEach(function(node) {
+app.get('/mypage', dom('myview').use(function(resource) {
+	resource.page.wait('ready').run(function(param, done) {
+	  // this runs in the browser
+	  var allimages = document.querySelectorAll('img');
+	  Array.prototype.slice.call(allimages).forEach(function(node) {
 			node.setAttribute('data-src', node.src);
 			node.src = null;
 		});
+		done(null, allimages.length);
+	}, "someconfig", function(err, countImages) {
+	  // this runs in the node process
+	  done(err);
 	});
 }));
 ```
@@ -137,6 +145,7 @@ Real world example
 
 ```js
 var dom = require('express-dom');
+// those modules don't actually exists - see raja for tools like that
 var minify = require('express-dom-minify');
 var procrastify = require('express-dom-procrastify');
 var archive = require('express-dom-archive');
@@ -163,11 +172,12 @@ html, body { display: none !important; }
 
 # Plugins
 
-Some plugins are available by default in dom.plugins, others as separate
-node modules.
-Note that `dom.plugins.nomedia` is enabled by default - it should be removed
-when calling page.png, page.pdf, or when acting upon any request that is not
-html or javascript.
+Some plugins are available by default in dom.plugins, others as separate modules.
+Note that by default, display is disabled in the webkitgtk instance, images are
+not loaded, to optimize DOM manipulations.
+It should be re-enabled when calling page.png, page.pdf, or when acting upon any
+request that is not html or javascript (tracking 404 images, for instance).
+See node-webkitgtk documentation about how to do that.
 
 
 # Debugging
@@ -188,7 +198,8 @@ not empty, like `DEBUG=1 node app.js`, to set `dom.settings.debug` to true.
 
 * Controller  
 	The logic that binds routes to views and plugins, manages how output is
-	cached, send messages to views and so on.
+	cached, send messages to views and so on. See raja for a powerful tool to do
+	that.
 
 This architecture works all right as long as your tools allow this workflow:
 
