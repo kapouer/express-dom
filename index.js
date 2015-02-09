@@ -5,20 +5,29 @@ var queue = require('queue-async');
 var escapeStringRegexp = require('escape-string-regexp');
 var request = require('request');
 var Path = require('path');
+var LFU = require('lfu-cache');
 
-var Dom = module.exports = function(model, options) {
-	// init pool later, allowing user to set pool settings
-	if (!Dom.pool) Dom.pool = initPool(Dom.settings);
-	var h = new Handler(model, options);
+var Dom = module.exports = function(model, opts) {
+	// init cache on demand, allow user settings
+	if (!Dom.pool) {
+		Dom.pool = initPool(Dom.settings);
+		Dom.cache = new LFU(Dom.settings.max - 1, Dom.settings.cacheDecay);
+		Dom.cache.on('eviction', function(key, inst) {
+			release(page, function(err) {
+				if (err) console.error(err);
+			})
+		});
+	}
+	var h = new Handler(model, opts);
 	return h.chainable;
 };
 
 Dom.Handler = Handler;
 
 Dom.settings = {
-	min: 2,
-	max: 16,
-	busyTimeout: 0,
+	min: 1,
+	max: 32,
+	cacheDecay: 60000,
 	idleTimeoutMillis: 1000000,
 	refreshIdle: false,
 	display: process.env.DISPLAY || 0,
@@ -26,6 +35,7 @@ Dom.settings = {
 	debug: !!process.env.DEBUG,
 	console: !!process.env.DEBUG
 };
+
 Dom.plugins = require('./plugins');
 
 Dom.authors = [];
@@ -41,15 +51,14 @@ Dom.use = function(mw) {
 	return Dom;
 };
 
-function Handler(model, options) {
+function Handler(model, opts) {
 	this.view = {};
 	if (isRemote(model)) {
 		this.view.url = model;
 	} else {
 		this.path = model; // app.get('statics') is available in middleware
 	}
-	this.options = options || {};
-	if (!this.options.busyTimeout) this.options.busyTimeout = Dom.settings.busyTimeout;
+	this.opts = opts || {};
 	this.chainable = this.middleware.bind(this);
 	this.chainable.author = this.author.bind(this);
 	this.chainable.use = this.use.bind(this);
@@ -92,7 +101,6 @@ Handler.prototype.build = function(inst, req, res, cb) {
 	.defer(h.getAuthored.bind(h), inst, req, res)
 	.defer(h.getUsed.bind(h), inst, req, res)
 	.defer(h.finish.bind(h), inst, res)
-	.defer(h.gc.bind(h))
 	.awaitAll(cb);
 };
 
@@ -100,15 +108,9 @@ Handler.prototype.instance = function(url, cb) {
 	var h = this;
 	var inst = h.pages[url];
 	if (!inst) inst = h.pages[url] = {
-		hits: 0,
-		busyness: 0,
-		mtime: new Date(),
 		author: {url: 'author:' + h.view.url},
 		user: {url: url}
 	};
-	inst.hits++;
-	inst.atime = new Date();
-	inst.lock = true;
 	cb(null, inst);
 };
 
@@ -116,66 +118,7 @@ Handler.prototype.finish = function(inst, res, cb) {
 	res.type('text/html');
 	res.set('Last-Modified', inst.user.mtime.toUTCString());
 	res.send(inst.user.data);
-	inst.lock = false;
 	cb();
-};
-
-Handler.prototype.acquire = function(inst, cb) {
-	if (inst.page) return cb();
-	var busyTimeout = this.options.busyTimeout;
-	this.gc(function() {
-		Dom.pool.acquire(function(err, page) {
-			if (err) return cb(err);
-			if (page.acquired) return cb(new Error("acquired a page that was not released"));
-			page.acquired = true;
-			inst.page = page;
-			if (busyTimeout) page.on('busy', function(inst) {
-				inst.busyness++;
-				setTimeout(function() {
-					inst.busyness--;
-				}, busyTimeout);
-			}.bind(null, inst));
-			cb();
-		});
-	});
-};
-
-Handler.prototype.gc = function(cb) {
-	// TODO couple Dom.pool with LFU
-	if (Dom.pool.getPoolSize() < Dom.settings.max || Dom.pool.availableObjectsCount() > 0) return cb();
-	var minScore = +Infinity;
-	var minInst;
-	var busyPages = 0;
-	for (var url in this.pages) {
-		var inst = this.pages[url];
-		if (inst.lock || !inst.page) {
-			continue;
-		}
-		if (inst.busyness > 0) {
-			busyPages++;
-		}
-		var score = 0;
-		if (inst.score !== undefined) {
-			// allow a score to be set by application
-			score = inst.score;
-		} else {
-			// or use our default scoring
-			score = (inst.weight || 1) * 60000 * inst.hits / (Date.now() - inst.atime.getTime());
-		}
-		if (score < minScore) {
-			minScore = score;
-			minInst = inst;
-		}
-	}
-	if (minInst) {
-		this.release(minInst.page, cb);
-		delete minInst.page;
-	} else {
-		if (busyPages == Dom.settings.max) {
-			console.warn("Too many busy instances - lower busyTimeout of raise Dom.settings.max")
-		}
-		cb();
-	}
 };
 
 Handler.prototype.getView = function(req, cb) {
@@ -207,12 +150,14 @@ Handler.prototype.getAuthored = function(inst, req, res, cb) {
 	var h = this;
 	if (inst.author.valid) return cb();
 	if (h.authors.length) {
-		h.acquire(inst, function(err) {
+		acquire(inst.author.url, function(err, page) {
 			if (err) return cb(err);
 			var obj = {
 				content: h.view.data,
 				console: true
 			};
+			inst.page = page;
+			page.parentInstance = inst;
 			if (!Dom.settings.debug) obj.style = Dom.settings.style;
 			inst.page.preload(inst.user.url, obj);
 			h.processMw(inst, h.authors, req, res);
@@ -222,8 +167,7 @@ Handler.prototype.getAuthored = function(inst, req, res, cb) {
 				inst.author.valid = true;
 				inst.author.mtime = new Date();
 				// release because we are done authoring
-				h.release(inst.page, cb);
-				delete inst.page;
+				release(inst.page, cb);
 			});
 		});
 	} else {
@@ -238,16 +182,18 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 	var h = this;
 	if (inst.user.valid) return cb();
 	var opts = {};
-	for (var key in h.options) {
-		opts[key] = h.options[key];
+	for (var key in h.opts) {
+		opts[key] = h.opts[key];
 	}
 	if (!opts.content) opts.content = inst.author.data;
 	if (!opts.cookie) opts.cookie = req.get('Cookie');
 	if (opts.console === undefined) opts.console = true;
 	if (opts.images === undefined) opts.images = false;
 	if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
-	h.acquire(inst, function(err) {
+	acquire(inst.user.url, function(err, page) {
 		if (err) return cb(err);
+		inst.page = page;
+		page.parentInstance = inst;
 		inst.page.load(inst.user.url, opts);
 		h.processMw(inst, h.users, req, res);
 		inst.page.wait('idle').html(function(err, html) {
@@ -255,21 +201,38 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 			inst.user.mtime = new Date();
 			inst.user.data = html;
 			inst.user.valid = true;
-			// do not release, gc will
+			// released by LFU
 			cb();
 		});
 	});
 };
 
-Handler.prototype.release = function(page, cb) {
+function acquire(url, cb) {
+	var page = Dom.cache.get(url);
+	if (page) return cb(null, page);
+	Dom.pool.acquire(function(err, page) {
+		if (err) return cb(err);
+		page.on('busy', function() {
+			// busy page has bonus
+			Dom.cache.get(url);
+		});
+		cb(null, page);
+	});
+}
+
+function release(url, cb) {
+	var page = Dom.cache.remove(url);
 	if (!page) return cb();
-	page.acquired = false;
+	if (page.parentInstance) {
+		delete page.parentInstance.page;
+		delete page.parentInstance;
+	}
 	page.removeAllListeners();
 	page.unload(function(err) {
 		Dom.pool.release(page);
 		cb(err);
 	});
-};
+}
 
 Handler.prototype.processMw = function(inst, list, req, res) {
 	if (!list || !list.length) return;
