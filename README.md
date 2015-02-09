@@ -113,6 +113,10 @@ To optimize loading of DOM, by default,
 dom.author(aGlobalAuthorPlugin);
 
 app.get('/mypage', dom('myview').use(function(resource) {
+	resource.page.on('request', function(req) {
+		// do not wait for socket.io xhr requests responses to emit idle
+		if (req.uri.indexOf('socket.io') > 0) req.ignore = true;
+	});
 	resource.page.wait('ready').run(function(param, done) {
 	  // this runs in the browser
 	  var allimages = document.querySelectorAll('img');
