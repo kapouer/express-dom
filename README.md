@@ -72,18 +72,20 @@ in the page lifecycle:
   If a page instance emits `busy` events during that time period, it won't be
   garbage collected. This allows an instance to stay loaded forever.
 
-* dom.author(plugin), dom.use(plugin)  
+* dom.author(plugin, position), dom.use(plugin, position)  
   where `plugin(resource, req, res)` returns immediately.  
   sets plugins on all future handler instances, `resource.page` is the
-  browser instance.
+  browser instance.  
+  `position` is an optional argument to be able to run plugins in order 'before',
+  'current', or 'after'. Defaults to 'current'.
 
 * dom.authors, dom.users  
   the arrays populated by previous methods.
 
-* handler.use(plugin)  
+* handler.use(plugin, position)  
   adds a user plugin.
 
-* handler.author(plugin)  
+* handler.author(plugin, position)  
   adds an author plugin  
   if there are none, the DOM is directly loaded as user.
 
