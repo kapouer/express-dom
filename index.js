@@ -38,16 +38,31 @@ Dom.settings = {
 
 Dom.plugins = require('./plugins');
 
-Dom.authors = [];
-Dom.users = [Dom.plugins.nostylesheets];
+Dom.authors = {
+	before: [],
+	current: [],
+	after: []
+};
 
-Dom.author = function(mw) {
-	Dom.authors.push(mw);
+Dom.users = {
+	before: [Dom.plugins.nostylesheets],
+	current: [],
+	after: []
+};
+
+Dom.author = function(mw, position) {
+	var list = Dom.authors;
+	if (!position) position = 'current';
+	if (!list[position]) throw new Error("Unknown position for express-dom author middleware", position);
+	list[position].push(mw);
 	return Dom;
 };
 
-Dom.use = function(mw) {
-	Dom.users.push(mw);
+Dom.use = function(mw, position) {
+	var list = Dom.users;
+	if (!position) position = 'current';
+	if (!list[position]) throw new Error("Unknown position for express-dom user middleware", position);
+	list[position].push(mw);
 	return Dom;
 };
 
@@ -62,11 +77,35 @@ function Handler(model, opts) {
 	this.chainable = this.middleware.bind(this);
 	this.chainable.author = this.author.bind(this);
 	this.chainable.use = this.use.bind(this);
-	this.authors = Dom.authors.slice();
-	this.users = Dom.users.slice();
+	this.authors = {
+		before: Dom.authors.before.slice(),
+		current: Dom.authors.current.slice(),
+		after: Dom.authors.after.slice()
+	};
+	this.users = {
+		before: Dom.users.before.slice(),
+		current: Dom.users.current.slice(),
+		after: Dom.users.after.slice()
+	};
 	this.pages = {};
 	if (this.init) this.init(); // used by raja
 }
+
+Handler.prototype.author = function(mw, position) {
+	var list = this.authors;
+	if (!position) position = 'current';
+	if (!list[position]) throw new Error("Unknown position for express-dom author middleware", position);
+	list[position].push(mw);
+	return this.chainable;
+};
+
+Handler.prototype.use = function(mw, position) {
+	var list = this.users;
+	if (!position) position = 'current';
+	if (!list[position]) throw new Error("Unknown position for express-dom user middleware", position);
+	list[position].push(mw);
+	return this.chainable;
+};
 
 Handler.prototype.middleware = function(req, res, next) {
 	var h = this;
@@ -149,7 +188,7 @@ Handler.prototype.loadRemote = function(url, cb) {
 Handler.prototype.getAuthored = function(inst, req, res, cb) {
 	var h = this;
 	if (inst.author.valid) return cb();
-	if (h.authors.length) {
+	if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
 		acquire(inst.author.url, function(err, page) {
 			if (err) return cb(err);
 			var obj = {
@@ -234,22 +273,12 @@ function release(url, cb) {
 	});
 }
 
-Handler.prototype.processMw = function(inst, list, req, res) {
-	if (!list || !list.length) return;
+Handler.prototype.processMw = function(inst, mwObj, req, res) {
+	var list = mwObj.before.concat(mwObj.current).concat(mwObj.after);
 	for (var i=0; i < list.length; i++) {
 		list[i](inst, req, res);
 	}
 };
-
-Handler.prototype.use = function(mw) {
-	this.users.push(mw);
-	return this.chainable;
-};
-Handler.prototype.author = function(mw) {
-	this.authors.push(mw);
-	return this.chainable;
-};
-
 
 function initPool(settings) {
 	var opts = {};
