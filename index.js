@@ -148,7 +148,10 @@ Handler.prototype.instance = function(url, cb) {
 	var inst = h.pages[url];
 	if (!inst) inst = h.pages[url] = {
 		author: {url: 'author:' + h.view.url},
-		user: {url: url}
+		user: {url: url},
+		output: function(cb) {
+			this.page.html(cb);
+		}
 	};
 	cb(null, inst);
 };
@@ -235,13 +238,17 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 		page.parentInstance = inst;
 		inst.page.load(inst.user.url, opts);
 		h.processMw(inst, h.users, req, res);
-		inst.page.wait('idle').html(function(err, html) {
+		inst.page.wait('idle', function(err) {
 			if (err) return cb(err);
-			inst.user.mtime = new Date();
-			inst.user.data = html;
-			inst.user.valid = true;
-			// released by LFU
-			cb();
+			inst.output.call(inst, next);
+			function next(err, str) {
+				if (err) return cb(err);
+				inst.user.mtime = new Date();
+				inst.user.data = str;
+				inst.user.valid = true;
+				// released by cache
+				cb();
+			}
 		});
 	});
 };
