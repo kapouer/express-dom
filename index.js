@@ -5,14 +5,14 @@ var queue = require('queue-async');
 var escapeStringRegexp = require('escape-string-regexp');
 var request = require('request');
 var Path = require('path');
-var LFU = require('lfu-cache');
+var Cache = require('adaptative-replacement-cache');
 
 var Dom = module.exports = function(model, opts) {
 	// init cache on demand, allow user settings
 	if (!Dom.pool) {
 		Dom.pool = initPool(Dom.settings);
-		Dom.cache = new LFU(Dom.settings.max - 1, Dom.settings.cacheDecay);
-		Dom.cache.on('eviction', function(key, inst) {
+		Dom.cache = new Cache(Dom.settings.max - 1);
+		Dom.cache.on('eviction', function(key, page) {
 			release(page, function(err) {
 				if (err) console.error(err);
 			})
@@ -27,7 +27,6 @@ Dom.Handler = Handler;
 Dom.settings = {
 	min: 1,
 	max: 32,
-	cacheDecay: 60000,
 	idleTimeoutMillis: 1000000,
 	refreshIdle: false,
 	display: process.env.DISPLAY || 0,
@@ -209,7 +208,10 @@ Handler.prototype.getAuthored = function(inst, req, res, cb) {
 				inst.author.valid = true;
 				inst.author.mtime = new Date();
 				// release because we are done authoring
-				release(inst.page, cb);
+				Dom.cache.del(inst.author.url);
+				release(inst.page, function(err) {
+					cb(err);
+				});
 			});
 		});
 	} else {
@@ -258,6 +260,7 @@ function acquire(url, cb) {
 	if (page) return cb(null, page);
 	Dom.pool.acquire(function(err, page) {
 		if (err) return cb(err);
+		Dom.cache.set(url, page);
 		page.on('busy', function() {
 			// busy page has bonus
 			Dom.cache.get(url);
@@ -266,9 +269,7 @@ function acquire(url, cb) {
 	});
 }
 
-function release(url, cb) {
-	var page = Dom.cache.remove(url);
-	if (!page) return cb();
+function release(page, cb) {
 	if (page.parentInstance) {
 		delete page.parentInstance.page;
 		delete page.parentInstance;

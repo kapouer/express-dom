@@ -30,7 +30,7 @@
   "dependencies": {
     "escape-string-regexp": "^1.0.2",
     "generic-pool": "^2.1.1",
-    "lfu-cache": "^0.1.0",
+    "adaptative-replacement-cache": "^0.1.0",
     "queue-async": "^1.0.7",
     "request": "^2.47.0",
     "webkitgtk": "^1.17.0"
