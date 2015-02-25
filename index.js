@@ -242,10 +242,10 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 		h.processMw(inst, h.users, req, res);
 		inst.page.wait('idle', function(err) {
 			if (err) return cb(err);
+			inst.user.mtime = new Date();
 			inst.output.call(inst, next);
 			function next(err, str) {
 				if (err) return cb(err);
-				inst.user.mtime = new Date();
 				inst.user.data = str;
 				inst.user.valid = true;
 				// released by cache
