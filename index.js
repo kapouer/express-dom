@@ -301,6 +301,9 @@ function initPool(settings) {
 	if (!opts.create) opts.create = function(cb) {
 		cb(null, WebKit(opts));
 	};
+	if (!opts.destroy) opts.destroy = function(client) {
+		client.destroy();
+	};
 	if (!opts.max) opts.max = 1;
 	var pool = Pool(opts);
 	process.on('exit', function() {
