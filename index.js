@@ -27,7 +27,6 @@ Dom.Handler = Handler;
 Dom.settings = {
 	min: 1,
 	max: 32,
-	idleTimeoutMillis: 1000000,
 	refreshIdle: false,
 	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
