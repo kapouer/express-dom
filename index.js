@@ -131,6 +131,7 @@ Handler.prototype.middleware = function(req, res, next) {
 		if (err) return next(err);
 		h.build(inst, req, res, function(err) {
 			if (err) return next(err);
+			h.finish(inst, res);
 		});
 	});
 };
@@ -141,7 +142,6 @@ Handler.prototype.build = function(inst, req, res, cb) {
 	.defer(h.getView.bind(h), req)
 	.defer(h.getAuthored.bind(h), inst, req, res)
 	.defer(h.getUsed.bind(h), inst, req, res)
-	.defer(h.finish.bind(h), inst, res)
 	.awaitAll(cb);
 };
 
@@ -158,11 +158,10 @@ Handler.prototype.instance = function(url, cb) {
 	cb(null, inst);
 };
 
-Handler.prototype.finish = function(inst, res, cb) {
+Handler.prototype.finish = function(inst, res) {
 	res.type('text/html');
 	res.set('Last-Modified', inst.user.mtime.toUTCString());
 	res.send(inst.user.data);
-	cb();
 };
 
 Handler.prototype.getView = function(req, cb) {
