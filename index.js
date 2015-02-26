@@ -192,12 +192,13 @@ Handler.prototype.getAuthored = function(inst, req, res, cb) {
 	if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
 		acquire(inst.author.url, function(err, page) {
 			if (err) return cb(err);
+			inst.page = page;
+			inst.locked = true;
+			page.parentInstance = inst;
 			var obj = {
 				content: h.view.data,
 				console: true
 			};
-			inst.page = page;
-			page.parentInstance = inst;
 			if (!Dom.settings.debug) obj.style = Dom.settings.style;
 			inst.page.preload(inst.user.url, obj);
 			h.processMw(inst, h.authors, req, res);
@@ -207,6 +208,7 @@ Handler.prototype.getAuthored = function(inst, req, res, cb) {
 				inst.author.valid = true;
 				inst.author.mtime = new Date();
 				// release because we are done authoring
+				inst.locked = false;
 				Dom.cache.del(inst.author.url);
 				release(inst.page, function(err) {
 					cb(err);
@@ -236,6 +238,7 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 	acquire(inst.user.url, function(err, page) {
 		if (err) return cb(err);
 		inst.page = page;
+		inst.locked = true;
 		page.parentInstance = inst;
 		inst.page.load(inst.user.url, opts);
 		h.processMw(inst, h.users, req, res);
@@ -248,6 +251,7 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 				inst.user.data = str;
 				inst.user.valid = true;
 				// released by cache
+				checkRelease(inst);
 				cb();
 			}
 		});
@@ -269,15 +273,32 @@ function acquire(url, cb) {
 }
 
 function release(page, cb) {
-	if (page.parentInstance) {
-		delete page.parentInstance.page;
+	var inst = page.parentInstance;
+	if (inst) {
+		if (inst.locked) {
+			inst.evict = true;
+			return;
+		}
+		inst.evict = false;
+		delete inst.page;
 		delete page.parentInstance;
 	}
-	page.removeAllListeners();
 	page.unload(function(err) {
+		page.removeAllListeners();
+		if (err) console.error(err);
 		Dom.pool.release(page);
 		cb(err);
 	});
+}
+
+function checkRelease(inst) {
+	inst.locked = false;
+	if (inst.evict) {
+		inst.evict = false;
+		if (inst.page) release(inst.page, function(err) {
+			if (err) console.error(err);
+		});
+	}
 }
 
 Handler.prototype.processMw = function(inst, mwObj, req, res) {
