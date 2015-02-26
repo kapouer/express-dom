@@ -9,9 +9,13 @@ var Cache = require('adaptative-replacement-cache');
 
 var Dom = module.exports = function(model, opts) {
 	// init cache on demand, allow user settings
+	if (Dom.settings.max <= 2) console.warn("express-dom expects Dom.settings.max to be > 2");
 	if (!Dom.pool) {
 		Dom.pool = initPool(Dom.settings);
-		Dom.cache = new Cache(Dom.settings.max - 1);
+		// cache puts pressure towards page release, the difference ensures some
+		// pages are always available (for a pool of 32, 3 pages are available or being released)
+		var cacheSize = Dom.settings.max - Math.floor(Math.log(Dom.settings.max));
+		Dom.cache = new Cache(cacheSize);
 		Dom.cache.on('eviction', function(key, page) {
 			release(page, function(err) {
 				if (err) console.error(err);
