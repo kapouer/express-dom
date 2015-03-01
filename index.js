@@ -280,7 +280,7 @@ function release(page, cb) {
 	if (inst) {
 		if (inst.locked) {
 			inst.evict = true;
-			return;
+			return cb();
 		}
 		inst.evict = false;
 		delete inst.page;
