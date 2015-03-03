@@ -1,37 +1,85 @@
 var WebKit = require('webkitgtk');
-var Pool = require('generic-pool').Pool;
 var fs = require('fs');
 var queue = require('queue-async');
-var escapeStringRegexp = require('escape-string-regexp');
 var request = require('request');
 var Path = require('path');
-var Cache = require('adaptative-replacement-cache');
+
+
+function Pool(cacheSize) {
+	this.list = [];
+	this.max = cacheSize;
+	this.count = 0;
+	this.queue = [];
+}
+
+Pool.prototype.acquire = function(cb) {
+	var page;
+	if (this.count < this.max) {
+		this.count++;
+		page = WebKit(Dom.settings);
+		page.locked = true;
+		this.list.push(page);
+	} else for (var i=0; i < this.list.length; i++) {
+		page = this.list[i];
+		if (!page.locked) {
+			page.locked = true;
+			if (typeof page.unlock == "function") {
+				page.unlock();
+				page.removeAllListeners();
+				delete page.unlock;
+			}
+			break;
+		}
+		page = null;
+	}
+	if (page) {
+		cb(null, page);
+	} else {
+		this.queue.push(cb);
+	}
+};
+
+Pool.prototype.unlock = function(page, unlockCb) {
+	page.unlock = unlockCb;
+	page.locked = false;
+	setImmediate(this.process.bind(this));
+};
+
+Pool.prototype.release = function(page, cb) {
+	page.unload(function(err) {
+		if (page.unlock) {
+			console.warn(new Error("page.unlock is set in Dom.pool.release"));
+			delete page.unlock;
+		}
+		page.removeAllListeners();
+		page.locked = false;
+		cb();
+		setImmediate(this.process.bind(this));
+	}.bind(this));
+};
+
+Pool.prototype.process = function() {
+	var next = this.queue.shift();
+	if (next) this.acquire(next);
+};
 
 var Dom = module.exports = function(model, opts) {
-	// init cache on demand, allow user settings
-	if (Dom.settings.max <= 2) console.warn("express-dom expects Dom.settings.max to be > 2");
 	if (!Dom.pool) {
-		Dom.pool = initPool(Dom.settings);
-		// cache puts pressure towards page release, the difference ensures some
-		// pages are always available (for a pool of 32, 3 pages are available or being released)
-		var cacheSize = Dom.settings.max - Math.floor(Math.log(Dom.settings.max));
-		Dom.cache = new Cache(cacheSize);
-		Dom.cache.on('eviction', function(key, page) {
-			release(page, function(err) {
-				if (err) console.error(err);
-			})
-		});
+		Dom.pool = new Pool(Dom.settings.max);
+		Dom.handlers = {}; // hash to store each view <-> middleware handler
+		Dom.pages = {}; // store instances by url
 	}
+	var h = Dom.handlers[model];
+	if (h) return h.chainable;
 	var h = new Handler(model, opts);
+	Dom.handlers[model] = h;
 	return h.chainable;
 };
 
 Dom.Handler = Handler;
 
 Dom.settings = {
-	min: 1,
-	max: 32,
-	refreshIdle: false,
+	max: 16,
 	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
 	debug: !!process.env.DEBUG,
@@ -89,7 +137,6 @@ function Handler(model, opts) {
 		current: Dom.users.current.slice(),
 		after: Dom.users.after.slice()
 	};
-	this.pages = {};
 	if (this.init) this.init(); // used by raja
 }
 
@@ -147,12 +194,12 @@ Handler.prototype.build = function(inst, req, res, cb) {
 
 Handler.prototype.instance = function(url, cb) {
 	var h = this;
-	var inst = h.pages[url];
-	if (!inst) inst = h.pages[url] = {
+	var inst = Dom.pages[url];
+	if (!inst) inst = Dom.pages[url] = {
 		author: {url: 'author:' + h.view.url},
 		user: {url: url},
-		output: function(cb) {
-			this.page.html(cb);
+		output: function(page, cb) {
+			page.html(cb);
 		}
 	};
 	cb(null, inst);
@@ -166,7 +213,9 @@ Handler.prototype.finish = function(inst, res) {
 
 Handler.prototype.getView = function(req, cb) {
 	var h = this;
-	if (h.view.valid) return cb();
+	if (h.view.valid) {
+		return cb();
+	}
 	var loader = isRemote(h.view.url) ? h.loadRemote : h.loadLocal;
 	loader.call(h, h.view.url, function(err, body) {
 		if (!err || body) {
@@ -191,13 +240,13 @@ Handler.prototype.loadRemote = function(url, cb) {
 
 Handler.prototype.getAuthored = function(inst, req, res, cb) {
 	var h = this;
-	if (inst.author.valid) return cb();
+	if (inst.author.valid) {
+		return cb();
+	}
 	if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
-		acquire(inst.author.url, function(err, page) {
+		Dom.pool.acquire(function(err, page) {
 			if (err) return cb(err);
 			inst.page = page;
-			inst.locked = true;
-			page.parentInstance = inst;
 			var obj = {
 				content: h.view.data,
 				console: true
@@ -206,15 +255,13 @@ Handler.prototype.getAuthored = function(inst, req, res, cb) {
 			inst.page.preload(inst.user.url, obj);
 			h.processMw(inst, h.authors, req, res);
 			inst.page.wait('idle').html(function(err, html) {
-				if (err) return cb(err);
-				inst.author.data = html;
-				inst.author.valid = true;
-				inst.author.mtime = new Date();
-				// release because we are done authoring
-				inst.locked = false;
-				Dom.cache.del(inst.author.url);
-				release(inst.page, function(err) {
-					cb(err);
+				delete inst.page;
+				Dom.pool.release(page, function(perr) {
+					if (err) return cb(err);
+					inst.author.data = html;
+					inst.author.valid = true;
+					inst.author.mtime = new Date();
+					cb();
 				});
 			});
 		});
@@ -238,71 +285,27 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 	if (opts.console === undefined) opts.console = true;
 	if (opts.images === undefined) opts.images = false;
 	if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
-	acquire(inst.user.url, function(err, page) {
+	Dom.pool.acquire(function(err, page) {
 		if (err) return cb(err);
 		inst.page = page;
-		inst.locked = true;
-		page.parentInstance = inst;
 		inst.page.load(inst.user.url, opts);
 		h.processMw(inst, h.users, req, res);
 		inst.page.wait('idle', function(err) {
 			if (err) return cb(err);
 			inst.user.mtime = new Date();
-			inst.output.call(inst, next);
+			inst.output(inst.page, next);
 			function next(err, str) {
+				Dom.pool.unlock(inst.page, function() {
+					delete this.page;
+				}.bind(inst));
 				if (err) return cb(err);
 				inst.user.data = str;
 				inst.user.valid = true;
-				// released by cache
-				checkRelease(inst);
 				cb();
 			}
 		});
 	});
 };
-
-function acquire(url, cb) {
-	var page = Dom.cache.get(url);
-	if (page) return cb(null, page);
-	Dom.pool.acquire(function(err, page) {
-		if (err) return cb(err);
-		Dom.cache.set(url, page);
-		page.on('busy', function() {
-			// busy page has bonus
-			Dom.cache.get(url);
-		});
-		cb(null, page);
-	});
-}
-
-function release(page, cb) {
-	var inst = page.parentInstance;
-	if (inst) {
-		if (inst.locked) {
-			inst.evict = true;
-			return cb();
-		}
-		inst.evict = false;
-		delete inst.page;
-		delete page.parentInstance;
-	}
-	page.unload(function(err) {
-		page.removeAllListeners();
-		if (err) console.error(err);
-		Dom.pool.release(page);
-		cb(err);
-	});
-}
-
-function checkRelease(inst) {
-	inst.locked = false;
-	if (inst.evict) {
-		inst.evict = false;
-		if (inst.page) release(inst.page, function(err) {
-			if (err) console.error(err);
-		});
-	}
-}
 
 Handler.prototype.processMw = function(inst, mwObj, req, res) {
 	var list = mwObj.before.concat(mwObj.current).concat(mwObj.after);
@@ -310,33 +313,6 @@ Handler.prototype.processMw = function(inst, mwObj, req, res) {
 		list[i](inst, req, res);
 	}
 };
-
-function initPool(settings) {
-	var opts = {};
-	for (var prop in settings) opts[prop] = settings[prop];
-	if (opts.debug) {
-		if (opts.display != 0) {
-			opts.display = 0;
-			console.info("debug is on - using default display 0");
-		}
-		opts.max = 1;
-	}
-	if (!opts.name) opts.name = "webkitPool";
-	if (!opts.create) opts.create = function(cb) {
-		cb(null, WebKit(opts));
-	};
-	if (!opts.destroy) opts.destroy = function(client) {
-		client.destroy();
-	};
-	if (!opts.max) opts.max = 1;
-	var pool = Pool(opts);
-	process.on('exit', function() {
-		pool.drain(function() {
-			pool.destroyAllNow();
-		});
-	});
-	return pool;
-}
 
 function isRemote(url) {
 	return /^https?:\/\//.test(url);
