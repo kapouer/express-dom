@@ -280,8 +280,10 @@ Handler.prototype.getUsed = function(inst, req, res, cb) {
 	for (var key in h.opts) {
 		opts[key] = h.opts[key];
 	}
+	for (var key in inst.opts) {
+		opts[key] = inst.opts[key];
+	}
 	if (!opts.content) opts.content = inst.author.data;
-	if (!opts.cookie) opts.cookie = req.get('Cookie');
 	if (opts.console === undefined) opts.console = true;
 	if (opts.images === undefined) opts.images = false;
 	if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
