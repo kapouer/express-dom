@@ -82,7 +82,7 @@ Dom.settings = {
 	max: 16,
 	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
-	debug: !!process.env.DEBUG,
+	debug: !!process.env.INSPECTOR,
 	console: !!process.env.DEBUG
 };
 

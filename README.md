@@ -188,8 +188,8 @@ See node-webkitgtk documentation about how to do that.
 
 # Debugging
 
-To show a webview with inspector, set environment variable DEBUG to something
-not empty, like `DEBUG=1 node app.js`, to set `dom.settings.debug` to true.
+To show a webview with inspector, set environment variable INSPECTOR to something
+not empty, like `INSPECTOR=1 node app.js`, to set `dom.settings.debug` to true.
 
 
 # MVC done right
