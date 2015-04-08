@@ -5,69 +5,10 @@ var request = require('request');
 var Path = require('path');
 
 
-function Pool(cacheSize) {
-	this.list = [];
-	this.max = cacheSize;
-	this.count = 0;
-	this.queue = [];
-}
-
-Pool.prototype.acquire = function(cb) {
-	var page;
-	if (this.count < this.max) {
-		this.count++;
-		page = WebKit(Dom.settings);
-		page.locked = true;
-		this.list.push(page);
-	} else for (var i=0; i < this.list.length; i++) {
-		page = this.list[i];
-		if (!page.locked) {
-			page.locked = true;
-			if (typeof page.unlock == "function") {
-				page.unlock();
-				page.removeAllListeners();
-				delete page.unlock;
-			}
-			break;
-		}
-		page = null;
-	}
-	if (page) {
-		cb(null, page);
-	} else {
-		this.queue.push(cb);
-	}
-};
-
-Pool.prototype.unlock = function(page, unlockCb) {
-	page.unlock = unlockCb;
-	page.locked = false;
-	setImmediate(this.process.bind(this));
-};
-
-Pool.prototype.release = function(page, cb) {
-	page.unload(function(err) {
-		if (page.unlock) {
-			console.warn(new Error("page.unlock is set in Dom.pool.release"));
-			delete page.unlock;
-		}
-		page.removeAllListeners();
-		page.locked = false;
-		cb();
-		setImmediate(this.process.bind(this));
-	}.bind(this));
-};
-
-Pool.prototype.process = function() {
-	var next = this.queue.shift();
-	if (next) this.acquire(next);
-};
-
 var Dom = module.exports = function(model, opts) {
 	if (!Dom.pool) {
 		Dom.pool = new Pool(Dom.settings.max);
 		Dom.handlers = {}; // hash to store each view <-> middleware handler
-		Dom.pages = {}; // store instances by url
 	}
 	var h = Dom.handlers[model];
 	if (h) return h.chainable;
@@ -119,9 +60,9 @@ Dom.use = function(mw, position) {
 function Handler(model, opts) {
 	this.view = {};
 	if (isRemote(model)) {
-		this.view.url = model;
+		this.url = model;
 	} else {
-		this.path = model; // app.get('statics') is available in middleware
+		this.model = model; // app.get('statics') is available in middleware
 	}
 	this.opts = opts || {};
 	this.chainable = this.middleware.bind(this);
@@ -158,9 +99,8 @@ Handler.prototype.use = function(mw, position) {
 
 Handler.prototype.middleware = function(req, res, next) {
 	var h = this;
-	if (h.path !== undefined) {
-		var path = h.path;
-		delete h.path;
+	if (h.model != null && h.url == null) {
+		var path = h.model;
 		var root = req.app.get('statics');
 		if (!root) return next(new Error("Cannot find view, undefined 'statics' application setting"));
 		if (!path) path = "index";
@@ -168,66 +108,58 @@ Handler.prototype.middleware = function(req, res, next) {
 		if (path.indexOf(root) !== 0) return next(new Error("Path outside statics dir\n" + path));
 		if (path.slice(-1) == "/") path += "index";
 		if (Path.extname(path) != ".html") path += ".html";
-		h.view.url = path;
+		h.url = path;
 	}
 	var url = req.protocol + '://' + req.headers.host + req.url;
-	if (url == h.view.url) {
+	if (url == h.url) {
 		return next(new Error("The view has the same url as the requested page"));
 	}
-	h.instance(url, function(err, inst) {
+	h.getView(h.url, req, res, function(err, view) {
 		if (err) return next(err);
-		h.build(inst, req, res, function(err) {
+		h.getPage(view, url, req, res, function(err, user) {
 			if (err) return next(err);
-			h.finish(inst, res);
+			h.finish(user, res);
 		});
 	});
 };
 
-Handler.prototype.build = function(inst, req, res, cb) {
+Handler.prototype.getPage = function(view, url, req, res, cb) {
 	var h = this;
-	queue(1)
-	.defer(h.getView.bind(h), req)
-	.defer(h.getAuthored.bind(h), inst, req, res)
-	.defer(h.getUsed.bind(h), inst, req, res)
-	.awaitAll(cb);
+	h.getAuthored(view, url, req, res, function(err, author) {
+		if (err) return cb(err);
+		h.getUsed(author, url, req, res, cb);
+	});
 };
 
-Handler.prototype.instance = function(url, cb) {
-	var h = this;
-	var inst = Dom.pages[url];
-	if (!inst) inst = Dom.pages[url] = {
-		author: {url: 'author:' + h.view.url},
-		user: {url: url},
-		output: function(page, cb) {
-			page.html(cb);
-		}
-	};
-	cb(null, inst);
+Handler.prototype.get = function(url, depend, req, cb) {
+	// this is useful for raja dom proxy
+	cb(null, new SimpleResource(url));
 };
 
-Handler.prototype.finish = function(inst, res) {
+Handler.prototype.finish = function(user, res) {
 	res.type('text/html');
-	res.set('Last-Modified', inst.user.mtime.toUTCString());
-	res.send(inst.user.data);
+	res.set('Last-Modified', user.mtime.toUTCString());
+	res.send(user.data);
 };
 
-Handler.prototype.getView = function(req, cb) {
+Handler.prototype.getView = function(url, req, res, cb) {
 	var h = this;
-	if (h.view.valid) {
-		return cb();
-	}
-	var loader = isRemote(h.view.url) ? h.loadRemote : h.loadLocal;
-	loader.call(h, h.view.url, function(err, body) {
-		if (!err || body) {
-			h.view.data = body;
-			h.view.valid = true;
-			h.view.mtime = new Date();
-		}	else {
-			if (!err) err = new Error("Empty initial html in " + h.view.url);
-			if (!err.code || err.code == 'ENOENT') err.code = 404;
-			else err.code = 500;
-		}
-		cb(err);
+	h.get(url, null, req, function(err, resource) {
+		if (resource.valid) return cb(null, resource);
+		var loader = isRemote(url) ? h.loadRemote : h.loadLocal;
+		loader.call(h, url, function(err, body) {
+			if (!err || body) {
+				resource.data = body;
+				resource.valid = true;
+				resource.mtime = new Date();
+				resource.save(cb);
+			}	else {
+				if (!err) err = new Error("Empty initial html in " + url);
+				if (!err.code || err.code == 'ENOENT') err.code = 404;
+				else err.code = 500;
+				cb(err);
+			}
+		});
 	});
 };
 
@@ -238,82 +170,162 @@ Handler.prototype.loadRemote = function(url, cb) {
 	});
 };
 
-Handler.prototype.getAuthored = function(inst, req, res, cb) {
+Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 	var h = this;
-	if (inst.author.valid) {
-		return cb();
-	}
-	if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
-		Dom.pool.acquire(function(err, page) {
-			if (err) return cb(err);
-			inst.page = page;
-			var obj = {
-				content: h.view.data,
-				console: true
-			};
-			if (!Dom.settings.debug) obj.style = Dom.settings.style;
-			inst.page.preload(inst.user.url, obj);
-			h.processMw(inst, h.authors, req, res);
-			inst.page.wait('idle').html(function(err, html) {
-				delete inst.page;
-				Dom.pool.release(page, function(perr) {
-					if (err) return cb(err);
-					inst.author.data = html;
-					inst.author.valid = true;
-					inst.author.mtime = new Date();
-					cb();
+	h.get(url, view, {headers: { 'X-Author': 1, 'Vary': 'X-Author' }}, function(err, resource) {
+		if (resource.valid) return cb(null, resource);
+		if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
+			Dom.pool.acquire(function(err, page) {
+				if (err) return cb(err);
+				var opts = {
+					content: view.data,
+					console: true
+				};
+				if (!Dom.settings.debug) opts.style = Dom.settings.style;
+				page.preload(url, opts);
+				h.processMw(page, resource, h.authors, req, res);
+				page.wait('idle').html(function(err, html) {
+					Dom.pool.release(page, function(perr) {
+						if (err) return cb(err);
+						resource.data = html;
+						resource.valid = true;
+						resource.mtime = new Date();
+						resource.save(cb);
+					});
 				});
 			});
-		});
-	} else {
-		inst.author.data = h.view.data;
-		inst.author.valid = true;
-		inst.author.mtime = new Date();
-		cb();
-	}
-};
-
-Handler.prototype.getUsed = function(inst, req, res, cb) {
-	var h = this;
-	if (inst.user.valid) return cb();
-	var opts = {};
-	for (var key in h.opts) {
-		opts[key] = h.opts[key];
-	}
-	for (var key in inst.opts) {
-		opts[key] = inst.opts[key];
-	}
-	if (!opts.content) opts.content = inst.author.data;
-	if (opts.console === undefined) opts.console = true;
-	if (opts.images === undefined) opts.images = false;
-	if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
-	Dom.pool.acquire(function(err, page) {
-		if (err) return cb(err);
-		inst.page = page;
-		inst.page.load(inst.user.url, opts);
-		h.processMw(inst, h.users, req, res);
-		inst.page.wait('idle', function(err) {
-			if (err) return cb(err);
-			inst.user.mtime = new Date();
-			inst.output(inst.page, next);
-			function next(err, str) {
-				Dom.pool.unlock(inst.page, function() {
-					delete this.page;
-				}.bind(inst));
-				if (err) return cb(err);
-				inst.user.data = str;
-				inst.user.valid = true;
-				cb();
-			}
-		});
+		} else {
+			resource.data = view.data;
+			resource.valid = true;
+			resource.mtime = new Date();
+			resource.save(cb);
+		}
 	});
 };
 
-Handler.prototype.processMw = function(inst, mwObj, req, res) {
+Handler.prototype.getUsed = function(author, url, req, res, cb) {
+	var h = this;
+	h.get(url, author, req, function(err, resource) {
+		if (resource.valid) return cb(null, resource);
+		Dom.pool.acquire(resource.page, function(err, page) {
+			if (err) return cb(err);
+
+			if (!resource.page) {
+				resource.page = page;
+				var opts = {};
+				var customFn;
+				for (var key in h.opts) {
+					if (key == 'params' && typeof h.opts[key] == 'function') customFn = h.opts[key];
+					else opts[key] = h.opts[key];
+				}
+				if (customFn) customFn(opts, req);
+				if (!opts.content) opts.content = author.data;
+				if (opts.console === undefined) opts.console = true;
+				if (opts.images === undefined) opts.images = false;
+				if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
+				page.load(resource.url, opts);
+				h.processMw(page, resource, h.users, req, res);
+				page.wait('idle', next);
+			} else {
+				next();
+			}
+		});
+		function next(err) {
+			if (err) return cb(err);
+			resource.mtime = new Date();
+			var page = resource.page;
+			page.html(function(err, str) {
+				Dom.pool.unlock(page, function() {
+					// breaks the link when the page is recycled
+					delete resource.page;
+				});
+				if (err) return cb(err);
+				resource.data = str;
+				resource.valid = true;
+				resource.save(cb);
+			});
+		}
+	});
+};
+
+Handler.prototype.processMw = function(page, resource, mwObj, req, res) {
 	var list = mwObj.before.concat(mwObj.current).concat(mwObj.after);
 	for (var i=0; i < list.length; i++) {
-		list[i](inst, req, res);
+		list[i](page, resource, req, res);
 	}
+};
+
+
+function Pool(cacheSize) {
+	this.list = [];
+	this.max = cacheSize;
+	this.count = 0;
+	this.queue = [];
+}
+
+Pool.prototype.acquire = function(page, cb) {
+	if (page && !cb) {
+		cb = page;
+		page = null;
+	}
+	if (page) {
+		page.locked = true;
+	} else if (this.count < this.max) {
+		this.count++;
+		page = WebKit(Dom.settings);
+		page.locked = true;
+		this.list.push(page);
+	} else for (var i=0; i < this.list.length; i++) {
+		page = this.list[i];
+		if (!page.locked) {
+			page.locked = true;
+			if (typeof page.unlock == "function") {
+				page.unlock();
+				page.removeAllListeners();
+				page.html = page.prototype.html;
+				delete page.unlock;
+			}
+			break;
+		}
+		page = null;
+	}
+	if (page) {
+		cb(null, page);
+	} else {
+		this.queue.push(cb);
+	}
+};
+
+Pool.prototype.unlock = function(page, unlockCb) {
+	page.unlock = unlockCb;
+	page.locked = false;
+	setImmediate(this.process.bind(this));
+};
+
+Pool.prototype.release = function(page, cb) {
+	page.unload(function(err) {
+		if (page.unlock) {
+			console.warn(new Error("page.unlock is set in Dom.pool.release"));
+			delete page.unlock;
+		}
+		page.removeAllListeners();
+		page.html = page.constructor.prototype.html;
+		page.locked = false;
+		cb();
+		setImmediate(this.process.bind(this));
+	}.bind(this));
+};
+
+Pool.prototype.process = function() {
+	var next = this.queue.shift();
+	if (next) this.acquire(next);
+};
+
+function SimpleResource(url) {
+	this.url = url;
+}
+SimpleResource.prototype.save = function(cb) {
+	cb(null, this);
 };
 
 function isRemote(url) {

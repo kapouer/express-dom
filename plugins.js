@@ -1,8 +1,8 @@
 var URL = require('url');
 var Path = require('path');
 
-exports.absolute = function(h) {
-	h.page.wait('ready').run(function() {
+exports.absolute = function(page) {
+	page.wait('ready').run(function() {
 		function absolut(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
@@ -24,8 +24,8 @@ exports.absolute = function(h) {
 	});
 };
 
-exports.mount = function(h) {
-	h.page.wait('ready').run(function() {
+exports.mount = function(page) {
+	page.wait('ready').run(function() {
 		var loc = document.location.protocol + '//' + document.location.host;
 		function mount(selector, att) {
 			var list = document.querySelectorAll(selector);
@@ -50,13 +50,13 @@ exports.mount = function(h) {
 	});
 };
 
-exports.nostylesheets = function(h) {
+exports.nostylesheets = function(page) {
 	// <script> tags are loaded with request header Accept */*
 	// <link> tags are loaded with Accept 'text/css,*/*;q=0.1'
 	// Accept text/html is for the document
 	// loading images automatically is disabled by default in express-dom
 	// everything else is allowed
-	h.page.on('request', function(req) {
+	page.on('request', function(req) {
 		var accept = req.headers.Accept;
 		if (accept && accept.split(',').shift() == "text/css") req.cancel = true;
 	});
