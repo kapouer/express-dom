@@ -67,6 +67,11 @@ in the page lifecycle:
   web page that is going to be modified.  
   Options are passed to the user webkitgtk instance, and can be modified by
   user plugins. The author instance has no configurable options.
+  options.params is a special parameter that is called just before page.load,
+  like this: options.params(options, req) - typically allowing to change per-request
+  settings.
+
+* TODO !
   One option is specific to express-dom:
   busyTimeout, milliseconds, defaults 0 - which disables it.
   If a page instance emits `busy` events during that time period, it won't be
@@ -114,12 +119,12 @@ To optimize loading of DOM, by default,
 ```js
 dom.author(aGlobalAuthorPlugin);
 
-app.get('/mypage', dom('myview').use(function(resource) {
-	resource.page.on('request', function(req) {
+app.get('/mypage', dom('myview').use(function(page, resource) {
+	page.on('request', function(req) {
 		// do not wait for socket.io xhr requests responses to emit idle
 		if (req.uri.indexOf('socket.io') > 0) req.ignore = true;
 	});
-	resource.page.wait('ready').run(function(param, done) {
+	page.wait('ready').run(function(param, done) {
 	  // this runs in the browser
 	  var allimages = document.querySelectorAll('img');
 	  Array.prototype.slice.call(allimages).forEach(function(node) {
@@ -161,8 +166,8 @@ dom.author(minify);
 app.get('/mypage', dom('myview').use(procrastify));
 app.get('/mypage.png', dom('myview', {
   style:"html {width:800px;height:600px;overflow:hidden;}"
-}).use(function(h, req, res) {
-  h.page.wait('idle').png(res);
+}).use(function(page, resource, req, res) {
+  page.wait('idle').png(res);
 }));
 app.get('/mypage.tar.gz', dom('myview').use(archive));
 
