@@ -215,7 +215,6 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 		if (resource.valid) return cb(null, resource);
 		Dom.pool.acquire(resource.page, function(err, page) {
 			if (err) return cb(err);
-
 			if (!resource.page) {
 				resource.page = page;
 				var opts = {};
