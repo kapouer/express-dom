@@ -141,7 +141,7 @@ Handler.prototype.get = function(url, depend, req, cb) {
 };
 
 Handler.prototype.finish = function(user, res) {
-	res.type('text/html');
+	res.set('Content-Type', user.headers['Content-Type']);
 	res.set('Last-Modified', user.mtime.toUTCString());
 	res.send(user.data);
 	debug('page sent', user.url, user.headers);
@@ -179,6 +179,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 	var h = this;
 	h.get(url, view, {headers: { 'X-Author': 1, 'Vary': 'X-Author' }}, function(err, resource) {
 		if (resource.valid) return cb(null, resource);
+		resource.headers['Content-Type'] = 'text/html';
 		if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
 			Dom.pool.acquire(function(err, page) {
 				if (err) return cb(err);
@@ -239,6 +240,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 		function next(err) {
 			if (err) return cb(err);
 			resource.mtime = new Date();
+			resource.headers['Content-Type'] = 'text/html';
 			var page = resource.page;
 			page.html(function(err, str) {
 				Dom.pool.unlock(page, function() {
