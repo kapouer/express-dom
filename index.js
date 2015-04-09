@@ -3,6 +3,7 @@ var fs = require('fs');
 var queue = require('queue-async');
 var request = require('request');
 var Path = require('path');
+var debug = require('debug')('express-dom');
 
 
 var Dom = module.exports = function(model, opts) {
@@ -116,8 +117,10 @@ Handler.prototype.middleware = function(req, res, next) {
 	}
 	h.getView(h.url, req, res, function(err, view) {
 		if (err) return next(err);
+		debug('view loaded', view.key);
 		h.getPage(view, url, req, res, function(err, user) {
 			if (err) return next(err);
+			debug('page built', user.key);
 			h.finish(user, res);
 		});
 	});
@@ -127,6 +130,7 @@ Handler.prototype.getPage = function(view, url, req, res, cb) {
 	var h = this;
 	h.getAuthored(view, url, req, res, function(err, author) {
 		if (err) return cb(err);
+		debug('page authored', author.key);
 		h.getUsed(author, url, req, res, cb);
 	});
 };
@@ -140,6 +144,7 @@ Handler.prototype.finish = function(user, res) {
 	res.type('text/html');
 	res.set('Last-Modified', user.mtime.toUTCString());
 	res.send(user.data);
+	debug('page sent', user.url, user.headers);
 };
 
 Handler.prototype.getView = function(url, req, res, cb) {
@@ -223,6 +228,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 				if (opts.console === undefined) opts.console = true;
 				if (opts.images === undefined) opts.images = false;
 				if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
+				debug("user load", resource.key);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
 				page.wait('idle', next);
@@ -240,6 +246,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 					delete resource.page;
 				});
 				if (err) return cb(err);
+				debug('got html', resource.key);
 				resource.data = str;
 				resource.valid = true;
 				resource.save(cb);
