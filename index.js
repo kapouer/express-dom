@@ -149,7 +149,7 @@ Handler.prototype.finish = function(user, res) {
 
 Handler.prototype.getView = function(url, req, res, cb) {
 	var h = this;
-	h.get(url, null, req, function(err, resource) {
+	h.get(url, function(err, resource) {
 		if (resource.valid) return cb(null, resource);
 		var loader = isRemote(url) ? h.loadRemote : h.loadLocal;
 		loader.call(h, url, function(err, body) {
