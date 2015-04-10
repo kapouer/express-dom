@@ -292,7 +292,7 @@ Pool.prototype.acquire = function(page, cb) {
 				debug("acquire call page.unlock");
 				page.unlock();
 				page.removeAllListeners();
-				page.html = page.prototype.html;
+				page.html = page.constructor.prototype.html;
 				delete page.unlock;
 			}
 			break;
