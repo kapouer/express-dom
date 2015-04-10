@@ -314,9 +314,11 @@ Pool.prototype.unlock = function(page, unlockCb) {
 };
 
 Pool.prototype.release = function(page, cb) {
+	page.locked = true; // make sure page cannot be acquired while it is unloaded
 	page.unload(function(err) {
 		if (page.unlock) {
 			debug("release call page.unlock");
+			page.unlock();
 			delete page.unlock;
 		}
 		page.removeAllListeners();
