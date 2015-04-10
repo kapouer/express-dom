@@ -117,7 +117,7 @@ Handler.prototype.middleware = function(req, res, next) {
 	}
 	h.getView(h.url, req, res, function(err, view) {
 		if (err) return next(err);
-		debug('view loaded', view.key);
+		debug('view loaded', view.key, view.url);
 		h.getPage(view, url, req, res, function(err, user) {
 			if (err) return next(err);
 			debug('page built', user.key);
@@ -244,6 +244,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			page.html(function(err, str) {
 				Dom.pool.unlock(page, function(resource) {
 					// breaks the link when the page is recycled
+					debug("unlocked page removed from resource", resource.key);
 					delete resource.page;
 				}.bind(this, resource));
 				if (err) return cb(err);
@@ -288,6 +289,7 @@ Pool.prototype.acquire = function(page, cb) {
 		if (!page.locked) {
 			page.locked = true;
 			if (typeof page.unlock == "function") {
+				debug("acquire call page.unlock");
 				page.unlock();
 				page.removeAllListeners();
 				page.html = page.prototype.html;
@@ -305,6 +307,7 @@ Pool.prototype.acquire = function(page, cb) {
 };
 
 Pool.prototype.unlock = function(page, unlockCb) {
+	debug('unlock called', unlockCb ? 'with' : 'without', 'callback');
 	page.unlock = unlockCb;
 	page.locked = false;
 	setImmediate(this.process.bind(this));
@@ -313,7 +316,7 @@ Pool.prototype.unlock = function(page, unlockCb) {
 Pool.prototype.release = function(page, cb) {
 	page.unload(function(err) {
 		if (page.unlock) {
-			console.warn(new Error("page.unlock is set in Dom.pool.release"));
+			debug("release call page.unlock");
 			delete page.unlock;
 		}
 		page.removeAllListeners();
