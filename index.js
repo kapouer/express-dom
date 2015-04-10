@@ -242,10 +242,10 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			resource.headers['Content-Type'] = 'text/html';
 			var page = resource.page;
 			page.html(function(err, str) {
-				Dom.pool.unlock(page, function() {
+				Dom.pool.unlock(page, function(resource) {
 					// breaks the link when the page is recycled
 					delete resource.page;
-				});
+				}.bind(this, resource));
 				if (err) return cb(err);
 				debug('got html', resource.key);
 				resource.data = str;
