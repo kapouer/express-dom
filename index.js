@@ -322,7 +322,7 @@ Pool.prototype.release = function(page, cb) {
 		page.removeAllListeners();
 		page.html = page.constructor.prototype.html;
 		page.locked = false;
-		cb();
+		if (cb) cb();
 		setImmediate(this.process.bind(this));
 	}.bind(this));
 };
