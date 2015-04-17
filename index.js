@@ -59,7 +59,6 @@ Dom.use = function(mw, position) {
 };
 
 function Handler(model, opts) {
-	this.view = {};
 	if (isRemote(model)) {
 		this.url = model;
 	} else {
