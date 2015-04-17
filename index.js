@@ -137,6 +137,7 @@ Handler.prototype.getPage = function(view, url, req, res, cb) {
 
 Handler.prototype.get = function(url, depend, req, cb) {
 	// this is useful for raja dom proxy
+	cb = cb || req || depend;
 	cb(null, new SimpleResource(url));
 };
 
@@ -339,6 +340,7 @@ Pool.prototype.process = function() {
 
 function SimpleResource(url) {
 	this.url = url;
+	this.headers = {};
 }
 SimpleResource.prototype.save = function(cb) {
 	cb(null, this);
