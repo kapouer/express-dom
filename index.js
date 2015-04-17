@@ -59,6 +59,7 @@ Dom.use = function(mw, position) {
 };
 
 function Handler(model, opts) {
+	debug("new handler", model, opts);
 	if (isRemote(model)) {
 		this.url = model;
 	} else {
@@ -116,10 +117,10 @@ Handler.prototype.middleware = function(req, res, next) {
 	}
 	h.getView(h.url, req, res, function(err, view) {
 		if (err) return next(err);
-		debug('view loaded', view.key, view.url);
+		debug('view loaded', view.key || view.url);
 		h.getPage(view, url, req, res, function(err, user) {
 			if (err) return next(err);
-			debug('page built', user.key);
+			debug('page built', user.key || user.url);
 			h.finish(user, res);
 		});
 	});
@@ -129,7 +130,7 @@ Handler.prototype.getPage = function(view, url, req, res, cb) {
 	var h = this;
 	h.getAuthored(view, url, req, res, function(err, author) {
 		if (err) return cb(err);
-		debug('page authored', author.key);
+		debug('page authored', author.key || author.url);
 		h.getUsed(author, url, req, res, cb);
 	});
 };
@@ -182,14 +183,17 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 		if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
 			Dom.pool.acquire(function(err, page) {
 				if (err) return cb(err);
+				debug('view.data length', view.data.length);
 				var opts = {
 					content: view.data,
 					console: true
 				};
 				if (!Dom.settings.debug) opts.style = Dom.settings.style;
+				debug('author preload', url);
 				page.preload(url, opts);
 				h.processMw(page, resource, h.authors, req, res);
 				page.wait('idle').html(function(err, html) {
+					debug('author.data length', html && html.length);
 					Dom.pool.release(page, function(perr) {
 						if (err) return cb(err);
 						resource.data = html;
@@ -200,6 +204,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 				});
 			});
 		} else {
+			debug("no author plugins");
 			resource.data = view.data;
 			resource.valid = true;
 			resource.mtime = new Date();
@@ -223,11 +228,12 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 					else opts[key] = h.opts[key];
 				}
 				if (customFn) customFn(opts, req);
+				debug('use author data length', author.data.length);
 				if (!opts.content) opts.content = author.data;
 				if (opts.console === undefined) opts.console = true;
 				if (opts.images === undefined) opts.images = false;
 				if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
-				debug("user load", resource.key);
+				debug("user load", resource.key || resource.url);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
 				page.wait('idle', next);
@@ -243,11 +249,11 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			page.html(function(err, str) {
 				Dom.pool.unlock(page, function(resource) {
 					// breaks the link when the page is recycled
-					debug("unlocked page removed from resource", resource.key);
+					debug("unlocked page removed from resource", resource.key || resource.url);
 					delete resource.page;
 				}.bind(this, resource));
 				if (err) return cb(err);
-				debug('got html', resource.key);
+				debug('got html', resource.key || resource.url);
 				resource.data = str;
 				resource.valid = true;
 				resource.save(cb);
