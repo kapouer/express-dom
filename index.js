@@ -142,8 +142,12 @@ Handler.prototype.get = function(url, depend, req, cb) {
 };
 
 Handler.prototype.finish = function(user, res) {
-	res.set('Content-Type', user.headers['Content-Type']);
-	res.set('Last-Modified', user.mtime.toUTCString());
+	for (var name in user.headers) {
+		if (name in {'Content-Type':1, 'Content-Encoding':1}) {
+			res.set(name, user.headers[name]);
+		}
+	}
+	if (user.mtime) res.set('Last-Modified', user.mtime.toUTCString());
 	res.send(user.data);
 	debug('page sent', user.url, user.headers);
 };
