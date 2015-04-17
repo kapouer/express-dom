@@ -246,7 +246,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			resource.mtime = new Date();
 			resource.headers['Content-Type'] = 'text/html';
 			var page = resource.page;
-			page.html(function(err, str) {
+			resource.output(page, function(err, str) {
 				Dom.pool.unlock(page, function(resource) {
 					// breaks the link when the page is recycled
 					debug("unlocked page removed from resource", resource.key || resource.url);
@@ -297,7 +297,6 @@ Pool.prototype.acquire = function(page, cb) {
 				debug("acquire call page.unlock");
 				page.unlock();
 				page.removeAllListeners();
-				page.html = page.constructor.prototype.html;
 				delete page.unlock;
 			}
 			break;
@@ -327,7 +326,6 @@ Pool.prototype.release = function(page, cb) {
 			delete page.unlock;
 		}
 		page.removeAllListeners();
-		page.html = page.constructor.prototype.html;
 		page.locked = false;
 		if (cb) cb();
 		setImmediate(this.process.bind(this));
@@ -344,6 +342,9 @@ function SimpleResource(url) {
 }
 SimpleResource.prototype.save = function(cb) {
 	cb(null, this);
+};
+SimpleResource.prototype.output = function(page, cb) {
+	page.html(cb);
 };
 
 function isRemote(url) {
