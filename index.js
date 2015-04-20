@@ -234,6 +234,10 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			debug("got valid user html", resource.key || resource.url);
 			return cb(null, resource);
 		}
+		if (author.mtime > resource.mtime) {
+			debug('author is more recent than user, reload page', resource.url || resource.key);
+			delete resource.page;
+		}
 		Dom.pool.acquire(resource.page, function(err, page) {
 			if (err) return cb(err);
 			if (!resource.page) {
