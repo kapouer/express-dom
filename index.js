@@ -156,6 +156,7 @@ Handler.prototype.getView = function(url, req, res, cb) {
 	var h = this;
 	h.get(url, function(err, resource) {
 		if (resource.valid) return cb(null, resource);
+		if (err) return cb(err);
 		var loader = isRemote(url) ? h.loadRemote : h.loadLocal;
 		loader.call(h, url, function(err, body) {
 			if (!err || body) {
@@ -184,6 +185,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 	var h = this;
 	h.get(url, view, {headers: { 'X-Author': 1, 'Vary': 'X-Author' }}, function(err, resource) {
 		if (resource.valid) return cb(null, resource);
+		if (err) return cb(err);
 		resource.headers['Content-Type'] = 'text/html';
 		if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
 			Dom.pool.acquire(function(err, page) {
@@ -222,6 +224,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 	var h = this;
 	h.get(url, author, req, function(err, resource) {
 		if (resource.valid) return cb(null, resource);
+		if (err) return cb(err);
 		Dom.pool.acquire(resource.page, function(err, page) {
 			if (err) return cb(err);
 			if (!resource.page) {
