@@ -155,8 +155,11 @@ Handler.prototype.finish = function(user, res) {
 Handler.prototype.getView = function(url, req, res, cb) {
 	var h = this;
 	h.get(url, function(err, resource) {
-		if (resource.valid) return cb(null, resource);
 		if (err) return cb(err);
+		if (resource.valid) {
+			debug("got valid view", resource.key || resource.url);
+			return cb(null, resource);
+		}
 		var loader = isRemote(url) ? h.loadRemote : h.loadLocal;
 		loader.call(h, url, function(err, body) {
 			if (!err || body) {
@@ -184,8 +187,11 @@ Handler.prototype.loadRemote = function(url, cb) {
 Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 	var h = this;
 	h.get(url, view, {headers: { 'X-Author': 1, 'Vary': 'X-Author' }}, function(err, resource) {
-		if (resource.valid) return cb(null, resource);
 		if (err) return cb(err);
+		if (resource.valid) {
+			debug("got valid authored html", resource.key || resource.url);
+			return cb(null, resource);
+		}
 		resource.headers['Content-Type'] = 'text/html';
 		if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
 			Dom.pool.acquire(function(err, page) {
@@ -223,8 +229,11 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 Handler.prototype.getUsed = function(author, url, req, res, cb) {
 	var h = this;
 	h.get(url, author, req, function(err, resource) {
-		if (resource.valid) return cb(null, resource);
 		if (err) return cb(err);
+		if (resource.valid) {
+			debug("got valid user html", resource.key || resource.url);
+			return cb(null, resource);
+		}
 		Dom.pool.acquire(resource.page, function(err, page) {
 			if (err) return cb(err);
 			if (!resource.page) {
@@ -236,8 +245,12 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 					else opts[key] = h.opts[key];
 				}
 				if (customFn) customFn(opts, req);
-				debug('use author data length', author.data.length);
-				if (!opts.content) opts.content = author.data;
+				if (!opts.content) {
+					debug('use author data length', author.data.length);
+					opts.content = author.data;
+				} else {
+					debug('use content from customFn data length', opts.content.length);
+				}
 				if (opts.console === undefined) opts.console = true;
 				if (opts.images === undefined) opts.images = false;
 				if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
