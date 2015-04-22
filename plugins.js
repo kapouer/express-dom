@@ -42,6 +42,7 @@ exports.mount = function(page) {
 				}
 			}
 		}
+		mount('a', 'href');
 		mount('img', 'src');
 		mount('video', 'src');
 		mount('object', 'src');
