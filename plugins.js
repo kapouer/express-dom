@@ -37,7 +37,7 @@ exports.mount = function(page) {
 				var item = node.attributes.getNamedItem(att);
 				if (!item) continue;
 				var val = item.nodeValue;
-				if (val && val.toString()[0] != '/' && href && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
+				if (val && /^(\/|#)/.test(val) == false && href && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
 					item.nodeValue = '/' + val;
 				}
 			}
