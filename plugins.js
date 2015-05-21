@@ -32,11 +32,10 @@ exports.mount = function(page) {
 			var node;
 			for (var i=0; i < list.length; i++) {
 				node = list.item(i);
-				var href = node[att];
-				if (!href) continue;
 				var item = node.attributes.getNamedItem(att);
 				if (!item) continue;
 				var val = item.nodeValue;
+				var href = node[att] || loc + '/' + val;
 				if (val && /^(\/|#)/.test(val) == false && href && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
 					item.nodeValue = '/' + val;
 				}
