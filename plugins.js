@@ -3,15 +3,19 @@ var Path = require('path');
 
 exports.absolute = function(page) {
 	page.wait('ready').run(function() {
+		var anc = document.createElement('a');
 		function absolut(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
 			for (var i=0; i < list.length; i++) {
 				node = list.item(i);
-				var href = node[att];
-				if (!href) continue;
 				var item = node.attributes.getNamedItem(att);
 				if (!item) continue;
+				var href = node[att];
+				if (!href) {
+					anc.href = item.nodeValue;
+					href = anc.href;
+				}
 				item.nodeValue = href;
 			}
 		}
@@ -27,6 +31,7 @@ exports.absolute = function(page) {
 exports.mount = function(page) {
 	page.wait('ready').run(function() {
 		var loc = document.location.protocol + '//' + document.location.host;
+		var anc = document.createElement('a');
 		function mount(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
@@ -35,7 +40,11 @@ exports.mount = function(page) {
 				var item = node.attributes.getNamedItem(att);
 				if (!item) continue;
 				var val = item.nodeValue;
-				var href = node[att] || loc + '/' + val;
+				var href = node[att];
+				if (!href) {
+					anc.href = val;
+					href = anc.href;
+				}
 				if (val && /^(\/|#)/.test(val) == false && href && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
 					item.nodeValue = '/' + val;
 				}
@@ -47,6 +56,7 @@ exports.mount = function(page) {
 		mount('object', 'src');
 		mount('link', 'href');
 		mount('script', 'src');
+		mount('include', 'src');
 	});
 };
 
