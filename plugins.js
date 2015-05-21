@@ -25,6 +25,7 @@ exports.absolute = function(page) {
 		absolut('object', 'src');
 		absolut('link', 'href');
 		absolut('script', 'src');
+		absolut('include', 'src');
 	});
 };
 
