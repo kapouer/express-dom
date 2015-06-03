@@ -272,6 +272,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			resource.mtime = new Date();
 			resource.headers['Content-Type'] = 'text/html';
 			var page = resource.page;
+			if (!page) return cb(new Error("resource.page is missing for\n" + resource.key));
 			resource.output(page, function(err, str) {
 				Dom.pool.unlock(page, function(resource) {
 					// breaks the link when the page is recycled
