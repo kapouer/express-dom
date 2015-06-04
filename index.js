@@ -262,10 +262,8 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 				debug("user load", resource.key || resource.url, "with stall", opts.stall);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
-				page.wait('idle', next);
-			} else {
-				next();
 			}
+			next();
 		});
 		function next(err) {
 			if (err) return cb(err);
@@ -273,6 +271,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			resource.headers['Content-Type'] = 'text/html';
 			var page = resource.page;
 			if (!page) return cb(new Error("resource.page is missing for\n" + resource.key));
+			page.wait('idle');
 			resource.output(page, function(err, str) {
 				Dom.pool.unlock(page, function(resource) {
 					// breaks the link when the page is recycled
