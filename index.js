@@ -299,6 +299,7 @@ Handler.prototype.processMw = function(page, resource, mwObj, req, res) {
 function Pool(cacheSize) {
 	this.list = [];
 	this.max = cacheSize;
+	this.extra = 0;
 	this.count = 0;
 	this.queue = [];
 }
@@ -310,26 +311,36 @@ Pool.prototype.acquire = function(page, cb) {
 	}
 	if (page) {
 		page.locked = true;
-	} else if (this.count < this.max) {
+	} else if (this.count < this.max + this.extra) {
 		this.count++;
 		page = WebKit(Dom.settings);
 		page.locked = true;
 		this.list.push(page);
-	} else for (var i=0; i < this.list.length; i++) {
-		page = this.list[i];
-		if (!page.locked) {
-			page.locked = true;
-			if (typeof page.unlock == "function") {
-				debug("acquire call page.unlock");
-				page.unlock();
-				page.removeAllListeners();
-				delete page.unlock;
+	} else {
+		for (var i=0; i < this.list.length; i++) {
+			page = this.list[i];
+			if (!page.locked) {
+				page.locked = true;
+				if (typeof page.unlock == "function") {
+					debug("acquire call page.unlock");
+					page.unlock();
+					page.removeAllListeners();
+					delete page.unlock;
+				}
+				break;
 			}
-			break;
+			page = null;
 		}
-		page = null;
+		if (!page) {
+			console.info("Need one extra instance", this.extra++);
+			setImmediate(this.process.bind(this));
+		}
 	}
 	if (page) {
+		if (this.extra) {
+			this.extra--;
+			if (this.extra == 0) console.info("No more extra instances, total", this.list.length);
+		}
 		cb(null, page);
 	} else {
 		this.queue.push(cb);
