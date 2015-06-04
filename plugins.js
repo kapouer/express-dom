@@ -3,7 +3,6 @@ var Path = require('path');
 
 exports.absolute = function(page) {
 	page.wait('ready').run(function() {
-		var anc = document.createElement('a');
 		function absolut(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
@@ -11,12 +10,8 @@ exports.absolute = function(page) {
 				node = list.item(i);
 				var item = node.attributes.getNamedItem(att);
 				if (!item) continue;
-				var href = node[att];
-				if (!href) {
-					anc.href = item.nodeValue;
-					href = anc.href;
-				}
-				item.nodeValue = href;
+				var uloc = new URL(item.nodeValue, document.baseURI);
+				item.nodeValue = uloc.href;
 			}
 		}
 		absolut('a', 'href');
@@ -31,8 +26,7 @@ exports.absolute = function(page) {
 
 exports.mount = function(page) {
 	page.wait('ready').run(function() {
-		var loc = document.location.protocol + '//' + document.location.host;
-		var anc = document.createElement('a');
+		var dloc = document.location;
 		function mount(selector, att) {
 			var list = document.querySelectorAll(selector);
 			var node;
@@ -40,14 +34,9 @@ exports.mount = function(page) {
 				node = list.item(i);
 				var item = node.attributes.getNamedItem(att);
 				if (!item) continue;
-				var val = item.nodeValue;
-				var href = node[att];
-				if (!href) {
-					anc.href = val;
-					href = anc.href;
-				}
-				if (val && /^(\/|#)/.test(val) == false && href && href.indexOf(loc) == 0  && !/^https?:/i.test(val)) {
-					item.nodeValue = '/' + val;
+				var uloc = new URL(item.nodeValue, document.baseURI);
+				if (uloc.protocol == dloc.protocol && uloc.host == dloc.host) {
+					item.nodeValue = uloc.pathname + uloc.search + uloc.hash;
 				}
 			}
 		}
