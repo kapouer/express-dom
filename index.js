@@ -186,7 +186,10 @@ Handler.prototype.loadRemote = function(url, cb) {
 
 Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 	var h = this;
-	h.get(url, view, {headers: { 'X-Author': 1, 'Vary': 'X-Author' }}, function(err, resource) {
+	h.get(url, view, {headers: {
+		'X-Author': view.key || view.url,
+		'Vary': 'X-Author'
+	}}, function(err, resource) {
 		if (err) return cb(err);
 		if (resource.valid) {
 			debug("got valid authored html", resource.key || resource.url);
