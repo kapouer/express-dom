@@ -262,6 +262,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 				if (opts.images === undefined) opts.images = false;
 				if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
 				if (opts.stall === undefined && Dom.settings.stall !== undefined) opts.stall = Dom.settings.stall;
+				if (opts.allow === undefined && Dom.settings.allow !== undefined) opts.allow = Dom.settings.allow;
 				debug("user load", resource.key || resource.url, "with stall", opts.stall);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
