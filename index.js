@@ -28,7 +28,8 @@ Dom.settings = {
 	console: !!process.env.DEBUG,
 	images: false,
 	private: true,
-	stall: 15000
+	stall: 15000,
+	allow: "same-domain"
 };
 
 Dom.plugins = require('./plugins');
