@@ -27,7 +27,8 @@ Dom.settings = {
 	debug: !!process.env.INSPECTOR,
 	console: !!process.env.DEBUG,
 	images: false,
-	private: true
+	private: true,
+	stall: 15000
 };
 
 Dom.plugins = require('./plugins');
