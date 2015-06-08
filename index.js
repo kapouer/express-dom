@@ -29,7 +29,7 @@ Dom.settings = {
 	images: false,
 	private: true,
 	stall: 15000,
-	allow: "same-domain"
+	allow: "same-origin"
 };
 
 Dom.plugins = require('./plugins');
