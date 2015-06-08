@@ -25,7 +25,9 @@ Dom.settings = {
 	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
 	debug: !!process.env.INSPECTOR,
-	console: !!process.env.DEBUG
+	console: !!process.env.DEBUG,
+	images: false,
+	private: true
 };
 
 Dom.plugins = require('./plugins');
@@ -258,11 +260,9 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 				} else {
 					debug('use content from customFn data length', opts.content.length);
 				}
-				if (opts.console === undefined) opts.console = true;
-				if (opts.images === undefined) opts.images = false;
-				if (opts.style === undefined && !Dom.settings.debug) opts.style = Dom.settings.style;
-				if (opts.stall === undefined && Dom.settings.stall !== undefined) opts.stall = Dom.settings.stall;
-				if (opts.allow === undefined && Dom.settings.allow !== undefined) opts.allow = Dom.settings.allow;
+				for (var k in Dom.settings) if (Dom.settings.hasOwnProperty(k) && opts[k] === undefined) {
+					opts[k] = Dom.settings[k];
+				}
 				debug("user load", resource.key || resource.url, "with stall", opts.stall);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
