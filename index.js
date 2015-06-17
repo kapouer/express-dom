@@ -214,6 +214,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 				h.processMw(page, resource, h.authors, req, res);
 				page.wait('idle').html(function(err, html) {
 					debug('author.data length', html && html.length);
+					page.locked = false;
 					Dom.pool.release(page, function(perr) {
 						if (err) return cb(err);
 						resource.data = html;
@@ -361,6 +362,7 @@ Pool.prototype.unlock = function(page, unlockCb) {
 };
 
 Pool.prototype.release = function(page, cb) {
+	if (page.locked) return setImmediate(cb);
 	page.locked = true; // make sure page cannot be acquired while it is unloaded
 	page.unload(function(err) {
 		if (page.unlock) {
