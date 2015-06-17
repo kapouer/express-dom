@@ -36,7 +36,9 @@ exports.mount = function(page) {
 				node = list.item(i);
 				var item = node.attributes.getNamedItem(att);
 				if (!item) continue;
-				var uloc = new URL(item.nodeValue, base);
+				var val = item.nodeValue;
+				if (!val || val.charAt(0) == '#') continue;
+				var uloc = new URL(val, base);
 				if (uloc.protocol == dloc.protocol && uloc.host == dloc.host) {
 					item.nodeValue = uloc.pathname + uloc.search + uloc.hash;
 				}
