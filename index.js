@@ -2,12 +2,8 @@ var fs = require('fs');
 var queue = require('queue-async');
 var request = require('request');
 var Path = require('path');
-var debug = require('debug');
-debug.enable('webkitgtk:stall');
-debug.enable('webkitgtk:error');
+var debug = require('debug')('express-dom');
 var WebKit = require('webkitgtk');
-debug = debug('express-dom');
-
 
 var Dom = module.exports = function(model, opts) {
 	if (!Dom.pool) {
