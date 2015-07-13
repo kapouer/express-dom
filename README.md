@@ -1,6 +1,8 @@
 express-dom
 ===========
 
+/this documentation is a work-in-progress.../
+
 Extensible web page builder proxy with client browser environment for express.
 
 1. design an empty web page that builds itself using javascript and backends,
