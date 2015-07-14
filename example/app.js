@@ -1,14 +1,15 @@
 var URL = require('url');
 var express = require('express');
 var app = express();
+var Cache = require('adaptative-replacement-cache');
 var dom = require('../');
 
 dom.settings.stall = 1000;
 dom.settings.allow = 'all';
 
+// keep the mostly used pages in memory cache
+var cache = new Cache(100);
 
-// very stupid cache
-var cache = {};
 var _hget = dom.Handler.prototype.get;
 dom.Handler.prototype.get = function(url, depend, req, cb) {
 	cb = cb || req || depend;
@@ -17,10 +18,10 @@ dom.Handler.prototype.get = function(url, depend, req, cb) {
 	else if (req.headers && req.headers['X-Author']) {
 		key = 'author ' + key;
 	}
-	var res = cache[key];
+	var res = cache.get(key);
 	if (res) return cb(null, res);
 	_hget.call(this, url, depend, req, function(err, resource) {
-		cache[key] = resource;
+		cache.set(key, resource);
 		cb(err, resource);
 	});
 };
