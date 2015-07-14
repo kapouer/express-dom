@@ -21,6 +21,12 @@ var dom = require('express-dom');
 app.get('/mypage', dom('myview').author(minify).use(absolutify));
 ```
 
+# Example
+
+See sample application in example/ dir.
+It is able to render a react web page and output an openable html version of it.
+
+
 # Gotchas
 
 * allows transformation of any legacy website on the fly - public or admin, like
