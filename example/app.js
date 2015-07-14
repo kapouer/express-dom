@@ -5,7 +5,6 @@ var dom = require('../');
 
 dom.settings.stall = 1000;
 dom.settings.allow = 'all';
-dom.settings.charset = 'UTF-8';
 
 
 // very stupid cache
@@ -25,15 +24,6 @@ dom.Handler.prototype.get = function(url, depend, req, cb) {
 		cb(err, resource);
 	});
 };
-
-
-dom.author(function(page) {
-	page.wait('ready').run(function() {
-		Array.prototype.slice.call(document.querySelectorAll('script')).forEach(function(node) {
-			node.setAttribute('charset', 'utf-8');
-		});
-	});
-});
 
 dom.use(function(page) {
 	page.on('request', function(req) {
