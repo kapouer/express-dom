@@ -3,6 +3,7 @@ var Path = require('path');
 
 exports.absolute = function(page) {
 	page.wait('ready').run(function() {
+		var dloc = document.location;
 		var base = dloc.protocol + '//' + dloc.host;
 		function absolut(selector, att) {
 			var list = document.querySelectorAll(selector);
