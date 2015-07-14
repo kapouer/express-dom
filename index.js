@@ -115,9 +115,6 @@ Handler.prototype.middleware = function(req, res, next) {
 		h.url = path;
 	}
 	var url = req.protocol + '://' + req.headers.host + req.url;
-	if (url == h.url) {
-		return next(new Error("The view has the same url as the requested page"));
-	}
 	h.getView(h.url, req, res, function(err, view) {
 		if (err) return next(err);
 		debug('view loaded', view.key || view.url);
