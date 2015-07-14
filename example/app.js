@@ -4,8 +4,9 @@ var app = express();
 var Cache = require('adaptative-replacement-cache');
 var dom = require('../');
 
-dom.settings.stall = 1000;
+dom.settings.stall = 5000;
 dom.settings.allow = 'all';
+dom.settings.timeout = 10000;
 
 // keep the mostly used pages in memory cache
 var cache = new Cache(100);
@@ -21,6 +22,15 @@ dom.Handler.prototype.get = function(url, depend, req, cb) {
 	var res = cache.get(key);
 	if (res) return cb(null, res);
 	_hget.call(this, url, depend, req, function(err, resource) {
+		resource.output = function(page, cb) {
+			var url = resource.url;
+			page.html(function(err, str) {
+				if (err) return cb(err);
+				page.unload().preload(url, {content: str, console: true, style: dom.settings.style});
+				dom.plugins.absolute(page);
+				page.wait('idle').html(cb);
+			});
+		};
 		cache.set(key, resource);
 		cb(err, resource);
 	});
@@ -68,5 +78,5 @@ app.get("*", function(req, res, next) {
 
 var port = 7799;
 app.listen(port);
-console.info("http://localhost:" + port + "/https://instagram.com/humansofny");
+console.info("http://localhost:" + port + "/<url>");
 
