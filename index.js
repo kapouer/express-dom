@@ -128,7 +128,7 @@ Handler.prototype.middleware = function(req, res, next) {
 
 Handler.prototype.getPage = function(view, url, req, res, cb) {
 	var h = this;
-	h.getAuthored(view, url, req, res, function(err, author) {
+	h.getAuthored(view, req.protocol + '://' + req.headers.host, req, res, function(err, author) {
 		if (err) return cb(err);
 		debug('page authored', author.key || author.url);
 		h.getUsed(author, url, req, res, cb);
@@ -186,8 +186,8 @@ Handler.prototype.loadRemote = function(url, cb) {
 
 Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 	var h = this;
-	h.get(url, view, {headers: {
-		'X-Author': view.key || view.url,
+	h.get(view.key || view.url, view, {headers: {
+		'X-Author': 1,
 		'Vary': 'X-Author'
 	}}, function(err, resource) {
 		if (err) return cb(err);
