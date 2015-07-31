@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript">
+			$(function() {
+				$.get('basic3.json').success(function(obj) {
+					$('.me').text(obj.test);
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div class="me">tata</div>
+	</body>
+</html>
