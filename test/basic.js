@@ -3,21 +3,27 @@ var request = require('request');
 var express = require('express');
 
 var host = "http://localhost";
+var dom = require('../');
+dom.settings.stall = 5000;
+dom.settings.allow = 'all';
+dom.settings.timeout = 10000;
 
 describe("Basic handler", function suite() {
-	this.timeout(10000);
-	var app, port = 7799;
+	this.timeout(3000);
+	var server, port = 7779;
 
 	before(function(done) {
-		app = express();
-		var dom = require('../');
-		dom.settings.stall = 5000;
-		dom.settings.allow = 'all';
-		dom.settings.timeout = 10000;
+		var app = express();
 		app.set('statics', __dirname + '/public');
 		app.get('/basic1', dom('basic1'));
-		app.listen(port);
-		done();
+		server = app.listen(port, function(err) {
+			if (err) console.error(err);
+			done();
+		});
+	});
+
+	after(function(done) {
+		server.close(done);
 	});
 
 	it("should change body by script run after DOMContentLoaded event in user phase", function(done) {
