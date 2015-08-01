@@ -28,7 +28,8 @@ Dom.settings = {
 	images: false,
 	private: true,
 	stall: 15000,
-	allow: "same-origin"
+	allow: "same-origin",
+	manual: true
 };
 
 Dom.plugins = require('./plugins');
@@ -208,6 +209,8 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 				debug('author preload', url);
 				page.preload(url, opts);
 				h.processMw(page, resource, h.authors, req, res);
+				page.wait('ready').done('ready');
+				page.wait('load').done('load');
 				page.wait('idle').html(function(err, html) {
 					debug('author.data length', html && html.length);
 					page.locked = false;
@@ -218,7 +221,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 						resource.mtime = new Date();
 						resource.save(cb);
 					});
-				});
+				}).done('idle');
 			});
 		} else {
 			debug("no author plugins");
@@ -265,6 +268,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 				debug("user load", resource.key || resource.url, "with stall", opts.stall);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
+				page.wait('ready').done('ready').wait('load').done('load');
 			}
 			next();
 		});
@@ -386,7 +390,7 @@ SimpleResource.prototype.save = function(cb) {
 	cb(null, this);
 };
 SimpleResource.prototype.output = function(page, cb) {
-	page.html(cb);
+	page.html(cb).done('idle');
 };
 
 function isRemote(url) {
