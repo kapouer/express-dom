@@ -212,7 +212,6 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 					this.html(function(err, str) {
 						done();
 						debug('author.data length', str && str.length);
-						page.locked = false;
 						Dom.pool.release(page, function(perr) {
 							if (err) return cb(err);
 							resource.data = str;
