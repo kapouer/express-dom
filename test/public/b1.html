@@ -5,13 +5,13 @@
 			document.addEventListener('DOMContentLoaded', function() {
 				setInterval(function() {
 						document.querySelector('.shouldstaythesame').innerHTML = 'to' + 'to';
-					},1500);
+				}, 1500);
 				var id = setInterval(function() {
 						document.querySelector('.shouldbemodified').innerHTML = 'ti' + 'ti';
-					},100);
+				}, 100);
 				setTimeout(function() {
-						clearInterval(id);
-					},150);
+					clearInterval(id);
+				}, 150);
 				// The value of 200 is arbitrary, set in Express-Dom.
 			}, false);
 		</script>

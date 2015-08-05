@@ -3,13 +3,14 @@
 	<head>
 		<script type="text/javascript">
 			document.addEventListener('DOMContentLoaded', function() {
+				// timeouts above 200 ms are ignored, this value is set in
+				// express-dom and allows critical timeouts (setTimeout(fn, 0), or short animations)
 				setTimeout(function() {
-						document.querySelector('.shouldstaythesame').innerHTML = 'to' + 'to';
-					},2001);
+					document.querySelector('.shouldstaythesame').innerHTML = 'to' + 'to';
+				}, 2001);
 				setTimeout(function() {
-						document.querySelector('.shouldbemodified').innerHTML = 'ti' + 'ti';
-					},199);
-					// The value of 200 is arbitrary, set in Express-Dom.
+					document.querySelector('.shouldbemodified').innerHTML = 'ti' + 'ti';
+				}, 50);
 			}, false);
 		</script>
 	</head>
