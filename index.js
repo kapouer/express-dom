@@ -344,8 +344,9 @@ Pool.prototype.acquire = function(page, cb) {
 			this.extra--;
 			if (this.extra == 0) console.info("No more extra instances, total", this.list.length);
 		}
-		if (page) cb(null, page);
-		else if (create) {
+		if (page) {
+			cb(null, page);
+		} else if (create) {
 			WebKit(Dom.settings, function(err, page) {
 				if (err) return cb(err);
 				page.locked = true;
