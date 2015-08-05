@@ -1,5 +1,4 @@
 var fs = require('fs');
-var queue = require('queue-async');
 var request = require('request');
 var Path = require('path');
 var debug = require('debug')('express-dom');
@@ -209,19 +208,20 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 				debug('author preload', url);
 				page.preload(url, opts);
 				h.processMw(page, resource, h.authors, req, res);
-				page.wait('ready').done('ready');
-				page.wait('load').done('load');
-				page.wait('idle').html(function(err, html) {
-					debug('author.data length', html && html.length);
-					page.locked = false;
-					Dom.pool.release(page, function(perr) {
-						if (err) return cb(err);
-						resource.data = html;
-						resource.valid = true;
-						resource.mtime = new Date();
-						resource.save(cb);
+				page.when('idle', function(done) {
+					this.html(function(err, str) {
+						done();
+						debug('author.data length', str && str.length);
+						page.locked = false;
+						Dom.pool.release(page, function(perr) {
+							if (err) return cb(err);
+							resource.data = str;
+							resource.valid = true;
+							resource.mtime = new Date();
+							resource.save(cb);
+						});
 					});
-				}).done('idle');
+				});
 			});
 		} else {
 			debug("no author plugins");
@@ -268,7 +268,6 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 				debug("user load", resource.key || resource.url, "with stall", opts.stall);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
-				page.wait('ready').done('ready').wait('load').done('load');
 			}
 			next();
 		});
@@ -278,7 +277,6 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			resource.headers['Content-Type'] = 'text/html';
 			var page = resource.page;
 			if (!page) return cb(new Error("resource.page is missing for\n" + resource.key));
-			page.wait('idle');
 			resource.output(page, function(err, str) {
 				Dom.pool.unlock(page, function(resource) {
 					// breaks the link when the page is recycled
@@ -320,7 +318,7 @@ Pool.prototype.acquire = function(page, cb) {
 		page.locked = true;
 	} else if (this.count < this.max + this.extra) {
 		this.count++;
-		page = WebKit(Dom.settings);
+		page = new WebKit();
 		page.locked = true;
 		this.list.push(page);
 	} else {
@@ -348,7 +346,7 @@ Pool.prototype.acquire = function(page, cb) {
 			this.extra--;
 			if (this.extra == 0) console.info("No more extra instances, total", this.list.length);
 		}
-		cb(null, page);
+		page.init(Dom.settings, cb);
 	} else {
 		this.queue.push(cb);
 	}
@@ -390,7 +388,12 @@ SimpleResource.prototype.save = function(cb) {
 	cb(null, this);
 };
 SimpleResource.prototype.output = function(page, cb) {
-	page.html(cb).done('idle');
+	page.when('idle', function(done) {
+		this.html(function(err, str) {
+			done();
+			cb(err, str);
+		});
+	});
 };
 
 function isRemote(url) {
