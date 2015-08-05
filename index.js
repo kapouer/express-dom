@@ -336,7 +336,6 @@ Pool.prototype.acquire = function(page, cb) {
 		}
 		if (!page) {
 			console.info("Need one extra instance", this.extra++);
-			setImmediate(this.process.bind(this));
 		}
 	}
 
