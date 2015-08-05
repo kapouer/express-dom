@@ -314,13 +314,12 @@ Pool.prototype.acquire = function(page, cb) {
 		cb = page;
 		page = null;
 	}
+	var create = false;
 	if (page) {
 		page.locked = true;
 	} else if (this.count < this.max + this.extra) {
 		this.count++;
-		page = new WebKit();
-		page.locked = true;
-		this.list.push(page);
+		create = true;
 	} else {
 		for (var i=0; i < this.list.length; i++) {
 			page = this.list[i];
@@ -341,12 +340,21 @@ Pool.prototype.acquire = function(page, cb) {
 			setImmediate(this.process.bind(this));
 		}
 	}
-	if (page) {
+
+	if (page || create) {
 		if (this.extra) {
 			this.extra--;
 			if (this.extra == 0) console.info("No more extra instances, total", this.list.length);
 		}
-		page.init(Dom.settings, cb);
+		if (page) cb(null, page);
+		else if (create) {
+			WebKit(Dom.settings, function(err, page) {
+				if (err) return cb(err);
+				page.locked = true;
+				this.list.push(page);
+				cb(null, page);
+			}.bind(this));
+		}
 	} else {
 		this.queue.push(cb);
 	}
