@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript">
+			$(function() {
+				var loads = '';
+				for (var i = 0 ; i < 100 ; i++) {
+					$.get('json/c0-'+i+'.json').success(function(i, obj) {
+						$('.load').after('c0-'+i+'\n');
+					}.bind(null, i));
+				}
+				//$('.load').html(loads);
+
+			});
+		</script>
+	</head>
+	<body>
+		<div class="me">tata</div>
+		<div class="load">tata</div>
+	</body>
+</html>

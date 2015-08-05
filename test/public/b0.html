@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript">
+			document.addEventListener('DOMContentLoaded', function() {
+				setTimeout(function() {
+						document.querySelector('.shouldstaythesame').innerHTML = 'to' + 'to';
+					},2001);
+				setTimeout(function() {
+						document.querySelector('.shouldbemodified').innerHTML = 'ti' + 'ti';
+					},199);
+					// The value of 200 is arbitrary, set in Express-Dom.
+			}, false);
+		</script>
+	</head>
+	<body>
+		<div class="shouldstaythesame">tata</div>
+		<div class="shouldbemodified">tete</div>
+	</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript">
+			$(function() {
+				$.get('json/b2-0.json').success(function(obj) {
+					$('.shouldbemodified').text(obj.toto);
+				});
+				$.get('json/b2-1.json').success(function(obj) {
+					$('.shouldstaythesame').text(obj.toto);
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div class="shouldbemodified">Original file</div>
+		<div class="shouldstaythesame">Original file</div>
+	</body>
+</html>
