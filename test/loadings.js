@@ -8,6 +8,8 @@ dom.settings.stall = 5000;
 dom.settings.allow = 'all';
 dom.settings.timeout = 10000;
 dom.settings.console = true;
+dom.settings.max = 2;
+
 
 describe("Loading ressources", function suite() {
 	this.timeout(3000);
@@ -52,6 +54,63 @@ describe("Loading ressources", function suite() {
 				expect(body.indexOf('c0-'+i)).to.be.greaterThan(0);
 			}
 			done();
+		});
+	});
+
+
+// Loading c1
+	it("should load several pages (more than settings.max) in the same time", function(done) {
+		var count = 0;
+		function countDone() {
+			count--;
+			if (!count) done();
+		}
+		count++;
+		request({
+			method: 'GET',
+			url: host + ':' + port + '/c0.html'
+		}, function(err, res, body) {
+			expect(res.statusCode).to.be(200);
+			for (var i = 0 ; i < 100 ; i++) {
+				expect(body.indexOf('c0-'+i)).to.be.greaterThan(0);
+			}
+			countDone();
+		});
+		count++;
+		request({
+			method: 'GET',
+			url: host + ':' + port + '/a3.html'
+		}, function(err, res, body) {
+			expect(res.statusCode).to.be(200);
+			expect(body.indexOf('toto')).to.be.greaterThan(0);
+			countDone();
+		});
+		count++;
+		request({
+			method: 'GET',
+			url: host + ':' + port + '/b0.html'
+		}, function(err, res, body) {
+			expect(body.indexOf('tata')).to.be.greaterThan(0);
+			expect(body.indexOf('titi')).to.be.greaterThan(0);
+			countDone();
+		});
+		count++;
+		request({
+			method: 'GET',
+			url: host + ':' + port + '/b1.html'
+		}, function(err, res, body) {
+			expect(body.indexOf('tata')).to.be.greaterThan(0);
+			expect(body.indexOf('titi')).to.be.greaterThan(0);
+			countDone();
+		});
+		count++;
+		request({
+			method: 'GET',
+			url: host + ':' + port + '/a4.html'
+		}, function(err, res, body) {
+			expect(res.statusCode).to.be(200);
+			expect(body.indexOf('tarte')).to.be.greaterThan(0);
+			countDone();
 		});
 	});
 
