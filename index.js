@@ -323,13 +323,6 @@ Pool.prototype.acquire = function(page, cb) {
 		for (var i=0; i < this.list.length; i++) {
 			page = this.list[i];
 			if (!page.locked) {
-				page.locked = true;
-				if (typeof page.unlock == "function") {
-					debug("acquire call page.unlock");
-					page.unlock();
-					page.removeAllListeners();
-					delete page.unlock;
-				}
 				break;
 			}
 			page = null;
@@ -345,7 +338,9 @@ Pool.prototype.acquire = function(page, cb) {
 			if (this.extra == 0) console.info("No more extra instances, total", this.list.length);
 		}
 		if (page) {
-			cb(null, page);
+			this.release(page, function(err) {
+				cb(null, page);
+			});
 		} else if (create) {
 			WebKit(Dom.settings, function(err, page) {
 				if (err) return cb(err);
