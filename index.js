@@ -361,17 +361,16 @@ Pool.prototype.unlock = function(page, unlockCb) {
 };
 
 Pool.prototype.release = function(page, cb) {
-	if (page.locked) return setImmediate(cb);
-	page.locked = true; // make sure page cannot be acquired while it is unloaded
+	page.locked = true;
 	page.unload(function(err) {
+		page.locked = false;
+		if (err) return cb(err);
 		if (page.unlock) {
 			debug("release call page.unlock");
 			page.unlock();
 			delete page.unlock;
 		}
-		page.removeAllListeners();
-		page.locked = false;
-		if (cb) cb();
+		if (cb) cb(); // important because locked just after
 		setImmediate(this.process.bind(this));
 	}.bind(this));
 };
