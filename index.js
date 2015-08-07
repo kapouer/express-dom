@@ -304,7 +304,7 @@ Handler.prototype.processMw = function(page, resource, mwObj, req, res) {
 function Pool(cacheSize) {
 	this.list = [];
 	this.max = cacheSize;
-	this.extra = 0;
+	this.notices = 1;
 	this.count = 0;
 	this.queue = [];
 }
@@ -317,7 +317,7 @@ Pool.prototype.acquire = function(page, cb) {
 	var create = false;
 	if (page) {
 		page.locked = true;
-	} else if (this.count < this.max + this.extra) {
+	} else if (this.count < this.max) {
 		this.count++;
 		create = true;
 	} else {
@@ -328,18 +328,12 @@ Pool.prototype.acquire = function(page, cb) {
 			}
 			page = null;
 		}
-		if (!page) {
-			console.info("Need one extra instance", this.extra++);
-		}
 	}
 
 	if (page || create) {
-		if (this.extra) {
-			this.extra--;
-			if (this.extra == 0) console.info("No more extra instances, total", this.list.length);
-		}
 		if (page) {
 			this.release(page, function(err) {
+				page.locked = true;
 				cb(null, page);
 			});
 		} else if (create) {
@@ -352,6 +346,10 @@ Pool.prototype.acquire = function(page, cb) {
 		}
 	} else {
 		this.queue.push(cb);
+		if (this.queue.length > (this.max * this.notices)) {
+			this.notices++;
+			console.info("express-dom", this.queue.length, "queued acquisitions - consider raising dom.settings.max above", this.max);
+		}
 	}
 };
 
