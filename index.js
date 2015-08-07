@@ -270,6 +270,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			next();
 		});
 		function next(err) {
+			if (err) console.trace(err);
 			if (err) return cb(err);
 			resource.mtime = new Date();
 			resource.headers['Content-Type'] = 'text/html';
@@ -281,6 +282,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 					debug("unlocked page removed from resource", resource.key || resource.url);
 					delete resource.page;
 				}.bind(this, resource));
+				if (err) console.trace(err);
 				if (err) return cb(err);
 				debug('got html', resource.key || resource.url);
 				resource.data = str;
