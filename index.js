@@ -27,8 +27,7 @@ Dom.settings = {
 	images: false,
 	private: true,
 	stall: 15000,
-	allow: "same-origin",
-	manual: true
+	allow: "same-origin"
 };
 
 Dom.plugins = require('./plugins');
