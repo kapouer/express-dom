@@ -3,11 +3,11 @@
 	<head>
 		<script type="text/javascript" src="jquery.js"></script>
 		<script type="text/javascript">
-			$(function() {
-				$.get('a4.json').success(function(obj) {
-					$('.me').text(obj.test);
-				});
+		document.addEventListener('DOMContentLoaded', function() {
+			$.get('a4.json').success(function(obj) {
+				$('.me').text(obj.test);
 			});
+		}, false);
 		</script>
 	</head>
 	<body>
