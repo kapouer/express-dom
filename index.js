@@ -208,9 +208,8 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 				debug('author preload', url);
 				page.preload(url, opts);
 				h.processMw(page, resource, h.authors, req, res);
-				page.when('idle', function(done) {
+				page.when('idle', function(wcb) {
 					this.html(function(err, str) {
-						done();
 						debug('author.data length', str && str.length);
 						Dom.pool.release(page, function(perr) {
 							if (err) return cb(err);
@@ -219,6 +218,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 							resource.mtime = new Date();
 							resource.save(cb);
 						});
+						wcb();
 					});
 				});
 			});
@@ -389,10 +389,11 @@ function SimpleResource(url) {
 SimpleResource.prototype.save = function(cb) {
 	cb(null, this);
 };
+
 SimpleResource.prototype.output = function(page, cb) {
-	page.when('idle', function(done) {
+	page.when('idle', function(wcb) {
 		this.html(function(err, str) {
-			done();
+			wcb();
 			cb(err, str);
 		});
 	});
