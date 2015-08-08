@@ -243,32 +243,32 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			debug('author is more recent than user, reload page', resource.url || resource.key);
 			delete resource.page;
 		}
-		Dom.pool.acquire(resource.page, function(err, page) {
+		if (resource.page) {
+			resource.page.locked = true;
+			debug("user page already loaded", resource.key);
+			next();
+		} else Dom.pool.acquire(function(err, page) {
 			if (err) return cb(err);
-			if (!resource.page) {
-				resource.page = page;
-				var opts = {};
-				var customFn;
-				for (var key in h.opts) {
-					if (key == 'params' && typeof h.opts[key] == 'function') customFn = h.opts[key];
-					else opts[key] = h.opts[key];
-				}
-				if (customFn) customFn(opts, req);
-				if (!opts.content) {
-					debug('use author data length', author.data.length);
-					opts.content = author.data;
-				} else {
-					debug('use content from customFn data length', opts.content.length);
-				}
-				for (var k in Dom.settings) if (Dom.settings.hasOwnProperty(k) && opts[k] === undefined) {
-					opts[k] = Dom.settings[k];
-				}
-				debug("user load", resource.key || resource.url, "with stall", opts.stall);
-				page.load(resource.url, opts);
-				h.processMw(page, resource, h.users, req, res);
-			} else {
-				debug("user already loaded", resource.key);
+			resource.page = page;
+			var opts = {};
+			var customFn;
+			for (var key in h.opts) {
+				if (key == 'params' && typeof h.opts[key] == 'function') customFn = h.opts[key];
+				else opts[key] = h.opts[key];
 			}
+			if (customFn) customFn(opts, req);
+			if (!opts.content) {
+				debug('use author data length', author.data.length);
+				opts.content = author.data;
+			} else {
+				debug('use content from customFn data length', opts.content.length);
+			}
+			for (var k in Dom.settings) if (Dom.settings.hasOwnProperty(k) && opts[k] === undefined) {
+				opts[k] = Dom.settings[k];
+			}
+			debug("user load", resource.key || resource.url, "with stall", opts.stall);
+			page.load(resource.url, opts);
+			h.processMw(page, resource, h.users, req, res);
 			next();
 		});
 		function next(err) {
@@ -311,15 +311,9 @@ function Pool(cacheSize) {
 	this.queue = [];
 }
 
-Pool.prototype.acquire = function(page, cb) {
-	if (page && !cb) {
-		cb = page;
-		page = null;
-	}
+Pool.prototype.acquire = function(cb) {
 	var create = false;
-	if (page) {
-		page.locked = true;
-	} else if (this.count < this.max) {
+	if (this.count < this.max) {
 		this.count++;
 		create = true;
 	} else {
@@ -332,20 +326,18 @@ Pool.prototype.acquire = function(page, cb) {
 		}
 	}
 
-	if (page || create) {
-		if (page) {
-			this.release(page, function(err) {
-				page.locked = true;
-				cb(null, page);
-			});
-		} else if (create) {
-			WebKit(Dom.settings, function(err, page) {
-				if (err) return cb(err);
-				page.locked = true;
-				this.list.push(page);
-				cb(null, page);
-			}.bind(this));
-		}
+	if (page) {
+		this.release(page, function(err) {
+			page.locked = true;
+			cb(null, page);
+		});
+	} else if (create) {
+		WebKit(Dom.settings, function(err, page) {
+			if (err) return cb(err);
+			page.locked = true;
+			this.list.push(page);
+			cb(null, page);
+		}.bind(this));
 	} else {
 		this.queue.push(cb);
 		if (this.queue.length > (this.max * this.notices)) {
