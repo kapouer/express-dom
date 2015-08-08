@@ -233,7 +233,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 
 Handler.prototype.getUsed = function(author, url, req, res, cb) {
 	var h = this;
-	h.get(url, author, req, function(err, resource) {
+	h.get(url, author, res, function(err, resource) {
 		if (err) return cb(err);
 		if (resource.valid) {
 			debug("got valid user html", resource.key || resource.url);
