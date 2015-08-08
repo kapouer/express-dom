@@ -266,6 +266,8 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 				debug("user load", resource.key || resource.url, "with stall", opts.stall);
 				page.load(resource.url, opts);
 				h.processMw(page, resource, h.users, req, res);
+			} else {
+				debug("user already loaded", resource.key);
 			}
 			next();
 		});
