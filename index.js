@@ -196,31 +196,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 		}
 		resource.headers['Content-Type'] = 'text/html';
 		if (h.authors.before.length || h.authors.current.length || h.authors.after.length) {
-			Dom.pool.acquire(function(err, page) {
-				if (err) return cb(err);
-				debug('view.data length', view.data.length);
-				var opts = {
-					content: view.data,
-					console: true
-				};
-				if (!Dom.settings.debug) opts.style = Dom.settings.style;
-				debug('author preload', url);
-				page.preload(url, opts);
-				h.processMw(page, resource, h.authors, req, res);
-				page.when('idle', function(wcb) {
-					this.html(function(err, str) {
-						debug('author.data length', str && str.length);
-						Dom.pool.release(page, function(perr) {
-							if (err) return cb(err);
-							resource.data = str;
-							resource.valid = true;
-							resource.mtime = new Date();
-							resource.save(cb);
-						});
-						wcb();
-					});
-				});
-			});
+			h.buildAuthored(resource, view, url, req, res, cb);
 		} else {
 			debug("no author plugins");
 			resource.data = view.data;
@@ -228,6 +204,35 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 			resource.mtime = new Date();
 			resource.save(cb);
 		}
+	});
+};
+
+Handler.prototype.buildAuthored = function(resource, view, url, req, res, cb) {
+	var h = this;
+	Dom.pool.acquire(function(err, page) {
+		if (err) return cb(err);
+		debug('view.data length', view.data.length);
+		var opts = {
+			content: view.data,
+			console: true
+		};
+		if (!Dom.settings.debug) opts.style = Dom.settings.style;
+		debug('author preload', url);
+		page.preload(url, opts);
+		h.processMw(page, resource, h.authors, req, res);
+		page.when('idle', function(wcb) {
+			this.html(function(err, str) {
+				debug('author.data length', str && str.length);
+				Dom.pool.release(page, function(perr) {
+					if (err) return cb(err);
+					resource.data = str;
+					resource.valid = true;
+					resource.mtime = new Date();
+					resource.save(cb);
+				});
+				wcb();
+			});
+		});
 	});
 };
 
@@ -239,60 +244,65 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 			debug("got valid user html", resource.key || resource.url);
 			return cb(null, resource);
 		}
-		if (author.mtime > resource.mtime) {
-			debug('author is more recent than user, reload page', resource.url || resource.key);
-			delete resource.page;
+		h.buildUsed(resource, author, url, req, res, cb);
+	});
+};
+
+Handler.prototype.buildUsed = function(resource, author, url, req, res, cb) {
+	var h = this;
+	if (author.mtime > resource.mtime) {
+		debug('author is more recent than user, reload page', resource.url || resource.key);
+		delete resource.page;
+	}
+	if (resource.page) {
+		resource.page.locked = true;
+		debug("user page already loaded", resource.key);
+		next();
+	} else Dom.pool.acquire(function(err, page) {
+		if (err) return cb(err);
+		resource.page = page;
+		var opts = {};
+		var customFn;
+		for (var key in h.opts) {
+			if (key == 'params' && typeof h.opts[key] == 'function') customFn = h.opts[key];
+			else opts[key] = h.opts[key];
 		}
-		if (resource.page) {
-			resource.page.locked = true;
-			debug("user page already loaded", resource.key);
-			next();
-		} else Dom.pool.acquire(function(err, page) {
-			if (err) return cb(err);
-			resource.page = page;
-			var opts = {};
-			var customFn;
-			for (var key in h.opts) {
-				if (key == 'params' && typeof h.opts[key] == 'function') customFn = h.opts[key];
-				else opts[key] = h.opts[key];
-			}
-			if (customFn) customFn(opts, req);
-			if (!opts.content) {
-				debug('use author data length', author.data.length);
-				opts.content = author.data;
-			} else {
-				debug('use content from customFn data length', opts.content.length);
-			}
-			for (var k in Dom.settings) if (Dom.settings.hasOwnProperty(k) && opts[k] === undefined) {
-				opts[k] = Dom.settings[k];
-			}
-			debug("user load", resource.key || resource.url, "with stall", opts.stall);
-			page.load(resource.url, opts);
-			h.processMw(page, resource, h.users, req, res);
-			next();
-		});
-		function next(err) {
+		if (customFn) customFn(opts, req);
+		if (!opts.content) {
+			debug('use author data length', author.data.length);
+			opts.content = author.data;
+		} else {
+			debug('use content from customFn data length', opts.content.length);
+		}
+		for (var k in Dom.settings) if (Dom.settings.hasOwnProperty(k) && opts[k] === undefined) {
+			opts[k] = Dom.settings[k];
+		}
+		debug("user load", resource.key || resource.url, "with stall", opts.stall);
+		page.load(resource.url, opts);
+		h.processMw(page, resource, h.users, req, res);
+		next();
+	});
+	function next(err) {
+		if (err) console.trace(err);
+		if (err) return cb(err);
+		resource.mtime = new Date();
+		resource.headers['Content-Type'] = 'text/html';
+		var page = resource.page;
+		if (!page) return cb(new Error("resource.page is missing for\n" + resource.key));
+		resource.output(page, function(err, str) {
+			Dom.pool.unlock(page, function(resource) {
+				// breaks the link when the page is recycled
+				debug("unlocked page removed from resource", resource.key || resource.url);
+				delete resource.page;
+			}.bind(this, resource));
 			if (err) console.trace(err);
 			if (err) return cb(err);
-			resource.mtime = new Date();
-			resource.headers['Content-Type'] = 'text/html';
-			var page = resource.page;
-			if (!page) return cb(new Error("resource.page is missing for\n" + resource.key));
-			resource.output(page, function(err, str) {
-				Dom.pool.unlock(page, function(resource) {
-					// breaks the link when the page is recycled
-					debug("unlocked page removed from resource", resource.key || resource.url);
-					delete resource.page;
-				}.bind(this, resource));
-				if (err) console.trace(err);
-				if (err) return cb(err);
-				debug('got html', resource.key || resource.url);
-				resource.data = str;
-				resource.valid = true;
-				resource.save(cb);
-			});
-		}
-	});
+			debug('got html', resource.key || resource.url);
+			resource.data = str;
+			resource.valid = true;
+			resource.save(cb);
+		});
+	}
 };
 
 Handler.prototype.processMw = function(page, resource, mwObj, req, res) {
