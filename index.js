@@ -313,6 +313,7 @@ function Pool(cacheSize) {
 
 Pool.prototype.acquire = function(cb) {
 	var create = false;
+	var page;
 	if (this.count < this.max) {
 		this.count++;
 		create = true;
