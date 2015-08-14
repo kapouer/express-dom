@@ -8,6 +8,7 @@ dom.settings.stall = 1000;
 dom.settings.allow = 'all';
 dom.settings.timeout = 10000;
 dom.settings.console = true;
+dom.settings.verbose = true;
 
 describe("Time management", function suite() {
 	this.timeout(10000);
