@@ -17,7 +17,7 @@ function pagePluginTest(page, plugin, ev) {
 			var el = document && document.getElementById(plugin + ev);
 			if (!el) console.error("ready event but NOT INTERACTIVE", document.readyState);
 			try {
-				el.innerText = plugin + " " + ev;
+				el.innerHTML = plugin + " " + ev;
 			} catch(e) {
 				console.error(plugin, ev, !!document, !!document.documentElement, e.toString());
 				if (!el) console.log(document.documentElement.outerHTML);
