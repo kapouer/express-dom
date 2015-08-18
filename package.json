@@ -30,7 +30,7 @@
   "dependencies": {
     "debug": "^2.1.3",
     "request": "^2.47.0",
-    "webkitgtk": "^2.1.0"
+    "webkitgtk": "^2.2.0"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
