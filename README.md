@@ -1,6 +1,14 @@
 express-dom
 ===========
 
+Express middleware rendering front-end web pages using DOM.
+
+Author and user plugins can be added, allowing global or per-page
+transformations.
+
+Works with [node-webkitgtk](https://github.com/kapouer/node-webkitgtk),
+which has a fallback to jsdom in case webkitgtk bindings are not buildable.
+
 /this documentation is a work-in-progress.../
 
 Extensible web page builder proxy with client browser environment for express.
