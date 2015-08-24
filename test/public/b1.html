@@ -2,7 +2,9 @@
 <html>
 	<head>
 		<script type="text/javascript">
-			document.addEventListener('DOMContentLoaded', function() {
+			if (document.readyState != "loading") ready();
+			else document.addEventListener('DOMContentLoaded', ready, false);
+			function ready() {
 				setInterval(function() {
 						document.querySelector('.shouldstaythesame').innerHTML = 'to' + 'to';
 				}, 150000);
@@ -13,7 +15,7 @@
 					clearInterval(id);
 				}, 150);
 				// The value of 200 is arbitrary, set in Express-Dom.
-			}, false);
+			}
 		</script>
 	</head>
 	<body>
