@@ -233,6 +233,7 @@ Handler.prototype.buildAuthored = function(resource, view, url, req, res, cb) {
 				wcb();
 			});
 		});
+		page.preload(url, opts);
 	});
 };
 
