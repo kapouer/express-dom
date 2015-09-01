@@ -65,9 +65,13 @@ exports.nostylesheets = function(page) {
 	// Accept text/html is for the document
 	// loading images automatically is disabled by default in express-dom
 	// everything else is allowed
-	page.on('request', function(req) {
-		var accept = req.headers.Accept;
-		if (accept && accept.split(',').shift() == "text/css") req.cancel = true;
+	page.filters.push(function() {
+		var accept = this.headers.Accept;
+		if (accept) {
+			if (accept.split(',').shift() == "text/css") this.cancel = true;
+		} else if (/.css(\?.*)?$/.test(this.uri)) {
+			this.cancel = true;
+		}
 	});
 };
 
