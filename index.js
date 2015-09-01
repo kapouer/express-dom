@@ -218,7 +218,8 @@ Handler.prototype.buildAuthored = function(resource, view, url, req, res, cb) {
 		};
 		if (!Dom.settings.debug) opts.style = Dom.settings.style;
 		debug('author preload', url);
-		page.preload(url, opts);
+		page.filters = [];
+		page.prepare();
 		h.processMw(page, resource, h.authors, req, res);
 		page.when('idle', function(wcb) {
 			this.html(function(err, str) {
@@ -278,9 +279,13 @@ Handler.prototype.buildUsed = function(resource, author, url, req, res, cb) {
 		for (var k in Dom.settings) if (Dom.settings.hasOwnProperty(k) && opts[k] === undefined) {
 			opts[k] = Dom.settings[k];
 		}
+		page.filters = [];
+		page.prepare();
+		h.processMw(page, resource, h.users, req, res);
+		opts.filters = (opts.filters || []).concat(page.filters);
+
 		debug("user load", resource.key || resource.url, "with stall", opts.stall);
 		page.load(resource.url, opts);
-		h.processMw(page, resource, h.users, req, res);
 		next();
 	});
 	function next(err) {
