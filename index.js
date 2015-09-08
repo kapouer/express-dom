@@ -361,7 +361,7 @@ Pool.prototype.acquire = function(cb) {
 			cb(null, page);
 		}.bind(this));
 	} else {
-		this.queue.push(cb);
+		this.queue.push({ts: Date.now(), cb: cb});
 		if (this.queue.length > (this.max * this.notices)) {
 			this.notices++;
 			console.info("express-dom", this.queue.length, "queued acquisitions - consider raising dom.settings.max above", this.max);
@@ -393,7 +393,11 @@ Pool.prototype.release = function(page, cb) {
 
 Pool.prototype.process = function() {
 	var next = this.queue.shift();
-	if (next) this.acquire(next);
+	if (next) {
+		var diff = Date.now() - next.ts;
+		if (diff > 1000) console.info("Took", diff + "ms", "to acquire a page");
+		this.acquire(next.cb);
+	}
 };
 
 function SimpleResource(url) {
