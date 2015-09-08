@@ -378,15 +378,14 @@ Pool.prototype.unlock = function(page, unlockCb) {
 
 Pool.prototype.release = function(page, cb) {
 	page.locked = true;
+	if (page.unlock) {
+		debug("release call page.unlock");
+		page.unlock();
+		delete page.unlock;
+	}
 	page.unload(function(err) {
 		page.locked = false;
-		if (err) return cb(err);
-		if (page.unlock) {
-			debug("release call page.unlock");
-			page.unlock();
-			delete page.unlock;
-		}
-		if (cb) cb(); // important because locked just after
+		if (cb) cb(err);
 		setImmediate(this.process.bind(this));
 	}.bind(this));
 };
