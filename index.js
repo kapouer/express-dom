@@ -394,7 +394,7 @@ Pool.prototype.process = function() {
 	var next = this.queue.shift();
 	if (next) {
 		var diff = Date.now() - next.ts;
-		if (diff > 1000) console.info("Took", diff + "ms", "to acquire a page");
+		if (diff > 5000) console.info("Took", diff + "ms", "to acquire a page");
 		this.acquire(next.cb);
 	}
 };
