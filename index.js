@@ -256,7 +256,12 @@ Handler.prototype.buildUsed = function(resource, author, url, req, res, cb) {
 		debug('author is more recent than user, reload page', resource.url || resource.key);
 		delete resource.page;
 	}
-	if (resource.page) {
+	var prevPage = resource.page;
+	if (prevPage && prevPage.readyState == "unloading") {
+		console.error("* A live page is unloading but still bound to the resource, it must not happen");
+		prevPage = false;
+	}
+	if (prevPage) {
 		resource.page.locked = true;
 		debug("user page already loaded", resource.key);
 		next();
