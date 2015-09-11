@@ -26,7 +26,7 @@ Extensible web page builder proxy with client browser environment for express.
 This is an example of a service that renders a given url, remove all scripts,
 and change all src, href attributes to their absolute versions:
 
-http://html.eda.sarl/http://material-ui.com/
+http://html.eda.sarl/?url=http://material-ui.com/
 
 (result is cached)
 
