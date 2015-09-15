@@ -11,7 +11,7 @@ var Dom = module.exports = function(model, opts) {
 	}
 	var h = Dom.handlers[model];
 	if (h) return h.chainable;
-	var h = new Handler(model, opts);
+	h = new Handler(model, opts);
 	Dom.handlers[model] = h;
 	return h.chainable;
 };
@@ -107,7 +107,7 @@ Handler.prototype.middleware = function(req, res, next) {
 		var root = req.app.get('statics');
 		if (!root) return next(new Error("Cannot find view, undefined 'statics' application setting"));
 		if (!path) path = "index";
-		var path = Path.resolve(root, path);
+		path = Path.resolve(root, path);
 		if (path.indexOf(root) !== 0) return next(new Error("Path outside statics dir\n" + path));
 		if (path.slice(-1) == "/") path += "index";
 		if (Path.extname(path) != ".html") path += ".html";
@@ -224,7 +224,7 @@ Handler.prototype.buildAuthored = function(resource, view, url, req, res, cb) {
 		page.when('idle', function(wcb) {
 			this.html(function(err, str) {
 				debug('author.data length', str && str.length);
-				Dom.pool.release(page, function(perr) {
+				Dom.pool.release(page, function() {
 					if (err) return cb(err);
 					resource.data = str;
 					resource.valid = true;
@@ -349,7 +349,7 @@ Pool.prototype.acquire = function(cb) {
 	}
 
 	if (page) {
-		this.release(page, function(err) {
+		this.release(page, function() {
 			page.locked = true;
 			cb(null, page);
 		});

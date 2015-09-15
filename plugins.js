@@ -1,5 +1,4 @@
 var URL = require('url');
-var Path = require('path');
 
 exports.absolute = function(page) {
 	page.when('ready', function(cb) {
