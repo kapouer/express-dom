@@ -146,7 +146,7 @@ Handler.prototype.finish = function(user, res) {
 			res.set(name, user.headers[name]);
 		}
 	}
-	if (user.mtime) res.set('Last-Modified', user.mtime.toUTCString());
+	if (user.mtime) res.set('Last-Modified', new Date(user.mtime).toUTCString());
 	res.send(user.data);
 	debug('page sent', user.url, user.headers);
 };
@@ -164,7 +164,7 @@ Handler.prototype.getView = function(url, req, res, cb) {
 			if (!err || body) {
 				resource.data = body;
 				resource.valid = true;
-				resource.mtime = new Date();
+				resource.mtime = new Date().toISOString();
 				resource.save(cb);
 			}	else {
 				if (!err) err = new Error("Empty initial html in " + url);
@@ -201,7 +201,7 @@ Handler.prototype.getAuthored = function(view, url, req, res, cb) {
 			debug("no author plugins");
 			resource.data = view.data;
 			resource.valid = true;
-			resource.mtime = new Date();
+			resource.mtime = new Date().toISOString();
 			resource.save(cb);
 		}
 	});
@@ -228,7 +228,7 @@ Handler.prototype.buildAuthored = function(resource, view, url, req, res, cb) {
 					if (err) return cb(err);
 					resource.data = str;
 					resource.valid = true;
-					resource.mtime = new Date();
+					resource.mtime = new Date().toISOString();
 					resource.save(cb);
 				});
 				wcb();
@@ -252,7 +252,7 @@ Handler.prototype.getUsed = function(author, url, req, res, cb) {
 
 Handler.prototype.buildUsed = function(resource, author, url, req, res, cb) {
 	var h = this;
-	if (author.mtime > resource.mtime) {
+	if (Date.parse(author.mtime) > Date.parse(resource.mtime)) {
 		debug('author is more recent than user, reload page', resource.url || resource.key);
 		delete resource.page;
 	}
@@ -296,7 +296,7 @@ Handler.prototype.buildUsed = function(resource, author, url, req, res, cb) {
 	function next(err) {
 		if (err) console.trace(err);
 		if (err) return cb(err);
-		resource.mtime = new Date();
+		resource.mtime = new Date().toISOString();
 		resource.headers['Content-Type'] = 'text/html';
 		var page = resource.page;
 		if (!page) return cb(new Error("resource.page is missing for\n" + resource.key));
