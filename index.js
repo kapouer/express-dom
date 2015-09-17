@@ -328,6 +328,7 @@ Handler.prototype.processMw = function(page, resource, mwObj, req, res) {
 
 function Pool(opts) {
 	this.list = [];
+	this.count = 0;
 	this.max = opts.max || 8;
 	this.notices = 1;
 	this.queue = [];
@@ -356,13 +357,17 @@ Pool.prototype.wipe = function() {
 		}
 	}
 	// in case desstroy calls have been made
-	if (nlist.length != this.list.length) this.list = nlist;
+	if (nlist.length != this.list.length) {
+		this.list = nlist;
+		this.count = this.list.length;
+	}
 };
 
 Pool.prototype.acquire = function(cb) {
 	var create = false;
 	var page;
-	if (this.list.length < this.max) {
+	if (this.count < this.max) {
+		this.count++;
 		create = true;
 	} else {
 		for (var i=0; i < this.list.length; i++) {
