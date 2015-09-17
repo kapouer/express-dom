@@ -6,7 +6,7 @@ var WebKit = require('webkitgtk');
 
 var Dom = module.exports = function(model, opts) {
 	if (!Dom.pool) {
-		Dom.pool = new Pool(Dom.settings.max);
+		Dom.pool = new Pool(Dom.settings);
 		Dom.handlers = {}; // hash to store each view <-> middleware handler
 	}
 	var h = Dom.handlers[model];
@@ -20,6 +20,8 @@ Dom.Handler = Handler;
 
 Dom.settings = {
 	max: 16,
+	destroyTimeout: 600000,
+	idleTimeout: 180000,
 	display: process.env.DISPLAY || 0,
 	style: fs.readFileSync(__dirname + '/index.css'),
 	debug: !!process.env.INSPECTOR,
@@ -324,13 +326,42 @@ Handler.prototype.processMw = function(page, resource, mwObj, req, res) {
 };
 
 
-function Pool(cacheSize) {
+function Pool(opts) {
 	this.list = [];
-	this.max = cacheSize;
-	this.notices = 1;
 	this.count = 0;
+	this.max = opts.max || 8;
+	this.notices = 1;
 	this.queue = [];
+	this.destroyTimeout = opts.destroyTimeout || 600000; // destroy the page if not used for that time
+	this.idleTimeout = opts.idleTimeout || 180000; // unload the page if not used for that time
+	setInterval(this.wipe.bind(this), this.idleTimeout / 4);
 }
+
+Pool.prototype.wipe = function() {
+	var now = Date.now();
+	var page;
+	var nlist = [];
+	for (var i=0; i < this.list.length; i++) {
+		page = this.list[i];
+		nlist.push(page);
+		if (page.locked) continue;
+		if (page.releaseTime) {
+			if (now > page.releaseTime + this.destroyTimeout) {
+				nlist.pop();
+				page.destroy(function(err) {
+					if (err) console.error(err);
+				});
+			}
+		} else if (page.pingTime && now > page.pingTime + this.idleTimeout) {
+			this.release(page);
+		}
+	}
+	// in case desstroy calls have been made
+	if (nlist.length != this.list.length) {
+		this.list = nlist;
+		this.count = this.list.length;
+	}
+};
 
 Pool.prototype.acquire = function(cb) {
 	var create = false;
@@ -351,6 +382,7 @@ Pool.prototype.acquire = function(cb) {
 	if (page) {
 		this.release(page, function() {
 			page.locked = true;
+			delete page.releaseTime;
 			cb(null, page);
 		});
 	} else if (create) {
@@ -378,6 +410,7 @@ Pool.prototype.unlock = function(page, unlockCb) {
 
 Pool.prototype.release = function(page, cb) {
 	page.locked = true;
+	page.releaseTime = Date.now();
 	if (page.unlock) {
 		debug("release call page.unlock");
 		page.unlock();
@@ -409,6 +442,7 @@ SimpleResource.prototype.save = function(cb) {
 
 SimpleResource.prototype.output = function(page, cb) {
 	page.when('idle', function(wcb) {
+		page.pingTime = Date.now();
 		this.html(function(err, str) {
 			wcb();
 			cb(err, str);
