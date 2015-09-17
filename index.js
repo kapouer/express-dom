@@ -383,6 +383,7 @@ Pool.prototype.acquire = function(cb) {
 		this.release(page, function() {
 			page.locked = true;
 			delete page.releaseTime;
+			delete page.pingTime;
 			cb(null, page);
 		});
 	} else if (create) {
