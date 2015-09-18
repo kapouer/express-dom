@@ -303,6 +303,7 @@ Handler.prototype.buildUsed = function(resource, author, url, req, res, cb) {
 		var page = resource.page;
 		if (!page) return cb(new Error("resource.page is missing for\n" + resource.key));
 		resource.output(page, function(err, str) {
+			page.pingTime = Date.now();
 			Dom.pool.unlock(page, function(resource) {
 				// breaks the link when the page is recycled
 				debug("unlocked page removed from resource", resource.key || resource.url);
@@ -443,7 +444,6 @@ SimpleResource.prototype.save = function(cb) {
 
 SimpleResource.prototype.output = function(page, cb) {
 	page.when('idle', function(wcb) {
-		page.pingTime = Date.now();
 		this.html(function(err, str) {
 			wcb();
 			cb(err, str);
