@@ -357,7 +357,7 @@ Pool.prototype.wipe = function() {
 			this.release(page);
 		}
 	}
-	// in case desstroy calls have been made
+	// in case destroy calls have been made
 	if (nlist.length != this.list.length) {
 		this.list = nlist;
 		this.count = this.list.length;
