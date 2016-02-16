@@ -3,122 +3,219 @@ express-dom
 
 Express middleware rendering web pages in a hosted web browser.
 
-Works with [node-webkitgtk](https://github.com/kapouer/node-webkitgtk),
-which falls back to jsdom in case webkitgtk bindings are not buildable.
+Uses [node-webkitgtk](https://github.com/kapouer/node-webkitgtk)
+which supports a fallback to [jsdom](https://github.com/tmpvar/jsdom)
+when the c++ bindings are not builded - in which case some features
+are disabled like pdf/png output.
 
-# Demo
+The webkitgtk bindings are slower to jumpstart, but faster and more resistant
+on heavy loads, while jsdom is way faster to start, but eats more memory and
+is slower, less stable on heavy loads. A planned feature is to allow switching
+from one backend to the other easily.
 
-This is an example of a service that renders a given url, remove all scripts,
-and change all src, href attributes to their absolute versions:
 
-http://html.eda.sarl/?url=http://material-ui.com/
+## Synopsis
 
-(result is cached)
-
-# Synopsis
+The simplest example for web page rendering is:
 
 ```js
 var app = require('express')();
 var dom = require('express-dom');
 
-app.set('statics', __dirname + '/public');
-app.get('*.*',
-	express.static(app.get('statics')),
-	function(req, res, next) {
-		console.info("File not found", req.path);
-		res.sendStatus(404);
-	}
+app.get(
+	dom('index.html')		// initialize handler and set html source
+	.load()		 	// load DOM, run the scripts, wait for idle, render and send result
 );
-app.get('/mypage.html', dom.preload('mypage').use('insertion', linkInsertPlugin));
-app.get('/mypage', dom.load('mypage').use('absolutize', absoluteLinksPlugin));
+
 ```
 
-# Example
+## Methods
 
-See sample application in example/ dir.
+* dom(string | buffer)  
+  where the string or buffer is a file path or starts with a '<'
+  and is seen as an html string.  
+  Returns a middleware that expect (req, res, next).  
+  If prepare or load are not called, will call res.send with the content
+  represented by the argument (the content of the file, or the html string).
 
-# API
+* .prepare(opts?, plugin, ...)  
+  load the DOM but no embedded scripts are run, and no assets are loaded.  
+  All arguments are optional. See below for description.  
+  Function plugin argument(s) are appended to the default list of plugins,
+  or to the list given in opts.plugins.
 
-* dom.preload(static file | html string | buffer, opts)  
-  loads the argument into a DOM, without loading any of its assets.  
-  When all plugins are done, serializes the DOM and send it to the response.  
-  returns a middleware function.
+* .load(opts?, plugin, ...)  
+  load the DOM and run the scripts.  
+  All arguments are optional. See below for description.  
+  Function plugin argument(s) are appended to the default list of plugins,
+  or to the list given in opts.plugins.
 
-* dom.load(static file | html string | buffer, opts)  
-  loads the argument in a DOM and let scripts from the same domain run.  
-  When all plugins are done, and `idle` event (see webkitgtk) is reached,
-  serializes the DOM and send it to the response.  
-  returns a middleware function.
+* dom.acquire(page, cb*)  
+  global method, usually called by the middleware, but exposed just in case.
 
-* dom.settings  
-  object passed to webkitgtk init(settings) function, of particular
-  interest are the `display` and `debug` options. See *webkitgtk* docs.  
-  It can also set webkitgtk instances pool settings, see *generic-pool* docs.
-
-* .use(<name>, plugin), .unuse(name | function)
-  Where plugin(page) and page is a webkitgtk instance.  
-  An optional name can be given, for book keeping.  
-  Chainable helper that adds or remove a plugin from .plugins array.  
-  The two methods and the array are available on the middleware function,
-  and on the two global scopes dom.load, dom.build.
-
-The options passed to dom.load or dom.build are directly passed to the
-.preload or .load functions of webkitgtk:
-- images are not loaded automatically, disable with {images: true}
-- document is not rendered, disable with {style: "" }
-- stylesheets are not loaded, disable with .unuse('nostylesheets') called
-on mw to disable it for that request, or dom.build to disable it globally.
+* dom.release(page, cb*)  
+  global method, should be called by the plugin that calls res.end (directly or not).
 
 
-# handling redirections
+## Options
 
-When a web page loads, one of its script can set the document location to a
-new url.
-Express-dom handles this by simply:
-- forbidding the redirection
-- sending 302 <newurl> to the response
+The global default values for these options can be changed using `dom.settings`.
+each dom middleware handler created using dom() has also a copy `dom().settings`.
 
-This behavior covers most use-cases of isomorphic web pages.
+* plugins  
+  sets the list of plugins, can be a single function. See below.
+
+* pool.max  
+  the maximum number of instances in the pool
+
+* pool.destroyTimeout  
+  destroys pages that have not been used for that long milliseconds
+
+* pool.idleTimeout  
+  unloads pages that have not been used for that long milliseconds
+
+Other options are passed directly to webkitgtk, like these ones:
+
+* display  
+  like X DISPLAY env variable
+
+* stall  
+  milliseconds before a resource is no more taken into account for idle event
+
+* console  
+  boolean, console on stdout or not
+
+* runTimeout  
+  milliseconds before a script run by a plugin is considered dead.
+
+...more options are documented in `webkitgtk` module.
 
 
-# Usage
+## Plugins
+
+This is the default list of plugins:
+
+```
+plugins: [dom.plugins.nocss, dom.plugins.redirect, dom.plugins.html]
+
+```
+
+It is possible to replace it entirely by setting the `plugins` option:
+`dom('index').load({plugins: [dom.plugins.html]})`
+
+or one can append plugins to the list using additional arguments:
+`dom(index).load({pool: {max:2}}, dom.plugins.mount)`
+
+A plugin is function that can do anything on the page instance, its settings
+before it is loaded, and on the state object used to send the result to the
+response:
+
+`function myplugin(page, settings, state) { ... }`
+
+The settings have the expected format above,
+and the state is an object with the following keys:
+
+* url  
+  the current request url, the absolute version
+
+* data  
+  the response data, but it follows the same semantics as dom(input), as it
+  is possible to set a local path, a buffer, or a string starting with &lt;
+
+* headers  
+  the response headers, defaults to Content-Type: text/html.
+
+* status  
+  optional response status code
+
+
+## Examples
+
+Here a script tag is added on the DOM before the page is loaded:
 
 ```js
-dom.author(aGlobalAuthorPlugin);
+var app = require('express')();
+var dom = require('express-dom');
 
-app.get('/mypage', dom.load('myview').use(function(page) {
-	page.on('request', function(req) {
-		// do not wait for socket.io xhr requests responses to emit idle
-		if (req.uri.indexOf('socket.io') > 0) req.ignore = true;
-	});
-	page.wait('ready').run(function(param, done) {
-	  // this runs in the browser
-	  var allimages = document.querySelectorAll('img');
-	  Array.prototype.slice.call(allimages).forEach(function(node) {
-			node.setAttribute('data-src', node.src);
-			node.src = null;
+dom.settings.display = "99"; // optional, here we already had a xvfb server
+
+app.get(
+	dom('index.html')		// initialize handler and set html source
+	.prepare(function(page) {
+		// async event
+		page.when('ready', function(cb) {
+			page.run(function(src) {
+					document.head.insertAdjacentHTML('beforeend', `<script src="${src}"></script>`);
+				},
+				['/js/test.js'], // parameters are passed as arguments
+				cb
+			);						 // never forget to call back
 		});
-		done(null, allimages.length);
-	}, "someconfig", function(err, countImages) {
-	  // this runs in the node process
-	  done(err);
-	});
-}));
+	}) 					// load DOM without assets, do not run inline scripts either
+	.load()			// load DOM and render
+);
+
 ```
 
-# Debugging
+
+Here a PDF is sent as output instead of HTML (requires webkitgtk bindings):
+
+```js
+var app = require('express')();
+var dom = require('express-dom');
+
+app.get(
+	dom('index.html')		// initialize handler and set html source
+	.load({
+		plugins: function(page, settings, state) {
+			page.when('idle', function(cb) {
+				var filepath = './cache/${Date.now()}.pdf';
+				page.pdf(filepath, function(err) {
+					if (err) {
+						state.status = 500;
+						state.data = err;
+					} else {
+						state.data = filepath;
+					}
+					cb(); // it is important to all after setting state object
+				});
+			});
+		}
+	})
+);
+
+```
+
+Note that 
+
+`.load({plugins: [myplugin]})` is the same as `.load({plugins:[]}, myplugin)`.
+
+
+## Redirection when document.location is set from a script in the page
+
+This behavior is implemented by the dom.plugins.redirect plugin.
+
+When a web page loads, one of its script can set document.location.
+
+When this happens, it triggers this behavior:
+- location does not change to newLocation, and the page is simply unloaded
+- res.redirect(302, newLocation) is called
+
+This behavior covers most use-cases of isomorphic web pages, see
+the wiki for more information.
+
+
+## Debugging (experimental)
 
 It should be possible to display the webkitgtk inspector (if the bindings are
 available of course): set environment variable INSPECTOR to something not empty,
 like `INSPECTOR=1 node app.js`, which in turn sets `dom.settings.debug` to true.
 
-
-# Use cases
-
-The wiki discusses some use cases for building isomorphic web pages.
+The best way to debug the web page is to disable .load() calls and let the
+page be rendered on client browser.
 
 
-# License
+## License
 
 MIT License, see LICENSE file.
 

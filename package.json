@@ -1,7 +1,7 @@
 {
   "name": "express-dom",
-  "version": "3.1.5",
-  "description": "Extensible web page builder proxy with client browser environment for express.",
+  "version": "4.0.0",
+  "description": "Prepare, render web pages - express middleware",
   "main": "index.js",
   "scripts": {
     "test": "mocha -R spec"
@@ -11,16 +11,12 @@
     "url": "git://github.com/kapouer/express-dom.git"
   },
   "keywords": [
-    "template",
     "DOM",
     "browser",
-    "build",
-    "minify",
-    "optimize",
-    "client",
+    "plugins",
     "hosted",
     "express",
-    "mvc"
+    "isomorphic"
   ],
   "author": "Jérémy Lal <kapouer@melix.org>",
   "license": "MIT",
@@ -29,8 +25,7 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "request": "^2.61.0",
-    "webkitgtk": "^3.0.3"
+    "webkitgtk": "^3.5.0"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
