@@ -32,11 +32,10 @@ app.get(
 ## Methods
 
 * dom(string | buffer)  
-  where the string or buffer is a file path or starts with a '<'
-  and is seen as an html string.  
+  a buffer or a string that starts with &lt; are seen as html content,
+  any other is interpreted as a local path and content loaded from it.  
   Returns a middleware that expect (req, res, next).  
-  If prepare or load are not called, will call res.send with the content
-  represented by the argument (the content of the file, or the html string).
+  If not other methods are called, the middleware just sends that content.
 
 * .prepare(opts?, plugin, ...)  
   load the DOM but no embedded scripts are run, and no assets are loaded.  
