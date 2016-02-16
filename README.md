@@ -214,8 +214,8 @@ Start with
 
 A non-empty DEBUG environment value will log browser console to stdout.
 
-To debug the web page itself, just remove .load() calls and let the page
-be rendered on your usual browser.
+To debug the web page itself, settting environment variable `DEVELOP=1` will
+disable .load() calls, meaning pages are not rendered, nor custom plugins applied.
 
 
 ## License
