@@ -51,10 +51,10 @@ app.get(
   or to the list given in opts.plugins.
 
 * dom.acquire(page, cb*)  
-  global method, usually called by the middleware, but exposed just in case.
+  global method, called internally, exposed for convenience.
 
 * dom.release(page, cb*)  
-  global method, should be called by the plugin that calls res.end (directly or not).
+  global method, called internally, exposed for convenience.  
 
 
 ## Options
