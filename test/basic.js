@@ -94,6 +94,18 @@ describe("Basic functionnalities", function suite() {
 		});
 	});
 
+	it("should redirect because client script sets document.location", function(done) {
+		request({
+			method: 'GET',
+			url: host + ':' + port + '/a5.html',
+			followRedirect: false
+		}, function(err, res, body) {
+			expect(res.statusCode).to.be(302);
+			expect(res.headers.location).to.be(host + ':' + port + '/newloc.html');
+			done();
+		});
+	});
+
 
 });
 

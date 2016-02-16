@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript">
+		document.addEventListener('DOMContentLoaded', function() {
+			$.get('a4.json').success(function(obj) {
+				$('.me').text(obj.test);
+				document.location = "newloc.html";
+			});
+		}, false);
+		</script>
+	</head>
+	<body>
+		<div class="me">tata</div>
+	</body>
+</html>
