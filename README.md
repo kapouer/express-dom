@@ -112,17 +112,31 @@ A plugin is function that can do anything on the page instance, its settings
 before it is loaded, and on the state object used to send the result to the
 response:
 
-`function myplugin(page, settings, state) { ... }`
+`function myplugin(page, settings, request, response) { ... }`
 
-The settings have the expected format above,
-and the state is an object with the following keys:
+The settings have the expected format above.
+
+Request object is:
 
 * location  
   the current request url components (protocol, host, pathname, query)  
   Can be modified by plugins, `URL.format(state.location)` will be used as
   the document location.
 
-* data  
+* input  
+  the input data that will be parsed to a DOM.  
+  Freed after usage.
+
+* statics  
+  the statics express root dir, usefull to find files given a local path
+
+* headers (read-only)  
+  the request headers (with the lower-cased keys)
+
+
+Response object is:
+
+* output  
   the response data, can be a buffer, a Readable stream, a string starting
   with &lt;, or a local file path.
 
@@ -131,6 +145,12 @@ and the state is an object with the following keys:
 
 * status  
   optional response status code
+
+Request and response objects are not express req, res instances.
+
+This is made to avoid confusion between what dom plugins see and what
+express middleware see. It is always possible to wrap the dom() calls
+in a middleware to gain access to req, res.
 
 
 ## Examples

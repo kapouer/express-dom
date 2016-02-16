@@ -22,11 +22,9 @@ describe("Miscellaneous tries", function suite() {
 		});
 
 		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
-		app.get(/\.html$/, function(req, res, next) {
-			dom().load({
-				'default-charset': req.get('accept-charset')
-			})(req, res, next);
-		});
+		app.get(/\.html$/, dom().load(function(p, s, request) {
+			s['default-charset'] = request.headers['accept-charset'];
+		}));
 
 		server = app.listen(function(err) {
 			if (err) console.error(err);

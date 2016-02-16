@@ -7,9 +7,9 @@ app.get('*', function(req, res, next) {
 	if (!url) return res.sendStatus(404);
 	dom(request(url)).load({
 		plugins: dom.plugins.png
-	}, function(page, state) {
+	}, function(page, settings, request) {
 		// make sure the page is hosted with the remote url, not the localhost one
-		state.location = URL.parse(url);
+		request.location = URL.parse(url);
 	})(req, res, next);
 });
 
