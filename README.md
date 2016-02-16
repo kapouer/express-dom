@@ -204,14 +204,15 @@ This behavior covers most use-cases of isomorphic web pages, see
 the wiki for more information.
 
 
-## Debugging (experimental)
+## Debugging
 
-It should be possible to display the webkitgtk inspector (if the bindings are
-available of course): set environment variable INSPECTOR to something not empty,
-like `INSPECTOR=1 node app.js`, which in turn sets `dom.settings.debug` to true.
+Start with
+`DEBUG=express-dom node app.js`
 
-The best way to debug the web page is to disable .load() calls and let the
-page be rendered on client browser.
+A non-empty DEBUG environment value will log browser console to stdout.
+
+To debug the web page itself, just remove .load() calls and let the page
+be rendered on your usual browser.
 
 
 ## License
