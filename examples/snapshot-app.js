@@ -9,6 +9,7 @@ app.get('*', function(req, res, next) {
 		plugins: dom.plugins.png
 	}, function(page, settings, request) {
 		// make sure the page is hosted with the remote url, not the localhost one
+		settings.allow = 'all';
 		request.location = URL.parse(url);
 	})(req, res, next);
 });
