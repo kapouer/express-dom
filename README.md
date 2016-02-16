@@ -32,7 +32,7 @@ app.get('*.html', dom().load());
   a buffer, a Readable stream, a string that starts with &lt;, or a local file path.  
   If empty, uses current request to find local file path from app statics dir.  
   Returns a middleware that expect (req, res, next).  
-  If not other methods are called, the middleware just sends that content.
+  If no other methods are called, the middleware just sends that content.
 
 * .prepare(opts?, plugin, ...)  
   load the DOM but no embedded scripts are run, and no assets are loaded.  
