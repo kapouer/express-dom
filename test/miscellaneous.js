@@ -23,7 +23,9 @@ describe("Miscellaneous tries", function suite() {
 
 		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
 		app.get(/\.html$/, function(req, res, next) {
-			dom(req.path.substring(1))(req, res, next);
+			dom().load({
+				'default-charset': req.get('accept-charset')
+			})(req, res, next);
 		});
 
 		server = app.listen(function(err) {
@@ -41,7 +43,7 @@ describe("Miscellaneous tries", function suite() {
 
 
 // Miscellaneous d0
-	it("should understand unmarqued string as utf8 (default)", function(done) {
+	it("should understand string as utf8 (default)", function(done) {
 		request({
 			method: 'GET',
 			url: host + ':' + port + '/d0.html'
@@ -52,11 +54,13 @@ describe("Miscellaneous tries", function suite() {
 	});
 
 // Miscellaneous d1
-	it("should understand unmarqued string as iso-8859-1 when charset set so", function(done) {
-		dom.settings.charset = "iso-8859-1";
+	it("should understand string as iso-8859-1 when charset set accordingly", function(done) {
 		request({
 			method: 'GET',
-			url: host + ':' + port + '/d0.html'
+			url: host + ':' + port + '/d0.html',
+			headers: {
+				"Accept-Charset": "iso-8859-1"
+			}
 		}, function(err, res, body) {
 			expect(body.indexOf('Ã©Ã¨')).to.be.greaterThan(0);
 			done();

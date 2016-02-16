@@ -9,7 +9,7 @@ dom.settings.allow = 'all';
 dom.settings.timeout = 900000;
 dom.settings.stallTimeout = 200; // the value used in the tests
 dom.settings.console = true;
-dom.settings.max = 8;
+dom.settings.pool.max = 8;
 require('http').globalAgent.maxSockets = 500;
 
 
@@ -27,9 +27,7 @@ describe("Loading ressources", function suite() {
 		});
 		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
 		var count = 0;
-		app.get(/\.html$/, function(req, res, next) {
-			dom(req.path.substring(1))(req, res, next);
-		});
+		app.get(/\.html$/, dom().load());
 
 
 		server = app.listen(function(err) {

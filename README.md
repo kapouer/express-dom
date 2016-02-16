@@ -31,9 +31,10 @@ app.get(
 
 ## Methods
 
-* dom(string | buffer)  
+* dom(string* | buffer*)  
   a buffer or a string that starts with &lt; are seen as html content,
   any other is interpreted as a local path and content loaded from it.  
+  If empty, uses current request to find local file.  
   Returns a middleware that expect (req, res, next).  
   If not other methods are called, the middleware just sends that content.
 
@@ -114,8 +115,10 @@ response:
 The settings have the expected format above,
 and the state is an object with the following keys:
 
-* url  
-  the current request url, the absolute version
+* location  
+  the current request url components (protocol, host, pathname, query)  
+  Can be modified by plugins, `URL.format(state.location)` will be used as
+  the document location.
 
 * data  
   the response data, but it follows the same semantics as dom(input), as it

@@ -8,7 +8,7 @@ dom.settings.stall = 5000;
 dom.settings.allow = 'all';
 dom.settings.timeout = 10000;
 dom.settings.console = true;
-dom.settings.max = 8;
+dom.settings.pool.max = 8;
 require('http').globalAgent.maxSockets = 50000;
 
 function pagePluginTest(page, plugin, ev) {
@@ -41,16 +41,16 @@ describe("when queues", function suite() {
 
 		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
 		app.get(/\.html$/, function(req, res, next) {
-			var mw = dom(req.path.substring(1));
-			mw.author(function(page) {
-				pagePluginTest(page, 'author', 'ready');
-				pagePluginTest(page, 'author', 'load');
-				pagePluginTest(page, 'author', 'idle');
+			var mw = dom();
+			mw.prepare(function(page) {
+				pagePluginTest(page, 'prepare', 'ready');
+				pagePluginTest(page, 'prepare', 'load');
+				pagePluginTest(page, 'prepare', 'idle');
 			});
-			mw.use(function(page) {
-				pagePluginTest(page, 'user', 'ready');
-				pagePluginTest(page, 'user', 'load');
-				pagePluginTest(page, 'user', 'idle');
+			mw.load(function(page) {
+				pagePluginTest(page, 'load', 'ready');
+				pagePluginTest(page, 'load', 'load');
+				pagePluginTest(page, 'load', 'idle');
 			});
 			mw(req, res, next);
 		});
@@ -94,12 +94,12 @@ describe("when queues", function suite() {
 				method: 'GET',
 				url: host + ':' + port + '/when.html'
 			}, function(err, res, body) {
-				expect(body.indexOf('author ready')).to.be.greaterThan(0);
-				expect(body.indexOf('author load')).to.be.greaterThan(0);
-				expect(body.indexOf('author idle')).to.be.greaterThan(0);
-				expect(body.indexOf('user ready')).to.be.greaterThan(0);
-				expect(body.indexOf('user load')).to.be.greaterThan(0);
-				expect(body.indexOf('user idle')).to.be.greaterThan(0);
+				expect(body.indexOf('prepare ready')).to.be.greaterThan(0);
+				expect(body.indexOf('prepare load')).to.be.greaterThan(0);
+				expect(body.indexOf('prepare idle')).to.be.greaterThan(0);
+				expect(body.indexOf('load ready')).to.be.greaterThan(0);
+				expect(body.indexOf('load load')).to.be.greaterThan(0);
+				expect(body.indexOf('load idle')).to.be.greaterThan(0);
 				expect(body.indexOf('toto')).to.be.greaterThan(0);
 				countDone('when', i);
 			});
