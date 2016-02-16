@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "webkitgtk": "^3.5.0"
+    "webkitgtk": "^3.5.1"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
