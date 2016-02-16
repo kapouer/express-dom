@@ -104,6 +104,10 @@ It is possible to replace it entirely by setting the `plugins` option:
 or one can append plugins to the list using additional arguments:
 `dom(index).load({pool: {max:2}}, dom.plugins.mount)`
 
+Note that 
+
+`.load({plugins: [myplugin]})` is the same as `.load({plugins:[]}, myplugin)`.
+
 A plugin is function that can do anything on the page instance, its settings
 before it is loaded, and on the state object used to send the result to the
 response:
@@ -139,8 +143,8 @@ var dom = require('express-dom');
 
 dom.settings.display = "99"; // optional, here we already had a xvfb server
 
-app.get(
-	dom('index.html')		// initialize handler and set html source
+app.get('*.html',
+	dom() // use static file as input
 	.prepare(function(page) {
 		// async event
 		page.when('ready', function(cb) {
@@ -156,25 +160,7 @@ app.get(
 );
 
 ```
-
-
-Here a PDF is sent as output instead of HTML (requires webkitgtk bindings):
-
-```js
-var app = require('express')();
-var dom = require('express-dom');
-
-app.set('statics', 'public');
-
-app.get(
-	dom().load({plugins: dom.plugins.png})
-);
-
-```
-
-Note that 
-
-`.load({plugins: [myplugin]})` is the same as `.load({plugins:[]}, myplugin)`.
+More can be found in examples/ directory.
 
 
 ## Redirection when document.location is set from a script in the page
