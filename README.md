@@ -22,10 +22,7 @@ The simplest example for web page rendering is:
 var app = require('express')();
 var dom = require('express-dom');
 
-app.get(
-	dom('index.html')		// initialize handler and set html source
-	.load()		 	// load DOM, run the scripts, wait for idle, render and send result
-);
+app.get('*.html', dom().load());
 
 ```
 
