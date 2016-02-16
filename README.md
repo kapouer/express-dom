@@ -99,6 +99,8 @@ plugins: [dom.plugins.nocss, dom.plugins.redirect, dom.plugins.html]
 
 ```
 
+More plugins are provided, please check the source code.
+
 It is possible to replace it entirely by setting the `plugins` option:
 `dom('index').load({plugins: [dom.plugins.html]})`
 
@@ -165,24 +167,10 @@ Here a PDF is sent as output instead of HTML (requires webkitgtk bindings):
 var app = require('express')();
 var dom = require('express-dom');
 
+app.set('statics', 'public');
+
 app.get(
-	dom('index.html')		// initialize handler and set html source
-	.load({
-		plugins: function(page, settings, state) {
-			page.when('idle', function(cb) {
-				var filepath = './cache/${Date.now()}.pdf';
-				page.pdf(filepath, function(err) {
-					if (err) {
-						state.status = 500;
-						state.data = err;
-					} else {
-						state.data = filepath;
-					}
-					cb(); // it is important to all after setting state object
-				});
-			});
-		}
-	})
+	dom().load({plugins: dom.plugins.png})
 );
 
 ```
