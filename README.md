@@ -31,10 +31,9 @@ app.get(
 
 ## Methods
 
-* dom(string* | buffer*)  
-  a buffer or a string that starts with &lt; are seen as html content,
-  any other is interpreted as a local path and content loaded from it.  
-  If empty, uses current request to find local file.  
+* dom(input*)  
+  a buffer, a Readable stream, a string that starts with &lt;, or a local file path.  
+  If empty, uses current request to find local file path from app statics dir.  
   Returns a middleware that expect (req, res, next).  
   If not other methods are called, the middleware just sends that content.
 
@@ -121,8 +120,8 @@ and the state is an object with the following keys:
   the document location.
 
 * data  
-  the response data, but it follows the same semantics as dom(input), as it
-  is possible to set a local path, a buffer, or a string starting with &lt;
+  the response data, can be a buffer, a Readable stream, a string starting
+  with &lt;, or a local file path.
 
 * headers  
   the response headers, defaults to Content-Type: text/html.
