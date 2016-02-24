@@ -214,7 +214,7 @@ To debug web pages,
 `DEVELOP=1 node app.js`
 
 This disables loading of the page on server,
-and applies custom load plugins as if they were prepare plugins.
+and add *appended* load plugins to prepare plugins.
 
 
 ## License
