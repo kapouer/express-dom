@@ -56,7 +56,11 @@ app.get('*.html', dom().load());
 ## Options
 
 The global default values for these options can be changed using `dom.settings`.
-each dom middleware handler created using dom() has also a copy `dom().settings`.
+Phase-dependant settings can be specified globally using `dom.settings.prepare`
+or `dom.settings.load`.
+
+Each dom middleware handler created using dom() has also a copy `dom().settings`
+and each phase also copies the associated global settings.
 
 * plugins  
   sets the list of plugins, can be a single function. See below.
@@ -89,12 +93,14 @@ Other options are passed directly to webkitgtk, like these ones:
 
 ## Plugins
 
-This is the default list of plugins:
+dom.settings.prepare.plugins holds the default plugins for preparing a page:
+- dom.plugins.noreq (disable all requests)
+- dom.plugins.html
 
-```
-plugins: [dom.plugins.nocss, dom.plugins.redirect, dom.plugins.html]
-
-```
+dom.settings.load.plugins holds the default plugins for loading a page:
+- dom.plugins.nomedia (allow only file extensions empty, js,  or ending with ml or json)
+- dom.plugins.redirect,
+- dom.plugins.html
 
 More plugins are provided, please check the source code.
 
