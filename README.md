@@ -210,8 +210,11 @@ Start with
 
 A non-empty DEBUG environment value will log browser console to stdout.
 
-To debug the web page itself, settting environment variable `DEVELOP=1` will
-disable .load() calls, meaning pages are not rendered, nor custom plugins applied.
+To debug web pages,
+`DEVELOP=1 node app.js`
+
+This disables loading of the page on server,
+and applies custom load plugins as if they were prepare plugins.
 
 
 ## License
