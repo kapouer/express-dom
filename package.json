@@ -4,7 +4,7 @@
   "description": "Prepare, render web pages - express middleware",
   "main": "lib/dom.js",
   "scripts": {
-    "test": "xvfb-run mocha -R spec"
+    "test": "xvfb-run -a mocha -R spec"
   },
   "repository": {
     "type": "git",
