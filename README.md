@@ -83,7 +83,7 @@ Other options are passed directly to webkitgtk, like these ones:
   milliseconds before a resource is no more taken into account for idle event
 
 * console  
-  boolean, console on stdout or not
+  boolean, console on stdout / stderr, or quiet
 
 * runTimeout  
   milliseconds before a script run by a plugin is considered dead.
@@ -208,7 +208,8 @@ the wiki for more information.
 Start with
 `DEBUG=express-dom node app.js`
 
-A non-empty DEBUG environment value will log browser console to stdout.
+If NODE_ENV environment variable is not "production", and if `console` option
+is not set, server-side browser console is logged to stdout / stderr.
 
 To debug web pages,
 `DEVELOP=1 node app.js`
