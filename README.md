@@ -159,6 +159,26 @@ express middleware see. It is always possible to wrap the dom() calls
 in a middleware to gain access to req, res.
 
 
+## Plugins tricks
+
+It is possible to leverage the hosted browser (webkitgtk or jsdom) options to:
+
+* load cookies in it
+
+* execute a script with arguments, before page scripts, using  
+  ```settings.script = {
+  	fn: function(arg1, ...) {},
+  	args: [arg1, ...]
+  };```
+
+* add additional request filters  
+  ```settings.filters.push(function() {
+  	if (this.uri == "/test"; this.cancel = true;
+  })```
+
+* change a setting before page is loaded
+
+
 ## Examples
 
 Here a script tag is added on the DOM before the page is loaded:
