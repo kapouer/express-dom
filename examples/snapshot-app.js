@@ -5,7 +5,7 @@ var URL = require('url');
 app.get('*', dom(function(settings, request, response) {
 	if (!request.query.url) return response.sendStatus(400);
 	var obj = URL.parse(request.query.url);
-	if (!obj.protocol) obj.protocol = 'http:';
+	if (!obj.protocol || !obj.host) return response.sendStatus(400);
 	settings.location = Object.assign({}, obj);
 	var mod = obj.protocol.startsWith('https') ? require('https') : require('http');
 	obj.headers = {
@@ -17,9 +17,10 @@ app.get('*', dom(function(settings, request, response) {
 		res.setEncoding('utf-8');
 		res.pipe(ps);
 	}).end();
-	settings.input = ps;
+	settings.view = ps;
 }).load({
-	plugins: dom.plugins.png
+	stall: 1000,
+	plugins: [dom.plugins.png, function(page, settings) { settings.allow = "all"; }]
 }));
 
 server = app.listen(process.env.PORT, function(err) {
