@@ -8,7 +8,7 @@ which supports a fallback to [jsdom](https://github.com/tmpvar/jsdom)
 when the c++ bindings are not builded - in which case some features
 are disabled like pdf/png output.
 
-The webkitgtk bindings are slower to jumpstart, but faster and more resistant
+The webkitgtk bindings are slower to start, but faster and more resistant
 on heavy loads, while jsdom is way faster to start, but eats more memory and
 is slower, less stable on heavy loads. A planned feature is to allow switching
 from one backend to the other easily.
@@ -28,30 +28,29 @@ app.get('*.html', dom().load());
 
 ## Methods
 
-* dom(input*)  
-  a buffer, a Readable stream, a string that starts with &lt;, or a local file path.  
-  If empty, uses current request to find local file path from app statics dir.  
-  Returns a middleware that expect (req, res, next).  
-  If no other methods are called, the middleware just sends that content.
+All arguments are optional.
 
-* .prepare(opts?, plugin, ...)  
+* dom(view, helper1, helper2, ...)  
+  `view` is a buffer, a Readable stream, a string that starts with &lt;
+  or a local file path, that are resolved to input data.  
+  If empty, resolves to the pathname constructed from the current request and
+  the 'views' app setting.  
+  Helpers can be added or even replace the `view` parameter, and can return a
+  promise. The last helper parses settings.view only if settings.input is null.  
+  dom() returns a middleware that expect (req, res, next).  
+  If no other methods are called, the middleware just sends the input data.  
+
+* .prepare(opts, plugin1, plugin2, ...)  
   load the DOM but no embedded scripts are run, and no assets are loaded.  
   All arguments are optional. See below for description.  
   Function plugin argument(s) are appended to the default list of plugins,
   or to the list given in opts.plugins.
 
-* .load(opts?, plugin, ...)  
+* .load(opts, plugin1, plugin2, ...)  
   load the DOM and run the scripts.  
   All arguments are optional. See below for description.  
   Function plugin argument(s) are appended to the default list of plugins,
   or to the list given in opts.plugins.
-
-* dom.acquire(page, cb*)  
-  global method, called internally, exposed for convenience.
-
-* dom.release(page, cb*)  
-  global method, called internally, exposed for convenience.  
-
 
 ## Options
 
@@ -62,8 +61,31 @@ or `dom.settings.load`.
 Each dom middleware handler created using dom() has also a copy `dom().settings`
 and each phase also copies the associated global settings.
 
+dom.settings.prepare.plugins holds the default plugins for preparing a page:
+- dom.plugins.noreq (disable all requests)
+- dom.plugins.html
+
+dom.settings.load.plugins holds the default plugins for loading a page:
+- dom.plugins.nomedia (allow only file extensions empty, js,  or ending with ml or json)
+- dom.plugins.redirect,
+- dom.plugins.html
+
+More plugins are provided, please check the source code.
+
+Replace default list of plugins by setting the `plugins` option:
+`dom('index').load({plugins: [dom.plugins.html]})`
+
+Prepend plugins to the default list using additional arguments:
+`dom(index).load({pool: {max:2}}, dom.plugins.mount)`
+
+Note that 
+
+`.load({plugins: [myplugin]})` is the same as `.load({plugins:[]}, myplugin)`.
+
+More on plugins below.
+
 * plugins  
-  sets the list of plugins, can be a single function. See below.
+  sets the list of plugins, can be a single function.
 
 * pool.max  
   the maximum number of instances in the pool
@@ -91,72 +113,48 @@ Other options are passed directly to webkitgtk, like these ones:
 ...more options are documented in `webkitgtk` module.
 
 
-## Plugins
+## Plugins and helpers
 
-dom.settings.prepare.plugins holds the default plugins for preparing a page:
-- dom.plugins.noreq (disable all requests)
-- dom.plugins.html
+A helper can change view, location, input depending on request - would rarely
+need to change the response, but can return a failed promise that will be
+passed as next(err).
 
-dom.settings.load.plugins holds the default plugins for loading a page:
-- dom.plugins.nomedia (allow only file extensions empty, js,  or ending with ml or json)
-- dom.plugins.redirect,
-- dom.plugins.html
+A plugin can listen to page events, change settings before the page is loaded,
+define input/output, access request/response.
 
-More plugins are provided, please check the source code.
+`function helper(settings, request, response) { ... }`
+`function plugin(page, settings, request, response) { ... }`
 
-It is possible to replace it entirely by setting the `plugins` option:
-`dom('index').load({plugins: [dom.plugins.html]})`
+* page  
+  Plugins get a not yet loaded dom instance.
 
-or one can append plugins to the list using additional arguments:
-`dom(index).load({pool: {max:2}}, dom.plugins.mount)`
+* settings  
+  see above for general settings, and below for per-request settings.
 
-Note that 
+* request, response  
+  untampered express arguments
 
-`.load({plugins: [myplugin]})` is the same as `.load({plugins:[]}, myplugin)`.
+A plugin can return a promise, however pay attention that
+`page.when(event, listener)` itself chain a listener;
+the last 'idle' listener being the internal handler that decides
+what to do with `settings.output`.
 
-A plugin is function that can do anything on the page instance, its settings
-before it is loaded, and on the state object used to send the result to the
-response:
+A few options are added to settings:
 
-`function myplugin(page, settings, request, response) { ... }`
+* settings.view  
+  only for helpers
 
-The settings have the expected format above.
+* settings.location  
+  parsed url that will be used to set document location;  
+  and defaults to the current request url.
 
-Request object is:
+* settings.input  
+  the data obtained from the view or the view itself if it was given as data.
 
-* location  
-  the current request url components (protocol, host, pathname, query)  
-  Can be modified by plugins, `URL.format(state.location)` will be used as
-  the document location.
-
-* input  
-  the input data that will be parsed to a DOM.  
-  Freed after usage.
-
-* statics  
-  the statics express root dir, usefull to find files given a local path
-
-* headers (read-only)  
-  the request headers (with the lower-cased keys)
-
-
-Response object is:
-
-* output  
-  the response data, can be a buffer, a Readable stream, a string starting
-  with &lt;, or a local file path.
-
-* headers  
-  the response headers, defaults to Content-Type: text/html.
-
-* status  
-  optional response status code
-
-Request and response objects are not express req, res instances.
-
-This is made to avoid confusion between what dom plugins see and what
-express middleware see. It is always possible to wrap the dom() calls
-in a middleware to gain access to req, res.
+* settings.output  
+  If `output !== false`, express-dom writes or pipe it to the response.  
+  A plugin can set response status, `output` and let other plugins change it,
+  or can directly handle response and set `output` to false (or do nothing).
 
 
 ## Plugins tricks

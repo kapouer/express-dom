@@ -17,7 +17,7 @@ describe("Time management", function suite() {
 
 	before(function(done) {
 		var app = express();
-		app.set('statics', __dirname + '/public');
+		app.set('views', __dirname + '/public');
 
 		app.get('/json/b2-0.json', function(req, res, next) {
 			res.type('json');
@@ -58,7 +58,7 @@ describe("Time management", function suite() {
 		});
 
 
-		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
+		app.get(/\.(json|js|css|png)$/, express.static(app.get('views')));
 		app.get(/\.html$/, dom().load());
 
 

@@ -15,8 +15,8 @@ describe("Basic functionnalities", function suite() {
 
 	before(function(done) {
 		var app = express();
-		app.set('statics', __dirname + '/public');
-		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
+		app.set('views', __dirname + '/public');
+		app.get(/\.(json|js|css|png)$/, express.static(app.get('views')));
 		app.get(/\.html$/, dom().load());
 
 

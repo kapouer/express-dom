@@ -18,14 +18,14 @@ describe("Loading ressources", function suite() {
 
 	before(function(done) {
 		var app = express();
-		app.set('statics', __dirname + '/public');
+		app.set('views', __dirname + '/public');
 		var countJSON = 0;
 		app.get(/\/json\/c0-(\d+)\.json$/, function(req, res, next) {
 			var obj = {};
 			obj[req.params[0]] = "c0-" + req.params[0];
 			res.send(obj);
 		});
-		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
+		app.get(/\.(json|js|css|png)$/, express.static(app.get('views')));
 		var count = 0;
 		app.get(/\.html$/, dom().load());
 

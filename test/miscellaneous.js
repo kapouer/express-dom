@@ -15,13 +15,13 @@ describe("Miscellaneous tries", function suite() {
 
 	before(function(done) {
 		var app = express();
-		app.set('statics', __dirname + '/public');
+		app.set('views', __dirname + '/public');
 
 		app.get('/d0.js', function(req, res, next) {
 			res.end('$(function() {$(".shouldbemodified").text("éè");});')
 		});
 
-		app.get(/\.(json|js|css|png)$/, express.static(app.get('statics')));
+		app.get(/\.(json|js|css|png)$/, express.static(app.get('views')));
 		app.get(/\.html$/, dom().load(function(p, s, request) {
 			s['default-charset'] = request.headers['accept-charset'];
 		}));
