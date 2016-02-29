@@ -167,10 +167,10 @@ It is possible to leverage the hosted browser (webkitgtk or jsdom) options to:
 * load cookies in it
 
 * execute a script with arguments, before page scripts, using  
-  ```settings.script = {
+  ```settings.scripts.push({
   	fn: function(arg1, ...) {},
   	args: [arg1, ...]
-  };```
+  });```
 
 * add additional request filters  
   ```settings.filters.push(function() {
