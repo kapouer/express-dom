@@ -62,10 +62,12 @@ Each dom middleware handler created using dom() has also a copy `dom().settings`
 and each phase also copies the associated global settings.
 
 dom.settings.prepare.plugins holds the default plugins for preparing a page:
+- dom.plugins.hide (display none, animate none)
 - dom.plugins.noreq (disable all requests)
 - dom.plugins.html
 
 dom.settings.load.plugins holds the default plugins for loading a page:
+- dom.plugins.hide
 - dom.plugins.nomedia (allow only file extensions empty, js,  or ending with ml or json)
 - dom.plugins.redirect,
 - dom.plugins.html
