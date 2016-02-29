@@ -69,7 +69,8 @@ dom.settings.prepare.plugins holds the default plugins for preparing a page:
 dom.settings.load.plugins holds the default plugins for loading a page:
 - dom.plugins.hide
 - dom.plugins.nomedia (allow only file extensions empty, js,  or ending with ml or json)
-- dom.plugins.redirect,
+- dom.plugins.prerender (sets visibilityState)
+- dom.plugins.redirect
 - dom.plugins.html
 
 More plugins are provided, please check the source code.
@@ -207,6 +208,18 @@ app.get('*.html',
 
 ```
 More can be found in examples/ directory.
+
+
+## How client code can tell if it is being run on a hosted browser ?
+
+By default, on load(), express-dom returns `prerender` for the value of
+`document.visibilityState`.
+
+This behavior can be disabled by removing the prerender plugin.
+
+See also
+[Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
+[Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
 
 
 ## Redirection when document.location is set from a script in the page
