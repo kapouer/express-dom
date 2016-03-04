@@ -7,17 +7,7 @@ app.get('*', dom(function(settings, request, response) {
 	var obj = URL.parse(request.query.url);
 	if (!obj.protocol || !obj.host) return response.sendStatus(400);
 	settings.location = Object.assign({}, obj);
-	var mod = obj.protocol.startsWith('https') ? require('https') : require('http');
-	obj.headers = {
-		'User-Agent': "Mozilla/5.0"
-	};
-	// here we use a passthrough, but returning a promise can avoid that
-	var ps = new require('stream').PassThrough();
-	mod.request(obj, function(res) {
-		res.setEncoding('utf-8');
-		res.pipe(ps);
-	}).end();
-	settings.view = ps;
+	settings.view = request.query.url;
 }).load({
 	stall: 1000,
 	plugins: [dom.plugins.png, function(page, settings) { settings.allow = "all"; }]

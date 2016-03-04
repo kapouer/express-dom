@@ -31,14 +31,11 @@ app.get('*.html', dom().load());
 All arguments are optional.
 
 * dom(view, helper1, helper2, ...)  
-  `view` is a buffer, a Readable stream, a string that starts with &lt;
-  or a local file path, that are resolved to input data.  
-  If empty, resolves to the pathname constructed from the current request and
-  the 'views' app setting.  
+  `view` is resolved by a default helper, see below.  
+  If empty, resolves to the current request express view file path.  
   Helpers can be added or even replace the `view` parameter, and can return a
-  promise. The last helper parses settings.view only if settings.input is null.  
+  promise, see below.  
   dom() returns a middleware that expect (req, res, next).  
-  If no other methods are called, the middleware just sends the input data.  
 
 * .prepare(opts, plugin1, plugin2, ...)  
   load the DOM but no embedded scripts are run, and no assets are loaded.  
@@ -51,6 +48,31 @@ All arguments are optional.
   All arguments are optional. See below for description.  
   Function plugin argument(s) are appended to the default list of plugins,
   or to the list given in opts.plugins.
+
+
+## View loading and responses
+
+When the middleware is called, helpers are run first.
+
+The view can be a buffer, a readable stream, a string that starts with `<`,
+or a local file path, or a remote url, or a parsed url object, or one or several
+functions known as helpers.
+
+If it is a parsed url object, it will be used as argument to Node.js http
+request, so additional options like headers can be set.
+
+The default (and last) helper resolves the view to input data, if it was not
+resolved by a previous custom helper, and the input data will be loaded into
+the DOM during prepare or load; with a document href equal to settings.location.
+
+If no input data can be resolved:
+- if no prepare or load calls are done, the response is 501 Not Implemented
+- else the response is 404 Not Found
+
+If a helper or a plugin sets input data to false, directly through a helper or
+indirectly through the output of a plugin, the default helper does not send a
+response.
+
 
 ## Options
 
