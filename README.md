@@ -244,6 +244,10 @@ See also
 [Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
 [Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
 
+and the
+[express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
+
+
 
 ## Redirection when document.location is set from a script in the page
 
