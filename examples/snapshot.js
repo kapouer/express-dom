@@ -1,3 +1,5 @@
+// if using webkitgtk native, run this example with `xfvb-run -a node snapshot.js`
+
 var app = require('express')();
 var dom = require('..');
 var URL = require('url');
