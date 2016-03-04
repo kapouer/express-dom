@@ -158,6 +158,7 @@ define input/output, access request/response.
 
 * request, response  
   untampered express arguments
+  next(arg) can be called indirectly by returning `Promise.reject(arg)`
 
 A plugin can return a promise, however pay attention that
 `page.when(event, listener)` itself chain a listener;
