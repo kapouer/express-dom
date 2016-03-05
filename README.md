@@ -226,7 +226,7 @@ with the notion of idempotent web page building and server prerendering, also
 coined "isomorphic page rendering".
 
 
-## Redirection when document.location is set from a script in the page
+## Redirection when document.location is set on client
 
 This behavior is implemented by the dom.plugins.redirect plugin.
 
@@ -239,6 +239,10 @@ When this happens, it triggers this behavior:
 This allows all the website routes to be defined by client code - the server
 application just knows about static files, views, api, and auth - and how to
 prerender web pages.
+
+Important: due to current limitations in native webkitgtk, it is strongly
+advised not to load an iframe when prerendering - it is confused with a location
+change and triggers a redirect, something that is obviously undesirable.
 
 
 ## Debugging
