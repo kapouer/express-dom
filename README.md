@@ -217,9 +217,9 @@ And it does no more than that.
 
 It is enabled by default when using load(), and can be removed if needed.
 
-See also
-[Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
-[Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
+See also:
+* [Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
+* [Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
 
 That last module is a facility for building pages on client which behaves well
 with the notion of idempotent web page building and server prerendering, also
