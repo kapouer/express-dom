@@ -1,17 +1,12 @@
 express-dom
 ===========
 
-Express middleware rendering web pages in a hosted web browser.
+Express middleware (pre)rendering web pages in a hosted web browser.
 
 Uses [node-webkitgtk](https://github.com/kapouer/node-webkitgtk)
 which supports a fallback to [jsdom](https://github.com/tmpvar/jsdom)
 when the c++ bindings are not builded - in which case some features
 are disabled like pdf/png output.
-
-The webkitgtk bindings are slower to start, but faster and more resistant
-on heavy loads, while jsdom is way faster to start, but eats more memory and
-is slower, less stable on heavy loads. A planned feature is to allow switching
-from one backend to the other easily.
 
 
 ## Synopsis
@@ -28,50 +23,45 @@ app.get('*.html', dom().load());
 
 ## Methods
 
-All arguments are optional.
+All arguments are optional, see sections below.
 
 * dom(view, helper1, helper2, ...)  
   `view` is resolved by a default helper, see below.  
   If empty, resolves to the current request express view file path.  
-  Helpers can be added or even replace the `view` parameter, and can return a
-  promise, see below.  
-  dom() returns a middleware that expect (req, res, next).  
+  Additional helper functions can return a promise, see below.  
 
 * .prepare(opts, plugin1, plugin2, ...)  
-  load the DOM but no embedded scripts are run, and no assets are loaded.  
-  All arguments are optional. See below for description.  
-  Function plugin argument(s) are appended to the default list of plugins,
-  or to the list given in opts.plugins.
+  loads the DOM without running embedded scripts not loading resources.  
+  Plugins are appended to the list of plugins (opts.plugins or default list).
 
 * .load(opts, plugin1, plugin2, ...)  
-  load the DOM and run the scripts.  
-  All arguments are optional. See below for description.  
-  Function plugin argument(s) are appended to the default list of plugins,
-  or to the list given in opts.plugins.
+  loads the DOM and runs embedded scripts; does not load resources by default.  
+  Plugins are appended to the list of plugins (opts.plugins or default list).
+
+These methods return an express middleware; they do nothing before the
+middleware is actually called by express.
 
 
-## View loading and responses
+## Input and output
 
-When the middleware is called, helpers are run first.
+Custom helpers are run before the final helper, which resolves `settings.view`
+into `settings.input` if not already done by a custom helper. Input is then
+loaded into DOM by prepare or load methods, with `settings.location` as the
+document location.
 
-The view can be a buffer, a readable stream, a string that starts with `<`,
-or a local file path, or a remote url, or a parsed url object, or one or several
-functions known as helpers.
+`view` can be a buffer, a readable stream, a string that starts with `<`,
+or a local file path, or a remote url, or a parsed url object.
 
-If it is a parsed url object, it will be used as argument to Node.js http
-request, so additional options like headers can be set.
-
-The default (and last) helper resolves the view to input data, if it was not
-resolved by a previous custom helper, and the input data will be loaded into
-the DOM during prepare or load; with a document href equal to settings.location.
+If it is a parsed url object, it is passed as argument for `http.request`,
+so more options can be added to it.
 
 If no input data can be resolved:
 - if no prepare or load calls are done, the response is 501 Not Implemented
 - else the response is 404 Not Found
 
-If a helper or a plugin sets input data to false, directly through a helper or
-indirectly through the output of a plugin, the default helper does not send a
-response.
+The final express-dom handler does not send a response if
+`settings.output === false`. If prepare or load methods weren't called,
+output is equal to `settings.input`. See plugins source for examples.
 
 
 ## Options
@@ -140,9 +130,11 @@ Other options are passed directly to webkitgtk, like these ones:
 
 ## Plugins and helpers
 
-A helper can change view, location, input depending on request - would rarely
-need to change the response, but can return a failed promise that will be
-passed as next(err).
+A helper can change view, location, input depending on request.  
+
+It should avoid ending the response, and should instead return
+`Promise.reject(val)`, which in turn calls `next(val)`, deferring the response
+to the next middleware, route, or error handler.
 
 A plugin can listen to page events, change settings before the page is loaded,
 define input/output, access request/response.
@@ -158,12 +150,18 @@ define input/output, access request/response.
 
 * request, response  
   untampered express arguments
-  next(arg) can be called indirectly by returning `Promise.reject(arg)`
 
-A plugin can return a promise, however pay attention that
-`page.when(event, listener)` itself chain a listener;
-the last 'idle' listener being the internal handler that decides
-what to do with `settings.output`.
+A plugin can return a promise if it needs to chain following plugins.
+
+The page object is an emitter with two interfaces: the standard, synchronous,
+`on`/`once` methods; and an asynchronous listener method `when`.  
+Plugins can use `page.when('idle', function listener(cb) {})` method to ensure
+their listener is executed asynchronously with respect to other plugins.
+
+The last 'idle' listener being the internal handler that decides what to do
+with `settings.output` as described above.
+
+In a future version, `page.idle` will simply be a promise.
 
 A few options are added to settings:
 
@@ -183,70 +181,49 @@ A few options are added to settings:
   or can directly handle response and set `output` to false (or do nothing).
 
 
-## Plugins tricks
+## Bundled plugins
 
-It is possible to leverage the hosted browser (webkitgtk or jsdom) options to:
+This is a limited list of plugins, some are used by default:
 
-* load cookies in it
+* referrer  
+  populates document.referrer using request.get('referrer')
 
-* execute a script with arguments, before page scripts, using  
-  ```settings.scripts.push({
-  	fn: function(arg1, ...) {},
-  	args: [arg1, ...]
-  });```
+* prerender  
+  sets visibilityState to prerender, see below
 
-* add additional request filters  
-  ```settings.filters.push(function() {
-  	if (this.uri == "/test"; this.cancel = true;
-  })```
+* redirect  
+  catch navigation and use it for redirection, see below
 
-* change a setting before page is loaded
+* noreq  
+  blocks all requests
 
+* hide  
+  hides page and disable css transitions, animations
 
-## Examples
+* png  
+  outputs a screenshot of the rendered DOM (requires native webkitgtk)
 
-Here a script tag is added on the DOM before the page is loaded:
+More can be found in source code.
 
-```js
-var app = require('express')();
-var dom = require('express-dom');
-
-dom.settings.display = "99"; // optional, here we already had a xvfb server
-
-app.get('*.html',
-	dom() // use static file as input
-	.prepare(function(page) {
-		// async event
-		page.when('ready', function(cb) {
-			page.run(function(src) {
-					document.head.insertAdjacentHTML('beforeend', `<script src="${src}"></script>`);
-				},
-				['/js/test.js'], // parameters are passed as arguments
-				cb
-			);						 // never forget to call back
-		});
-	}) 					// load DOM without assets, do not run inline scripts either
-	.load()			// load DOM and render
-);
-
-```
-More can be found in examples/ directory.
+See also
+[express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
 
 
 ## How client code can tell if it is being run on a hosted browser ?
 
-By default, on load(), express-dom returns `prerender` for the value of
-`document.visibilityState`.
+The prerender plugin ensures that: `document.visibilityState == "prerender"`.
 
-This behavior can be disabled by removing the prerender plugin.
+And it does no more than that.
+
+It is enabled by default when using load(), and can be removed if needed.
 
 See also
 [Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
 [Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
 
-and the
-[express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
-
+That last module is a facility for building pages on client which behaves well
+with the notion of idempotent web page building and server prerendering, also
+coined "isomorphic page rendering".
 
 
 ## Redirection when document.location is set from a script in the page
@@ -259,8 +236,9 @@ When this happens, it triggers this behavior:
 - location does not change to newLocation, and the page is simply unloaded
 - res.redirect(302, newLocation) is called
 
-This behavior covers most use-cases of isomorphic web pages, see
-the wiki for more information.
+This allows all the website routes to be defined by client code - the server
+application just knows about static files, views, api, and auth - and how to
+prerender web pages.
 
 
 ## Debugging
@@ -276,6 +254,17 @@ To debug web pages,
 
 This disables loading of the page on server,
 and add *appended* load plugins to prepare plugins.
+
+
+## Backends
+
+The webkitgtk native bindings are slower to start, but faster and more resilient
+on heavy loads, while jsdom is way faster to start, but eats more memory and
+is slower, less stable on heavy loads. A planned feature is to allow switching
+from one backend to the other easily.
+
+Currently the jsdom backend is bundled into webkitgtk module, this might change
+in future releases.
 
 
 ## License
