@@ -27,7 +27,7 @@
     "bl": "^1.1.2",
     "debug": "^2.2.0",
     "pify": "^2.3.0",
-    "webkitgtk": "^3.6.5"
+    "webkitgtk": "^3.6.7"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
