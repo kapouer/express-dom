@@ -130,7 +130,7 @@ Other options are passed directly to webkitgtk, like these ones:
 
 ## Plugins and helpers
 
-A helper can change view, location, input depending on request.  
+A helper can change view, location, input, and settings, depending on request.
 
 It should avoid ending the response, and should instead return
 `Promise.reject(val)`, which in turn calls `next(val)`, deferring the response
@@ -207,6 +207,8 @@ More can be found in source code.
 
 See also
 [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
+which also shows that a helper can configure plugins by writing
+`settings.load = {plugins: [mypluginA, mypluginB]};`.
 
 
 ## How client code can tell if it is being run on a hosted browser ?
