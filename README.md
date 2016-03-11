@@ -72,8 +72,8 @@ The global default values for these options can be changed using `dom.settings`.
 Phase-dependant settings can be specified globally using `dom.settings.prepare`
 or `dom.settings.load`.
 
-Each dom middleware handler created using dom() has also a copy `dom().settings`
-and each phase also copies the associated global settings.
+Each dom middleware handler created using dom() keeps its own copy of `settings`,
+and each request is processed with its own copy as well.
 
 dom.settings.helpers holds the default helpers:
 - dom.helpers.view
@@ -104,8 +104,7 @@ Note that
 
 More on plugins below.
 
-* plugins  
-  sets the list of plugins, can be a single function.
+Pool options are defined through global settings `dom.pool`
 
 * pool.max  
   the maximum number of instances in the pool
@@ -116,10 +115,8 @@ More on plugins below.
 * pool.idleTimeout  
   unloads pages that have not been used for that long milliseconds
 
-Other options are passed directly to webkitgtk, like these ones:
 
-* display  
-  like X DISPLAY env variable
+Default page initialization options can be set in `dom.settings`
 
 * stall  
   milliseconds before a resource is no more taken into account for idle event
@@ -137,6 +134,9 @@ Other options are passed directly to webkitgtk, like these ones:
 
 A helper can change view, location, input, settings and call prepare or load,
 depending on request.
+
+The settings object received by the helper is used as defaults for the settings
+object received by plugins.
 
 It should avoid ending the response, and should instead return
 `Promise.reject(val)`, which in turn calls `next(val)`, deferring the response
@@ -156,7 +156,7 @@ define input/output, access request/response.
   Plugins get a not yet loaded dom instance.
 
 * settings  
-  see above for general settings, and below for per-request settings.
+  see above for default settings, and below for per-request settings.
 
 * request, response  
   untampered express arguments
@@ -218,7 +218,7 @@ More can be found in source code.
 See also
 [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
 which also shows that a helper can configure plugins by writing
-`settings.load = {plugins: [mypluginA, mypluginB]};`.
+`mw.load({plugins: [mypluginA, mypluginB]});`.
 
 
 ## How client code can tell if it is being run on a hosted browser ?
