@@ -30,12 +30,14 @@ All arguments are optional, see sections below.
   If empty, resolves to the current request express view file path.  
   Additional helper functions can return a promise, see below.  
 
-* .prepare(opts, plugin1, plugin2, ...)  
-  loads the DOM without running embedded scripts not loading resources.  
+* prepare(opts, plugin1, plugin2, ...)  
+  Set options and/or plugins for DOM loading without running embedded
+  scripts not loading resources.  
   Plugins are appended to the list of plugins (opts.plugins or default list).
 
-* .load(opts, plugin1, plugin2, ...)  
-  loads the DOM and runs embedded scripts; does not load resources by default.  
+* load(opts, plugin1, plugin2, ...)  
+  Set options and/or plugins for DOM loading and runs embedded scripts;
+  does not load resources by default.  
   Plugins are appended to the list of plugins (opts.plugins or default list).
 
 These methods return an express middleware; they do nothing before the
@@ -72,6 +74,9 @@ or `dom.settings.load`.
 
 Each dom middleware handler created using dom() has also a copy `dom().settings`
 and each phase also copies the associated global settings.
+
+dom.settings.helpers holds the default helpers:
+- dom.helpers.view
 
 dom.settings.prepare.plugins holds the default plugins for preparing a page:
 - dom.plugins.hide (display none, animate none)
@@ -130,7 +135,8 @@ Other options are passed directly to webkitgtk, like these ones:
 
 ## Plugins and helpers
 
-A helper can change view, location, input, and settings, depending on request.
+A helper can change view, location, input, settings and call prepare or load,
+depending on request.
 
 It should avoid ending the response, and should instead return
 `Promise.reject(val)`, which in turn calls `next(val)`, deferring the response
@@ -139,8 +145,12 @@ to the next middleware, route, or error handler.
 A plugin can listen to page events, change settings before the page is loaded,
 define input/output, access request/response.
 
-`function helper(settings, request, response) { ... }`
+`function helper(mw, settings, request, response) { ... }`
 `function plugin(page, settings, request, response) { ... }`
+
+* mw  
+  the current dom middleware, like the one returned by `dom()`.  
+  Exposes `prepare` and `load` methods.
 
 * page  
   Plugins get a not yet loaded dom instance.
