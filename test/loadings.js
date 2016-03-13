@@ -9,7 +9,7 @@ dom.settings.allow = 'all';
 dom.settings.timeout = 900000;
 dom.settings.stallTimeout = 200; // the value used in the tests
 dom.settings.console = true;
-dom.settings.pool.max = 8;
+dom.pool.max = 8;
 
 describe("Loading ressources", function suite() {
 	var server, port;

@@ -8,7 +8,7 @@ dom.settings.stall = 5000;
 dom.settings.allow = 'all';
 dom.settings.timeout = 10000;
 dom.settings.console = true;
-dom.settings.pool.max = 8;
+dom.pool.max = 8;
 
 function pagePluginTest(page, plugin, ev) {
 	page.when(ev, function(cb) {
