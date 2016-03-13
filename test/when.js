@@ -9,7 +9,6 @@ dom.settings.allow = 'all';
 dom.settings.timeout = 10000;
 dom.settings.console = true;
 dom.settings.pool.max = 8;
-require('http').globalAgent.maxSockets = 50000;
 
 function pagePluginTest(page, plugin, ev) {
 	page.when(ev, function(cb) {
