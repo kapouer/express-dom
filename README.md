@@ -163,15 +163,14 @@ define input/output, access request/response.
 
 A plugin can return a promise if it needs to chain following plugins.
 
-The page object is an emitter with two interfaces: the standard, synchronous,
-`on`/`once` methods; and an asynchronous listener method `when`.  
-Plugins can use `page.when('idle', function listener(cb) {})` method to ensure
-their listener is executed asynchronously with respect to other plugins.
+The page object has an asynchronous listener method `when` that allows one to
+queue thenables between ready, load, or idle events.  
+Plugins can use `page.when('idle', function listener() {})` method to ensure
+their listener is executed asynchronously with respect to other plugins,
+and the listener can return a promise.
 
 The last 'idle' listener being the internal handler that decides what to do
 with `settings.output` as described above.
-
-In a future version, `page.idle` will simply be a promise.
 
 A few options are added to settings:
 
