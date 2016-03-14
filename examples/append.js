@@ -12,15 +12,14 @@ app.get('*.html',
 	dom() // use static file as input
 	.prepare(function(page) {
 		// async event
-		page.when('ready', function(cb) {
-			page.run(function(src) {
+		page.when('ready', function() {
+			return page.run(function(src) {
 					document.head.insertAdjacentHTML(
 						'beforeend',
 						`<script src="${src}"></script>`
 					);
 				},
-				['append.js'], // parameters are passed as arguments
-				cb
+				['append.js'] // parameters are passed as arguments
 			);						 // never forget to call back
 		});
 	}) 					// load DOM without assets, do not run inline scripts either

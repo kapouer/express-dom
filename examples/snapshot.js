@@ -4,7 +4,7 @@ var app = require('express')();
 var dom = require('..');
 var URL = require('url');
 
-app.get('*', dom(function(settings, request, response) {
+app.get('*', dom(function(mw, settings, request, response) {
 	if (!request.query.url) return response.sendStatus(400);
 	var obj = URL.parse(request.query.url);
 	if (!obj.protocol || !obj.host) return response.sendStatus(400);
