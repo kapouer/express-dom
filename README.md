@@ -232,9 +232,10 @@ See also:
 * [Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
 * [Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
 
-That last module is a facility for building pages on client which behaves well
-with the notion of idempotent web page building and server prerendering, also
-coined "isomorphic page rendering".
+The [window-page](https://github.com/kapouer/window-page) module comes really
+handy for developing websites with pure client rendering that can support being
+prerendered on server. It is lightweight, simple, and helps organize application
+code with or without using a framework.
 
 
 ## Redirection when document.location is set on client
