@@ -3,10 +3,10 @@ express-dom
 
 Express middleware (pre)rendering web pages in a hosted web browser.
 
-Uses [node-webkitgtk](https://github.com/kapouer/node-webkitgtk)
-which supports a fallback to [jsdom](https://github.com/tmpvar/jsdom)
+Uses [node-webkitgtk](https://github.com/kapouer/node-webkitgtk),
+which supports partial fallback to [jsdom](https://github.com/tmpvar/jsdom)
 when the c++ bindings are not builded - in which case some features
-are disabled like pdf/png output.
+are disabled like pdf/png output (since express-dom 5.1.3).
 
 
 ## Synopsis
