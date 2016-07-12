@@ -1,6 +1,6 @@
 {
   "name": "express-dom",
-  "version": "5.1.4",
+  "version": "5.1.5",
   "description": "Prepare, render web pages - express middleware",
   "main": "lib/dom.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "clone": "^1.0.2",
     "debug": "^2.2.0",
     "pify": "^2.3.0",
-    "webkitgtk": "^4.3.3"
+    "webkitgtk": "^4.3.4"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
