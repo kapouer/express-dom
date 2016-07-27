@@ -43,6 +43,11 @@ All arguments are optional, see sections below.
 These methods return an express middleware and are chainable, they do nothing
 before the middleware is actually called by express.
 
+* dom.clear()  
+  Clear the browser cache (if there is one) upon next page acquisition.  
+  An application using cache control directives should set its own cache dir with
+  `dom.settings.cacheDir` and should call this method on start.
+
 
 ## Input and output
 
