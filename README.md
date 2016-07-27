@@ -121,8 +121,8 @@ Default page initialization options can be set in `dom.settings`
 * stall  
   milliseconds before a resource is no more taken into account for idle event
 
-* console  
-  boolean, console on stdout / stderr, or quiet
+* verbose  
+  boolean, console on stdout / stderr, log warnings (default true)
 
 * runTimeout  
   milliseconds before a script run by a plugin is considered dead.
