@@ -30,18 +30,18 @@ All arguments are optional, see sections below.
   If empty, resolves to the current request express view file path.  
   Additional helper functions can return a promise, see below.  
 
-* prepare(opts, plugin1, plugin2, ...)  
+* dom(...).prepare(opts, plugin1, plugin2, ...)  
   Set options and/or plugins for DOM loading without running embedded
   scripts not loading resources.  
   Plugins are appended to the list of plugins (opts.plugins or default list).
 
-* load(opts, plugin1, plugin2, ...)  
+* dom(...).load(opts, plugin1, plugin2, ...)  
   Set options and/or plugins for DOM loading and runs embedded scripts;
   does not load resources by default.  
   Plugins are appended to the list of plugins (opts.plugins or default list).
 
-These methods return an express middleware; they do nothing before the
-middleware is actually called by express.
+These methods return an express middleware and are chainable, they do nothing
+before the middleware is actually called by express.
 
 
 ## Input and output
