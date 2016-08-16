@@ -16,6 +16,8 @@
     "plugins",
     "hosted",
     "express",
+    "server",
+    "render",
     "isomorphic"
   ],
   "author": "Jérémy Lal <kapouer@melix.org>",
