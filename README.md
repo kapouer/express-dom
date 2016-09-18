@@ -122,6 +122,9 @@ Pool options are defined through global settings `dom.pool`
 * pool.idleTimeout  
   unloads pages that have not been used for that long milliseconds
 
+* pool.maxloads  
+  destroys pages that have loaded more than maxloads times (default 100)
+
 
 Default page initialization options can be set in `dom.settings`
 
