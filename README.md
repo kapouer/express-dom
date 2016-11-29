@@ -187,6 +187,9 @@ A few options are added to settings:
 * settings.view  
   only for helpers
 
+* settings.views  
+  the root public dir for the default helper plugin
+
 * settings.location  
   parsed url that will be used to set document location;  
   and defaults to the current request url.
