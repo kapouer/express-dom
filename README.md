@@ -45,6 +45,10 @@ All arguments are optional, see sections below.
 These methods return an express middleware and are chainable, they do nothing
 before the middleware is actually called by express.
 
+* dom(...).load(...)(url).then(function(state) {})
+  A convenient way to get the result without the need for express to call the
+  middleware.  The state object has `status` and `body` properties.
+
 * dom.clear()  
   Clear the browser cache (if there is one) upon next page acquisition.  
   An application using cache control directives should set its own cache dir with
