@@ -35,12 +35,14 @@ All arguments are optional, see sections below.
 * dom(...).prepare(opts, plugin1, plugin2, ...)  
   Set options and/or plugins for DOM loading without running embedded
   scripts not loading resources.  
-  Plugins are appended to the list of plugins (opts.plugins or default list).
+  Plugins are appended to the list of plugins (opts.plugins or default list).  
+  Prepare is meant to modify the DOM from server-side.
 
 * dom(...).load(opts, plugin1, plugin2, ...)  
   Set options and/or plugins for DOM loading and runs embedded scripts;
   does not load resources by default.  
-  Plugins are appended to the list of plugins (opts.plugins or default list).
+  Plugins are appended to the list of plugins (opts.plugins or default list).  
+  Load is meant to modify the DOM using client scripts.
 
 These methods return an express middleware and are chainable, they do nothing
 before the middleware is actually called by express.
