@@ -41,38 +41,14 @@ describe("Loading ressources", function suite() {
 	});
 
 
-
-// Loading c0
-//	it("should load 100 json ressources after $().ready", function(done) {
-//		request({
-//			method: 'GET',
-//			url: host + ':' + port + '/c0.html'
-//		}, function(err, res, body) {
-//			expect(res.statusCode).to.be(200);
-//			for (var i = 0 ; i < 100 ; i++) {
-//				expect(body.indexOf('c0-'+i)).to.be.greaterThan(0);
-//			}
-//			done();
-//		});
-//	});
-
-
-// Loading c1
-	it("should load several pages (more than settings.max) in the same time", function(done) {
+	it("should load several pages (more than pool.max) at the same time", function(done) {
 		this.timeout(100000);
 		var count = 0;
 		var counts = {};
 		var received = {};
 		function countDone(from, counter) {
 			count--;
-//			if (!counts[from]) counts[from] = 0;
-//			counts[from]++;
-//			console.log(count, counts);
 			if (!count) done();
-//			if (!received[from]) received[from] = [];
-//			received[from].push(counter);
-//			received[from].sort();
-//			if (count < 4) console.log(received);
 		}
 		function batch(i) {
 			count++;
