@@ -115,6 +115,31 @@ describe("Loading ressources", function suite() {
 
 	});
 
+	it("should load > pool.max pages that load sub-pages without being deadlocked", function(done) {
+		this.timeout(10000);
+		var count = 0;
+		var counts = {};
+		var received = {};
+		function countDone(from, counter) {
+			count--;
+			if (!count) done();
+		}
+		function batch(i) {
+			count++;
+			request({
+				method: 'GET',
+				url: host + ':' + port + '/sub.html' + '?' + i
+			}, function(err, res, body) {
+				if (err) console.error(err);
+				expect(res.statusCode).to.be(200);
+				expect(body.indexOf('div class="load">true</div>')).to.be.greaterThan(0);
+				countDone('c0', i);
+			});
+		}
+		var i=0;
+		// at the limit: there's one missing instance
+		while (i++ < dom.pool.max) batch(i);
+	});
 
 });
 

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript">
+			$(function() {
+				$.get('/c0.html').success(function(obj) {
+					$('.load').html(obj.indexOf("c0-98") > 0 ? "true" : "false");
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div class="me">tata</div>
+		<div class="load">tata</div>
+	</body>
+</html>
