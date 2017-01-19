@@ -90,6 +90,7 @@ and each request is processed with its own copy as well.
 
 dom.settings.helpers holds the default helpers:
 - dom.helpers.view
+- dom.helpers.prioritize (increments `settings.priority` if request is xhr)
 
 dom.settings.prepare.plugins holds the default plugins for preparing a page:
 - dom.plugins.hide (display none, animate none)
@@ -120,7 +121,8 @@ More on plugins below.
 Pool options are defined through global settings `dom.pool`
 
 * pool.max  
-  the maximum number of instances in the pool
+  the maximum number of instances in the pool, per priority.  
+  By default, two pools will exist when using `prioritize` helper.
 
 * pool.destroyTimeout  
   destroys pages that have not been used for that long milliseconds
@@ -208,6 +210,11 @@ A few options are added to settings:
   If `output !== false`, express-dom writes or pipe it to the response.  
   A plugin can set response status, `output` and let other plugins change it,
   or can directly handle response and set `output` to false (or do nothing).
+
+* settings.priority (integer, default 0)  
+  This defines separate pools (and queues) for allocating instances.
+  Used in conjonction with `prioritize` helper (installed by default), it helps
+  avoiding deadlocks when a page needs other pages during its prerending.
 
 
 ## Bundled plugins
