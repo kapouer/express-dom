@@ -18,7 +18,14 @@ describe("Released instances", function suite() {
 	before(function(done) {
 		var app = express();
 		app.set('views', __dirname + '/public');
+		var countJSON = 0;
+		app.get(/\/json\/c0-(\d+)\.json$/, function(req, res, next) {
+			var obj = {};
+			obj[req.params[0]] = "c0-" + req.params[0];
+			res.send(obj);
+		});
 		app.get(/\.(json|js|css|png)$/, express.static(app.get('views')));
+		var count = 0;
 		app.get(/\.html$/, dom().load());
 
 
@@ -34,7 +41,7 @@ describe("Released instances", function suite() {
 		done();
 	});
 
-	it("should be destroyed after destroyTimeout", function(done) {
+	it("should be destroyed after destroyTimeout - single pool", function(done) {
 		request({
 			method: 'GET',
 			url: host + ':' + port + '/a0.html'
@@ -44,6 +51,22 @@ describe("Released instances", function suite() {
 			var pool = dom.pool.instance;
 			setTimeout(function() {
 				expect(pool.lists[0].length).to.be(0);
+				done();
+			}, pool.idleTimeout + pool.destroyTimeout + pool.wipeTimeout);
+		});
+	});
+
+	it("should be destroyed after destroyTimeout - both pools", function(done) {
+		request({
+			method: 'GET',
+			url: host + ':' + port + '/sub.html'
+		}, function(err, res, body) {
+			expect(res.statusCode).to.be(200);
+			expect(body.indexOf('div class="load">true</div>')).to.be.greaterThan(0);
+			var pool = dom.pool.instance;
+			setTimeout(function() {
+				expect(pool.lists[0].length).to.be(0);
+				expect(pool.lists[1].length).to.be(0);
 				done();
 			}, pool.idleTimeout + pool.destroyTimeout + pool.wipeTimeout);
 		});
