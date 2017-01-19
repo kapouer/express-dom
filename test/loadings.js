@@ -9,7 +9,7 @@ dom.settings.allow = 'all';
 dom.settings.timeout = 900000;
 dom.settings.stallTimeout = 200; // the value used in the tests
 dom.settings.console = true;
-dom.pool.max = 8;
+dom.pool.max = 4;
 
 describe("Loading ressources", function suite() {
 	var server, port;
@@ -42,7 +42,7 @@ describe("Loading ressources", function suite() {
 
 
 	it("should load several pages (more than pool.max) at the same time", function(done) {
-		this.timeout(100000);
+		this.timeout(10000);
 		var count = 0;
 		var counts = {};
 		var received = {};
@@ -138,7 +138,7 @@ describe("Loading ressources", function suite() {
 		}
 		var i=0;
 		// at the limit: there's one missing instance
-		while (i++ < dom.pool.max) batch(i);
+		while (i++ < 3 * dom.pool.max) setTimeout(batch.bind(null, i));
 	});
 
 });
