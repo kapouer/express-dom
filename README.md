@@ -228,6 +228,12 @@ A few options are added to settings:
   This defines separate pools (and queues) for allocating instances.
   Used in conjonction with `prioritize` helper (installed by default), it helps
   avoiding deadlocks when a page needs other pages during its prerending.
+  
+* settings.load.disable  
+  Disable load phase. Only the prepare phase will run.  
+  Can be set per request (by a prepare plugin or helper),
+  or as default (dom.settings.develop sets dom.settings.load.disable).  
+  New in version 5.8.0.
 
 
 ## Bundled plugins
@@ -251,6 +257,9 @@ This is a limited list of plugins, some are used by default:
 
 * png  
   outputs a screenshot of the rendered DOM (requires native webkitgtk)
+
+* develop  
+  sets `settings.load.disable = true` if `query.develop` is defined.
 
 More can be found in source code.
 
@@ -305,11 +314,11 @@ Start with
 If NODE_ENV environment variable is not "production", and if `console` option
 is not set, server-side browser console is logged to stdout / stderr.
 
-To debug web pages,
+To debug web pages, set `DEVELOP` environment variable like this:
 `DEVELOP=1 node app.js`
 
-This disables loading of the page on server,
-and add *appended* load plugins to prepare plugins.
+This disables load phase (so that web pages are rendered on client only),
+and turn off backend browser cache.
 
 
 ## Backends
