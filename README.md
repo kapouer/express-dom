@@ -23,6 +23,19 @@ app.get('*.html', dom().load());
 
 ```
 
+Web pages can be built in two separate phases:
+- prepare  
+  this loads the html view into a DOM that can be modified
+  by prepare plugins, but does not run the view's scripts.
+- load  
+  this loads and run the result of the prepared view the same as if it was
+  loaded in a browser.
+
+The *prepare* phase is supposed to setup the view with application parameters,
+the *load* phase is supposed to prerender the view depending on the current
+location.
+
+
 ## Methods
 
 All arguments are optional, see sections below.
