@@ -1,6 +1,6 @@
 {
   "name": "express-dom",
-  "version": "3.1.5",
+  "version": "3.1.6",
   "description": "Extensible web page builder proxy with client browser environment for express.",
   "main": "index.js",
   "scripts": {
@@ -30,7 +30,7 @@
   "dependencies": {
     "debug": "^2.2.0",
     "request": "^2.61.0",
-    "webkitgtk": "^3.0.3"
+    "webkitgtk": "^4"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
