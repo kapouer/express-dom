@@ -26,7 +26,7 @@ Dom.settings = {
 	style: fs.readFileSync(__dirname + '/index.css'),
 	debug: !!process.env.INSPECTOR,
 	console: !!process.env.DEBUG,
-	images: false,
+	"auto-load-images": false,
 	stall: 15000,
 	allow: "same-origin"
 };
