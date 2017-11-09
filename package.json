@@ -1,6 +1,6 @@
 {
   "name": "express-dom",
-  "version": "3.1.7",
+  "version": "3.1.8",
   "description": "Extensible web page builder proxy with client browser environment for express.",
   "main": "index.js",
   "scripts": {
