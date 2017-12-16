@@ -214,7 +214,10 @@ A few options are added to settings:
 
 * settings.location  
   parsed url that will be used to set document location;  
-  and defaults to the current request url.
+  and defaults to the current request url.  
+  New in version 5.9.0: `settings.location.headers.cookie` is a copy of
+  `request.headers.cookie`, so an helper can do `settings.view = settings.location`
+  to pass request to another url.
 
 * settings.input  
   the data obtained from the view or the view itself if it was given as data.
