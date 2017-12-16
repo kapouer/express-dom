@@ -26,18 +26,18 @@
     "url": "https://github.com/kapouer/express-dom/issues"
   },
   "dependencies": {
-    "bl": "^1.1.2",
-    "clone": "^1.0.2",
-    "debug": "^2.2.0",
+    "bl": "^1.2.1",
+    "clone": "^1.0.3",
+    "debug": "^2.6.9",
     "pify": "^2.3.0",
-    "webkitgtk": "^4.4.8"
+    "webkitgtk": "^4.6.0"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
     "expect.js": "^0.3.1",
-    "express": "^4.13.1",
-    "mocha": "^2.2.5",
+    "express": "^4.16.2",
     "jquery": "~2.1.4",
-    "request": "^2.69.0"
+    "mocha": "^2.2.5",
+    "request": "^2.83.0"
   }
 }
