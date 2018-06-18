@@ -348,7 +348,7 @@ Pool.prototype.wipe = function() {
 		nlist.push(page);
 		if (page.locked) continue;
 		if (page.releaseTime) {
-			if (now > page.releaseTime + this.destroyTimeout) {
+			if (now > page.releaseTime + this.destroyTimeout || page.acquisitions > 100) {
 				nlist.pop();
 				page.destroy(function(err) {
 					if (err) console.error(err);
@@ -384,6 +384,7 @@ Pool.prototype.acquire = function(cb) {
 	if (page) {
 		this.release(page, function() {
 			page.locked = true;
+			page.acquisitions++;
 			delete page.releaseTime;
 			delete page.pingTime;
 			cb(null, page);
