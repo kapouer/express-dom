@@ -391,6 +391,9 @@ Pool.prototype.acquire = function(cb) {
 		WebKit(Dom.settings, function(err, page) {
 			if (err) return cb(err);
 			page.locked = true;
+			page.on('close', function() {
+				this.release(page);
+			}.bind(this));
 			this.list.push(page);
 			cb(null, page);
 		}.bind(this));
