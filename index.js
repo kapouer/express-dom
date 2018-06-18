@@ -356,7 +356,7 @@ Pool.prototype.wipe = function() {
 			}
 		} else if (page.pingTime && now > page.pingTime + this.idleTimeout) {
 			this.release(page);
-		} else if (page.acquisitions >= 8) {
+		} else if (page.acquisitions >= 100) {
 			nlist.pop();
 			page.destroy(function(err) {
 				if (err) console.error(err);
