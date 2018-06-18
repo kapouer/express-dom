@@ -7,6 +7,7 @@ var dom = require('../');
 dom.settings.stall = 900000;
 dom.settings.allow = 'all';
 dom.settings.timeout = 900000;
+dom.settings.stallTimeout = 200; // the value used in the tests
 dom.settings.console = true;
 dom.settings.max = 8;
 require('http').globalAgent.maxSockets = 500;

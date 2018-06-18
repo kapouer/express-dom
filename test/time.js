@@ -7,6 +7,7 @@ var dom = require('../');
 dom.settings.stall = 1000;
 dom.settings.allow = 'all';
 dom.settings.timeout = 10000;
+dom.settings.stallTimeout = 200; // the value used in the tests
 dom.settings.console = true;
 dom.settings.verbose = true;
 
