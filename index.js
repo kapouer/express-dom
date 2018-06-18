@@ -344,6 +344,7 @@ Pool.prototype.wipe = function() {
 	var nlist = [];
 	for (var i=0; i < this.list.length; i++) {
 		page = this.list[i];
+		if (page.trash) continue;
 		nlist.push(page);
 		if (page.locked) continue;
 		if (page.releaseTime) {
@@ -373,7 +374,7 @@ Pool.prototype.acquire = function(cb) {
 	} else {
 		for (var i=0; i < this.list.length; i++) {
 			page = this.list[i];
-			if (!page.locked) {
+			if (!page.locked && !page.trash) {
 				break;
 			}
 			page = null;
@@ -391,8 +392,13 @@ Pool.prototype.acquire = function(cb) {
 		WebKit(Dom.settings, function(err, page) {
 			if (err) return cb(err);
 			page.locked = true;
-			page.on('close', function() {
-				this.release(page);
+			page.acquisitions = 1;
+			page.on('crash', function() {
+				console.warn("crashed page", page.uri);
+				page.trash = true;
+				this.release(page, function() {
+					this.wipe();
+				}.bind(this));
 			}.bind(this));
 			this.list.push(page);
 			cb(null, page);
