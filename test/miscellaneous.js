@@ -53,7 +53,7 @@ describe("Miscellaneous tries", function suite() {
 
 // Miscellaneous d1
 	it("should understand unmarqued string as iso-8859-1 when charset set so", function(done) {
-		dom.settings.charset = "iso-8859-1";
+		dom.settings['default-charset'] = "iso-8859-1";
 		request({
 			method: 'GET',
 			url: host + ':' + port + '/d0.html'
