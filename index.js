@@ -348,7 +348,7 @@ Pool.prototype.wipe = function() {
 		nlist.push(page);
 		if (page.locked) continue;
 		if (page.releaseTime) {
-			if (now > page.releaseTime + this.destroyTimeout) {
+			if (now > page.releaseTime + this.destroyTimeout || page.acquisitions >= 100) {
 				nlist.pop();
 				page.destroy(function(err) {
 					if (err) console.error(err);
@@ -356,11 +356,6 @@ Pool.prototype.wipe = function() {
 			}
 		} else if (page.pingTime && now > page.pingTime + this.idleTimeout) {
 			this.release(page);
-		} else if (page.acquisitions >= 100) {
-			nlist.pop();
-			page.destroy(function(err) {
-				if (err) console.error(err);
-			});
 		}
 	}
 	// in case desstroy calls have been made
