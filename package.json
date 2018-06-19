@@ -30,7 +30,7 @@
     "clone": "^1.0.3",
     "debug": "^2.6.9",
     "pify": "^2.3.0",
-    "webkitgtk": "^4.6.0"
+    "webkitgtk": "^4.9.0"
   },
   "devDependencies": {
     "adaptative-replacement-cache": "^0.1.0",
