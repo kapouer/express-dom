@@ -83,6 +83,9 @@ or a local file path, or a remote url, or a parsed url object.
 If it is a parsed url object, it is passed as argument for `http.request`,
 so more options can be added to it.
 
+If it resolves as a remote url (string or parsed), the statusCode of the
+remote url will set the statusCode of the current response. (Since 5.11.0).
+
 If no input data can be resolved:
 - if no prepare or load calls are done, the response is 501 Not Implemented
 - else the response is 404 Not Found
