@@ -234,7 +234,13 @@ A few options are added to settings:
   This defines separate pools (and queues) for allocating instances.
   Used in conjonction with `prioritize` helper (installed by default), it helps
   avoiding deadlocks when a page needs other pages during its prerending.
-  
+
+* settings.prepare.disable  
+  Disable prepare phase.  
+  Can be set per request (by helper),
+  or as default.  
+  New in version 5.12.0.
+
 * settings.load.disable  
   Disable load phase. Only the prepare phase will run.  
   Can be set per request (by a prepare plugin or helper),
