@@ -1,6 +1,6 @@
 {
   "name": "express-dom",
-  "version": "5.12.8",
+  "version": "5.12.9",
   "description": "Prepare, render web pages - express middleware",
   "main": "lib/dom.js",
   "scripts": {
