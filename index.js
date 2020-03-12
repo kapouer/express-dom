@@ -309,7 +309,10 @@ Handler.prototype.buildUsed = function(resource, author, url, req, res, cb) {
 				debug("unlocked page removed from resource", resource.key || resource.url);
 				delete resource.page;
 			}.bind(this, resource));
-			if (err) console.trace(err);
+			if (err) {
+				page.trash = true;
+				delete resource.page;
+			}
 			if (err) return cb(err);
 			debug('got html', resource.key || resource.url);
 			resource.data = str;
