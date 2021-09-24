@@ -4,7 +4,7 @@
 		<script type="text/javascript" src="jquery.js"></script>
 		<script type="text/javascript">
 			$(function() {
-				$.get('/c0.html').success(function(obj) {
+				$.get('/c0.html').done(function(obj) {
 					$('.load').html(obj.indexOf("c0-98") > 0 ? "true" : "false");
 				});
 			});

@@ -4,10 +4,10 @@
 		<script type="text/javascript" src="jquery.js"></script>
 		<script type="text/javascript">
 			$(function() {
-				$.get('json/b3-0.json').success(function(obj) {
+				$.get('json/b3-0.json').done(function(obj) {
 					$('.shouldbemodified').text(obj.toto);
 				});
-				$.get('json/b3-1.json').success(function(obj) {
+				$.get('json/b3-1.json').done(function(obj) {
 					$('.shouldstaythesame').text(obj.toto);
 				});
 			});

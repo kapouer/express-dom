@@ -6,7 +6,7 @@
 			$(function() {
 				var loads = '';
 				for (var i = 0 ; i < 100 ; i++) {
-					$.get('json/c0-'+i+'.json').success(function(i, obj) {
+					$.get('json/c0-'+i+'.json').done(function(i, obj) {
 						$('.load').after('c0-'+i+'\n');
 					}.bind(null, i));
 				}
