@@ -41,6 +41,9 @@
     "request": "^2.88.2",
     "@kapouer/eslint-config": "^1.6.0"
   },
+  "mocha": {
+    "exit": true
+  },
   "eslintConfig": {
     "extends": "@kapouer/eslint-config"
   }
