@@ -45,6 +45,16 @@
     "exit": true
   },
   "eslintConfig": {
-    "extends": "@kapouer/eslint-config"
+    "extends": "@kapouer/eslint-config",
+    "overrides": [
+      {
+        "files": [
+          "test/*.js"
+        ],
+        "env": {
+          "mocha": true
+        }
+      }
+    ]
   }
 }
