@@ -1,10 +1,10 @@
 {
   "name": "express-dom",
-  "version": "5.14.4",
+  "version": "6.0.0",
   "description": "Prepare, render web pages - express middleware",
-  "main": "lib/dom.js",
+  "main": "index.js",
   "scripts": {
-    "test": "xvfb-run -a mocha -R spec"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -27,19 +27,20 @@
   },
   "dependencies": {
     "bl": "^5.0.0",
+    "browser-pool": "^3.1.2",
     "clone": "^2.1.2",
-    "debug": "^4.3.3",
-    "pify": "^5.0.0",
-    "webkitgtk": "^4.14.1"
+    "debug": "^4.3.4",
+    "playwright-core": "^1.21.1",
+    "undici": "^5.1.1"
   },
   "devDependencies": {
+    "@kapouer/eslint-config": "^1.6.2",
     "adaptative-replacement-cache": "^0.1.0",
     "expect.js": "^0.3.1",
-    "express": "^4.17.2",
+    "express": "^4.18.1",
     "jquery": "~3.6.0",
-    "mocha": "^9.2.0",
-    "request": "^2.88.2",
-    "@kapouer/eslint-config": "^1.6.2"
+    "mocha": "^10.0.0",
+    "request": "^2.88.2"
   },
   "mocha": {
     "exit": true
