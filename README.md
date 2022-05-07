@@ -2,10 +2,7 @@
 
 Express middleware (pre)rendering web pages in a hosted web browser.
 
-Uses [node-webkitgtk](https://github.com/kapouer/node-webkitgtk),
-which supports partial fallback to [jsdom](https://github.com/tmpvar/jsdom)
-when the c++ bindings are not builded - in which case some features
-are disabled like pdf/png output (since express-dom 5.1.3).
+Since version 6, uses [playwright](https://playwright.dev/docs/api/) as backend.
 
 ## Synopsis
 
@@ -34,7 +31,9 @@ location.
 
 ## Methods
 
-All arguments are optional, see sections below.
+All arguments are optional, see below.
+
+Return express middlewares:
 
 - dom(view, helper1, helper2, ...)
   `view` is resolved by a default helper, see below.
@@ -53,17 +52,10 @@ All arguments are optional, see sections below.
   Plugins are appended to the list of plugins (opts.plugins or default list).
   Load is meant to modify the DOM using client scripts.
 
-These methods return an express middleware and are chainable, they do nothing
-before the middleware is actually called by express.
-
-- dom(...).load(...)(url).then(function(state) {})
-  A convenient way to get the result without the need for express to call the
-  middleware.  The state object has `status` and `body` properties.
-
-- dom.clear()
-  Clear the browser cache (if there is one) upon next page acquisition.
-  An application using cache control directives should set its own cache dir with
-  `dom.settings.cacheDir` and should call this method on start.
+A special form is available for rendering outside express:
+```js
+const { status, body } = await dom(...).load(...)(url);
+```
 
 ## Input and output
 
@@ -75,11 +67,11 @@ document location.
 `view` can be a buffer, a readable stream, a string that starts with `<`,
 or a local file path, or a remote url, or a parsed url object.
 
-If it is a parsed url object, it is passed as argument for `http.request`,
+If it is a parsed url object, it is passed as argument for `request()`,
 so more options can be added to it.
 
 If it resolves as a remote url (string or parsed), the statusCode of the
-remote url will set the statusCode of the current response. (Since 5.11.0).
+remote url will set the statusCode of the current response.
 
 If no input data can be resolved:
 
@@ -138,12 +130,6 @@ Pool options are defined through global settings `dom.pool`
   the maximum number of instances in the pool, per priority.
   By default, two pools will exist when using `prioritize` helper.
 
-- pool.destroyTimeout
-  destroys pages that have not been used for that long milliseconds
-
-- pool.idleTimeout
-  unloads pages that have not been used for that long milliseconds
-
 - pool.maxloads
   destroys pages that have loaded more than maxloads times (default 100)
 
@@ -155,11 +141,6 @@ Default page initialization options can be set in `dom.settings`
 - verbose
   boolean, console on stdout / stderr, log warnings (default true)
 
-- runTimeout
-  milliseconds before a script run by a plugin is considered dead.
-
-...more options are documented in `webkitgtk` module.
-
 ## Plugins and helpers
 
 A helper can change view, location, input, settings and call prepare or load,
@@ -168,9 +149,7 @@ depending on request.
 The settings object received by the helper is used as defaults for the settings
 object received by plugins.
 
-It should avoid ending the response, and should instead return
-`Promise.reject(val)`, which in turn calls `next(val)`, deferring the response
-to the next middleware, route, or error handler.
+It should avoid ending the response, and should instead throw an error.
 
 A plugin can listen to page events, change settings before the page is loaded,
 define input/output, access request/response.
@@ -183,7 +162,7 @@ define input/output, access request/response.
   Exposes `prepare` and `load` methods.
 
 - page
-  Plugins get a not yet loaded dom instance.
+  Plugins get a not yet loaded playwright page instance.
 
 - settings
   see above for default settings, and below for per-request settings.
@@ -214,7 +193,7 @@ A few options are added to settings:
 - settings.location
   parsed url that will be used to set document location;
   and defaults to the current request url.
-  New in version 5.9.0: `settings.location.headers.cookie` is a copy of
+  `settings.location.headers.cookie` is a copy of
   `request.headers.cookie`, so an helper can do `settings.view = settings.location`
   to pass request to another url.
 
@@ -235,13 +214,11 @@ A few options are added to settings:
   Disable prepare phase.
   Can be set per request (by helper),
   or as default.
-  New in version 5.12.0.
 
 - settings.load.disable
   Disable load phase. Only the prepare phase will run.
   Can be set per request (by a prepare plugin or helper),
   or as default (dom.settings.develop sets dom.settings.load.disable).
-  New in version 5.8.0.
 
 ## Bundled plugins
 
@@ -277,7 +254,8 @@ which also shows that a helper can configure plugins by writing
 
 ## How client code can tell if it is being run on a hosted browser ?
 
-The prerender plugin ensures that: `document.visibilityState == "prerender"`.
+The prerender plugin ensures that: `document.visibilityState == "prerender"`,
+and `document.hidden == true`.
 
 And it does no more than that.
 
@@ -328,13 +306,7 @@ and turn off backend browser cache.
 
 ## Backends
 
-The webkitgtk native bindings are slower to start, but faster and more resilient
-on heavy loads, while jsdom is way faster to start, but eats more memory and
-is slower, less stable on heavy loads. A planned feature is to allow switching
-from one backend to the other easily.
-
-Currently the jsdom backend is bundled into webkitgtk module, this might change
-in future releases.
+The playwright backend is configured to use system-installed chrome.
 
 ## License
 
