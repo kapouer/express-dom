@@ -191,11 +191,13 @@ A few options are added to settings:
   defaults to app.get('views')
 
 - settings.location
-  parsed url that will be used to set document location;
+  whatwg url, will be used to set document location;
   and defaults to the current request url.
-  `settings.location.headers.cookie` is a copy of
-  `request.headers.cookie`, so an helper can do `settings.view = settings.location`
-  to pass request to another url.
+
+- settings.location.headers
+  additional headers.
+  In particular, cookie can be found here, if any.
+  An helper can do `settings.view = settings.location` to pass request to another url.
 
 - settings.input
   the data obtained from the view or the view itself if it was given as data.
