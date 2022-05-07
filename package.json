@@ -12,13 +12,8 @@
   },
   "keywords": [
     "DOM",
-    "browser",
-    "plugins",
-    "hosted",
     "express",
-    "server",
-    "render",
-    "isomorphic"
+    "prerender"
   ],
   "author": "Jérémy Lal <kapouer@melix.org>",
   "license": "MIT",
