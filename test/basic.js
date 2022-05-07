@@ -18,8 +18,12 @@ describe("Basic functionnalities", function suite() {
 		const app = express();
 		app.set('views', __dirname + '/public');
 		app.get(/\.(json|js|css|png)$/, (req, res, next) => {
-			if (req.query.delay) setTimeout(next, parseInt(req.query.delay));
-			else next();
+			if (req.query.delay) {
+				setTimeout(next, parseInt(req.query.delay));
+				delete req.query.delay;
+			} else {
+				next();
+			}
 		}, express.static(app.get('views')));
 		app.get(/\.html$/, dom().load());
 
@@ -35,22 +39,32 @@ describe("Basic functionnalities", function suite() {
 
 
 
-	// Basic a0
-	it("should load a simple Html page", async () => {
-		const { statusCode, body } = await request(`${host}/a0.html`);
+	it("loads a simple Html page", async () => {
+		const { statusCode, body } = await request(`${host}/basic-html.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /toto/);
 	});
 
-	// Basic a1
-	it("should let script change dom after DOMContentLoaded", async () => {
-		const { statusCode, body } = await request(`${host}/a1.html`);
+	it("changes DOM using inline script", async () => {
+		const { statusCode, body } = await request(`${host}/basic-inline.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /tutu/);
 	});
 
-	it("should change body by fetch", async () => {
-		const { statusCode, body } = await request(`${host}/a4.html`);
+	it("changes DOM using external script", async () => {
+		const { statusCode, body } = await request(`${host}/basic-extern.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /tutu/);
+	});
+
+	it("changes DOM using data loaded by xhr", async () => {
+		const { statusCode, body } = await request(`${host}/basic-xhr.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /tarte/);
+	});
+
+	it("changes DOM using data loaded by fetch", async () => {
+		const { statusCode, body } = await request(`${host}/basic-fetch.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /tarte/);
 	});

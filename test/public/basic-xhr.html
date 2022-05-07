@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>async xhr</title>
+		<script type="text/javascript">
+			document.addEventListener('DOMContentLoaded', function() {
+				const xhr = new XMLHttpRequest();
+				xhr.open("get", "a4.json?delay=1000");
+				xhr.responseType = 'json';
+				xhr.addEventListener('load', () => {
+					const obj = xhr.response;
+					document.querySelector('.me').textContent = obj.test;
+				});
+				xhr.send();
+			}, false);
+		</script>
+	</head>
+	<body>
+		<div class="me">tata</div>
+	</body>
+</html>
