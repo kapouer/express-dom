@@ -17,7 +17,10 @@ describe("Basic functionnalities", function suite() {
 	before(async () => {
 		const app = express();
 		app.set('views', __dirname + '/public');
-		app.get(/\.(json|js|css|png)$/, express.static(app.get('views')));
+		app.get(/\.(json|js|css|png)$/, (req, res, next) => {
+			if (req.query.delay) setTimeout(next, parseInt(req.query.delay));
+			else next();
+		}, express.static(app.get('views')));
 		app.get(/\.html$/, dom().load());
 
 		server = app.listen();
