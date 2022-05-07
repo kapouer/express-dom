@@ -46,6 +46,12 @@ describe("Basic functionnalities", function suite() {
 		assert.match(await body.text(), /tutu/);
 	});
 
+	it("should change body by fetch", async () => {
+		const { statusCode, body } = await request(`${host}/a4.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /tarte/);
+	});
+
 	// // Basic a2
 	// it("should change body by external jquery.js (after ready)", (done) => {
 	// 	request({
@@ -70,17 +76,8 @@ describe("Basic functionnalities", function suite() {
 	// 	});
 	// });
 
-	// // Basic a4
-	// it("should change body by xhr after ready (and external jquery)", (done) => {
-	// 	request({
-	// 		method: 'GET',
-	// 		url: host + ':' + port + '/a4.html'
-	// 	}, (err, res, body) => {
-	// 		expect(res.statusCode).to.be(200);
-	// 		expect(body.indexOf('tarte')).to.be.greaterThan(0);
-	// 		done();
-	// 	});
-	// });
+
+
 
 	// it("should redirect because client script sets document.location", (done) => {
 	// 	request({
