@@ -78,22 +78,5 @@ describe("Basic functionnalities", function suite() {
 		assert.equal(location, `${host}/basic-redirect-loc.html`);
 	});
 
-
-
-
-
-	// it("should redirect because client script sets document.location", (done) => {
-	// 	request({
-	// 		method: 'GET',
-	// 		url: host + ':' + port + '/a5.html',
-	// 		followRedirect: false
-	// 	}, (err, res, body) => {
-	// 		expect(res.statusCode).to.be(302);
-	// 		expect(res.headers.location).to.be(host + ':' + port + '/newloc.html');
-	// 		done();
-	// 	});
-	// });
-
-
 });
 
