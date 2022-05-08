@@ -163,6 +163,9 @@ define input/output, access request/response.
 
 - page
   Plugins get a not yet loaded playwright page instance.
+  Use `page.on('idle', fn)` to run an *asynchronous* listener.
+  This idle event is emitted using a special promise-aware method,
+  not the standard synchronous emitter.
 
 - settings
   see above for default settings, and below for per-request settings.
@@ -170,16 +173,9 @@ define input/output, access request/response.
 - request, response
   untampered express arguments
 
-A plugin can return a promise if it needs to chain following plugins.
+Plugins can be asynchronous as well.
 
-The page object has an asynchronous listener method `when` that allows one to
-queue thenables between ready, load, or idle events.
-Plugins can use `page.when('idle', function listener() {})` method to ensure
-their listener is executed asynchronously with respect to other plugins,
-and the listener can return a promise.
-
-The last 'idle' listener being the internal handler that decides what to do
-with `settings.output` as described above.
+One output plugin will have to set `settings.output`, see below.
 
 A few options are added to settings:
 
@@ -256,8 +252,12 @@ which also shows that a helper can configure plugins by writing
 
 ## How client code can tell if it is being run on a hosted browser ?
 
-The prerender plugin ensures that: `document.visibilityState == "prerender"`,
-and `document.hidden == true`.
+The prerender plugins sets
+
+```js
+document.visibilityState = "prerender";
+document.hidden == true;
+```
 
 And it does no more than that.
 
@@ -268,45 +268,16 @@ See also:
 - [Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
 - [Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
 
-The [window-page](https://github.com/kapouer/window-page) module comes really
-handy for developing websites with pure client rendering that can support being
-prerendered on server. It is lightweight, simple, and helps organize application
-code with or without using a framework.
+## Redirection on navigation
 
-## Redirection when document.location is set on client
+dom.plugins.redirect listens to navigate events and emits
+`res.redirect(302, location)` accordingly.
 
-This behavior is implemented by the dom.plugins.redirect plugin.
+## Logs
 
-When a web page loads, one of its script can set document.location.
+Set `DEBUG=express-dom` environment variable.
 
-When this happens, it triggers this behavior:
-
-- location does not change to newLocation, and the page is simply unloaded
-- res.redirect(302, newLocation) is called
-
-This allows all the website routes to be defined by client code - the server
-application just knows about static files, views, api, and auth - and how to
-prerender web pages.
-
-Important: due to current limitations in native webkitgtk, it is strongly
-advised not to load an iframe when prerendering - it is confused with a location
-change and triggers a redirect, something that is obviously undesirable.
-
-## Debugging
-
-Start with
-`DEBUG=express-dom node app.js`
-
-If NODE_ENV environment variable is not "production", and if `console` option
-is not set, server-side browser console is logged to stdout / stderr.
-
-To debug web pages, set `DEVELOP` environment variable like this:
-`DEVELOP=1 node app.js`
-
-This disables load phase (so that web pages are rendered on client only),
-and turn off backend browser cache.
-
-## Backends
+## Backend
 
 The playwright backend is configured to use system-installed chrome.
 
