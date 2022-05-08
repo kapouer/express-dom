@@ -274,9 +274,12 @@ See also:
 dom.plugins.redirect listens to navigate events and emits
 `res.redirect(302, location)` accordingly.
 
-## Logs
+## Logs and debug
 
-Set `DEBUG=express-dom` environment variable.
+Useful env vars to know:
+
+- `DEBUG=express-dom`
+- `PWDEBUG=1`
 
 ## Backend
 
