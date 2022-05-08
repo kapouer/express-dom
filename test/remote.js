@@ -55,5 +55,17 @@ describe("Remote url loading", function suite() {
 		});
 	});
 
+	// // Basic a3
+	// it("should change body by external jquery.js load from distant server (after ready)", (done) => {
+	// 	request({
+	// 		method: 'GET',
+	// 		url: host + ':' + port + '/a3.html'
+	// 	}, (err, res, body) => {
+	// 		expect(res.statusCode).to.be(200);
+	// 		expect(body.indexOf('toto')).to.be.greaterThan(0);
+	// 		done();
+	// 	});
+	// });
+
 });
 
