@@ -69,6 +69,14 @@ describe("Basic functionnalities", function suite() {
 		assert.match(await body.text(), /tarte/);
 	});
 
+	it("redirects using navigation", async () => {
+		const {
+			statusCode,
+			headers: { location }
+		} = await request(`${host}/basic-redirect.html`);
+		assert.equal(statusCode, 302);
+		assert.equal(location, `${host}/basic-redirect-loc.html`);
+	});
 
 
 
