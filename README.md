@@ -53,6 +53,7 @@ Return express middlewares:
   Load is meant to modify the DOM using client scripts.
 
 A special form is available for rendering outside express:
+
 ```js
 const { status, body } = await dom(...).load(...)(url);
 ```
