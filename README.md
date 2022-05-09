@@ -244,6 +244,10 @@ This is a limited list of plugins, some are used by default:
 - png
   outputs a screenshot of the rendered DOM
 
+- cookies
+  Allows cookies listed in `settings.allowCookies` Set,
+  or all cookies if no such setting exists.
+
 - develop
   sets `settings.load.disable = true` if `query.develop` is defined.
 
