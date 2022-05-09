@@ -4,7 +4,7 @@
 		<title>async fetch</title>
 		<script type="text/javascript">
 		document.addEventListener('DOMContentLoaded', async function() {
-			const res = await fetch("a4.json?delay=1000");
+			const res = await fetch("a4.json?delay=100");
 			const obj = await res.json();
 			document.querySelector('.me').textContent = obj.test;
 		}, false);
