@@ -35,9 +35,8 @@ All arguments are optional, see below.
 
 Return express middlewares:
 
-- dom(view, helper1, helper2, ...)
-  `view` is resolved by a default helper, see below.
-  If empty, resolves to the current request express view file path.
+- dom(helper1, helper2, ...)
+  The default helper resolves to the current request express view file path.
   Additional helper functions can return a promise, see below.
 
 - dom(...).prepare(opts, plugin1, plugin2, ...)
