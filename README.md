@@ -101,14 +101,13 @@ dom.settings.prepare.plugins holds the default plugins for preparing a page:
 
 - dom.plugins.types
 - dom.plugins.hide
-- dom.plugins.noreq
+- dom.plugins.none
 - dom.plugins.html
 
 dom.settings.load.plugins holds the default plugins for loading a page:
 
 - dom.plugins.types
 - dom.plugins.hide
-- dom.plugins.nomedia
 - dom.plugins.prerender
 - dom.plugins.redirect
 - dom.plugins.html
@@ -128,17 +127,14 @@ Pool options are defined through global settings `dom.pool`
 - pool.max
   the maximum number of instances in the pool, per priority.
   By default, two pools will exist when using `prioritize` helper.
-
 - pool.maxloads
   destroys pages that have loaded more than maxloads times (default 100)
 
 Default page initialization options can be set in `dom.settings`
 
-- stall
-  milliseconds before a resource is no more taken into account for idle event
-
-- verbose
-  boolean, console on stdout / stderr, log warnings (default true)
+- stall: time before idle event ignores an async resource
+- timeout: time before an async resource times out
+- verbose: console on stdout / stderr
 
 ## Plugins and helpers
 
@@ -229,7 +225,7 @@ This is a limited list of plugins, some are used by default:
   populates document.referrer using request.get('referrer')
 
 - prerender
-  sets visibilityState to prerender, see below
+  `document.visibilityState == 'prerender'`
 
 - redirect
   catch navigation and use it for redirection, see below
@@ -237,12 +233,14 @@ This is a limited list of plugins, some are used by default:
 - types
   filter requests by settings.types Set.
 
-- noreq
+- none
   blocks all requests
 
 - hide
-  hides page and disable css transitions, animations
-  Can be enabled/disabled using settings.hide boolean.
+  ensures `document.hidden == true`;
+  adds user stylesheet to keep rendering to minimum;
+  aborts stylesheet, image, font loading;
+  can be disabled using `settings.hide = false`.
 
 - png
   outputs a screenshot of the rendered DOM
@@ -256,24 +254,6 @@ See also
 [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
 which also shows that a helper can configure plugins by writing
 `mw.load({plugins: [mypluginA, mypluginB]});`.
-
-## How client code can tell if it is being run on a hosted browser ?
-
-The prerender plugins sets
-
-```js
-document.visibilityState = "prerender";
-document.hidden == true;
-```
-
-And it does no more than that.
-
-It is enabled by default when using load(), and can be removed if needed.
-
-See also:
-
-- [Page visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
-- [Load event handling when visible](https://github.com/kapouer/window-page/commit/49ec9ff0)
 
 ## Redirection on navigation
 
