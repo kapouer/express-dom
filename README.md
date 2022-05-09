@@ -116,14 +116,10 @@ dom.settings.load.plugins holds the default plugins for loading a page:
 More plugins are provided, please check the source code.
 
 Replace default list of plugins by setting the `plugins` option:
-`dom('index').load({plugins: [dom.plugins.html]})`
+`dom('index').load({plugins: ['html']})`
 
 Prepend plugins to the default list using additional arguments:
-`dom(index).load({pool: {max:2}}, dom.plugins.mount)`
-
-Note that
-
-`.load({plugins: [myplugin]})` is the same as `.load({plugins:[]}, myplugin)`.
+`dom('index').load({pool: {max:2}}, 'mount')`
 
 More on plugins below.
 
