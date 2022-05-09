@@ -99,15 +99,17 @@ dom.settings.helpers holds the default helpers:
 
 dom.settings.prepare.plugins holds the default plugins for preparing a page:
 
-- dom.plugins.hide (display none, animate none)
-- dom.plugins.noreq (disable all requests)
+- dom.plugins.types
+- dom.plugins.hide
+- dom.plugins.noreq
 - dom.plugins.html
 
 dom.settings.load.plugins holds the default plugins for loading a page:
 
+- dom.plugins.types
 - dom.plugins.hide
-- dom.plugins.nomedia (allow only file extensions empty, js,  or ending with ml or json)
-- dom.plugins.prerender (sets visibilityState)
+- dom.plugins.nomedia
+- dom.plugins.prerender
 - dom.plugins.redirect
 - dom.plugins.html
 
@@ -155,8 +157,8 @@ It should avoid ending the response, and should instead throw an error.
 A plugin can listen to page events, change settings before the page is loaded,
 define input/output, access request/response.
 
-`function helper(mw, settings, request, response) { ... }`
-`function plugin(page, settings, request, response) { ... }`
+`function helper(mw, settings, req, res) { ... }`
+`function plugin(page, settings, req, res) { ... }`
 
 - mw
   the current dom middleware, like the one returned by `dom()`.
@@ -171,8 +173,8 @@ define input/output, access request/response.
 - settings
   see above for default settings, and below for per-request settings.
 
-- request, response
-  untampered express arguments
+- req, res
+  usual express middleware arguments
 
 Plugins can be asynchronous as well.
 
@@ -204,6 +206,10 @@ A few options are added to settings:
   A plugin can set response status, `output` and let other plugins change it,
   or can directly handle response and set `output` to false (or do nothing).
 
+- settings.filters
+  Array of filter: request => bool functions.
+  If a filter returns *false*, the request is aborted.
+
 - settings.priority (integer, default 0)
   This defines separate pools (and queues) for allocating instances.
   Used in conjonction with `prioritize` helper (installed by default), it helps
@@ -232,14 +238,18 @@ This is a limited list of plugins, some are used by default:
 - redirect
   catch navigation and use it for redirection, see below
 
+- types
+  filter requests by settings.types Set.
+
 - noreq
   blocks all requests
 
 - hide
   hides page and disable css transitions, animations
+  Can be enabled/disabled using settings.hide boolean.
 
 - png
-  outputs a screenshot of the rendered DOM (requires native webkitgtk)
+  outputs a screenshot of the rendered DOM
 
 - develop
   sets `settings.load.disable = true` if `query.develop` is defined.
