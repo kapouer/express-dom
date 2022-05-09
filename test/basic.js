@@ -51,10 +51,31 @@ describe("Basic functionnalities", function suite() {
 		assert.match(await body.text(), /tutu/);
 	});
 
-	it("changes DOM using external script", async () => {
-		const { statusCode, body } = await request(`${host}/basic-extern.html`);
-		assert.equal(statusCode, 200);
-		assert.match(await body.text(), /tutu/);
+	it("changes DOM using script", async () => {
+		// race conditions are tricky, let's run this many times
+		for (let i = 0; i < 10; i++) {
+			const { statusCode, body } = await request(`${host}/basic-script.html`);
+			assert.equal(statusCode, 200);
+			assert.match(await body.text(), /tutu/);
+		}
+	});
+
+	it("changes DOM using async script", async () => {
+		// race conditions are tricky, let's run this many times
+		for (let i = 0; i < 10; i++) {
+			const { statusCode, body } = await request(`${host}/basic-script-async.html`);
+			assert.equal(statusCode, 200);
+			assert.match(await body.text(), /tutu/);
+		}
+	});
+
+	it("changes DOM using data script", async () => {
+		// race conditions are tricky, let's run this many times
+		for (let i = 0; i < 10; i++) {
+			const { statusCode, body } = await request(`${host}/basic-script-data.html`);
+			assert.equal(statusCode, 200);
+			assert.match(await body.text(), /tutu/);
+		}
 	});
 
 	it("changes DOM using data loaded by xhr", async () => {
@@ -64,9 +85,11 @@ describe("Basic functionnalities", function suite() {
 	});
 
 	it("changes DOM using data loaded by fetch", async () => {
-		const { statusCode, body } = await request(`${host}/basic-fetch.html`);
-		assert.equal(statusCode, 200);
-		assert.match(await body.text(), /tarte/);
+		for (let i = 0; i < 10; i++) {
+			const { statusCode, body } = await request(`${host}/basic-fetch.html`);
+			assert.equal(statusCode, 200);
+			assert.match(await body.text(), /tarte/);
+		}
 	});
 
 	it("redirects using navigation", async () => {
