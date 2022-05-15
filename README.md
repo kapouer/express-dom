@@ -201,6 +201,9 @@ A few options are added to settings:
   Array of filter: request => bool functions.
   If a filter returns *false*, the request is aborted.
 
+- settings.domain
+  Configures the "domain" filter, see below.
+
 - settings.priority (integer, default 0)
   This defines separate pools (and queues) for allocating instances.
   Used in conjonction with `prioritize` helper (installed by default), it helps
@@ -232,8 +235,11 @@ This is a limited list of plugins, some are used by default:
 - types
   filter requests by settings.types Set.
 
-- none
-  blocks all requests
+- domain
+  filter requests by settings.domain value:
+  - "same": reject cross-domain requests
+  - "none": reject all requests
+  - "all": accept all requests (the default)
 
 - hide
   ensures `document.hidden == true`;
