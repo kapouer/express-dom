@@ -221,7 +221,7 @@ This is a limited list of plugins, some are used by default:
 
 - prerender
   `document.visibilityState == 'prerender'`
-  sets policies for script, connect to 'self'.
+  sets policies for script, connect to 'self' 'unsafe-inline'.
 
 - redirect
   catch navigation and use it for redirection, see below
@@ -233,7 +233,7 @@ This is a limited list of plugins, some are used by default:
   can be disabled by a previous plugin using `settings.hide = false`.
 
 - png
-  sets policies for script, connect, style to 'self',
+  sets policies for script, connect, style to 'self' 'unsafe-inline',
   and policies for font, img to `'self' https: data:`.
   outputs a screenshot of the rendered DOM.
 
