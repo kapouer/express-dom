@@ -9,25 +9,20 @@ Since version 6, uses [playwright](https://playwright.dev/docs/api/) as backend.
 The simplest example for web page rendering is:
 
 ```js
-var app = require('express')();
-var dom = require('express-dom');
+const app = require('express')();
+const dom = require('express-dom');
 
 app.get('*.html', dom().load());
 
 ```
 
-Web pages can be built in two separate phases:
+There are two (optional) phases to prerender a web page:
 
 - prepare
-  this loads the html view into a DOM that can be modified
-  by prepare plugins, but does not run the view's scripts.
+  loads the page in browser, does not load or run any resources.
+  Useful for applying plugins to an html template.
 - load
-  this loads and run the result of the prepared view the same as if it was
-  loaded in a browser.
-
-The *prepare* phase is supposed to setup the view with application parameters,
-the *load* phase is supposed to prerender the view depending on the current
-location.
+  loads the prepared page in browser, only load and run scripts.
 
 ## Methods
 
@@ -98,14 +93,12 @@ dom.settings.helpers holds the default helpers:
 
 dom.settings.prepare.plugins holds the default plugins for preparing a page:
 
-- dom.plugins.types
 - dom.plugins.hide
 - dom.plugins.none
 - dom.plugins.html
 
 dom.settings.load.plugins holds the default plugins for loading a page:
 
-- dom.plugins.types
 - dom.plugins.hide
 - dom.plugins.prerender
 - dom.plugins.redirect
@@ -173,48 +166,48 @@ One output plugin will have to set `settings.output`, see below.
 
 A few options are added to settings:
 
-- settings.view
-  only for helpers
+- view
+  supports: url string, location, express view name,
+  string starting with "<", buffer, stream.
 
-- settings.views (string or array)
+- views (string or array)
   the root public dir(s) for the default helper plugin
   defaults to app.get('views')
 
-- settings.location
+- location
   whatwg url, will be used to set document location;
   and defaults to the current request url.
 
-- settings.location.headers
-  additional headers.
-  In particular, cookie can be found here, if any.
-  An helper can do `settings.view = settings.location` to pass request to another url.
+- headers
+  additional page request headers set by plugins.
 
-- settings.input
+- input
   the data obtained from the view or the view itself if it was given as data.
 
-- settings.output
+- output
   If `output !== false`, express-dom writes or pipe it to the response.
   A plugin can set response status, `output` and let other plugins change it,
   or can directly handle response and set `output` to false (or do nothing).
 
-- settings.filters
+- filters
   Array of filter: request => bool functions.
   If a filter returns *false*, the request is aborted.
 
-- settings.domain
-  Configures the "domain" filter, see below.
+- policies
+  map of Content-Security-Policy Fetch directives (without -src suffix).
+  Defaults to `{ default: "'none'" }`.
 
-- settings.priority (integer, default 0)
+- priority (integer, default 0)
   This defines separate pools (and queues) for allocating instances.
   Used in conjonction with `prioritize` helper (installed by default), it helps
   avoiding deadlocks when a page needs other pages during its prerending.
 
-- settings.prepare.disable
+- prepare.disable
   Disable prepare phase.
   Can be set per request (by helper),
   or as default.
 
-- settings.load.disable
+- load.disable
   Disable load phase. Only the prepare phase will run.
   Can be set per request (by a prepare plugin or helper),
   or as default (dom.settings.develop sets dom.settings.load.disable).
@@ -224,31 +217,25 @@ A few options are added to settings:
 This is a limited list of plugins, some are used by default:
 
 - referrer
-  populates document.referrer using request.get('referrer')
+  Sets headers.referer to express req.get('referrer')
 
 - prerender
   `document.visibilityState == 'prerender'`
+  sets policies for script, connect to 'self'.
 
 - redirect
   catch navigation and use it for redirection, see below
-
-- types
-  filter requests by settings.types Set.
-
-- domain
-  filter requests by settings.domain value:
-  - "same": reject cross-domain requests
-  - "none": reject all requests
-  - "all": accept all requests (the default)
 
 - hide
   ensures `document.hidden == true`;
   adds user stylesheet to keep rendering to minimum;
   aborts stylesheet, image, font loading;
-  can be disabled using `settings.hide = false`.
+  can be disabled by a previous plugin using `settings.hide = false`.
 
 - png
-  outputs a screenshot of the rendered DOM
+  sets policies for script, connect, style to 'self',
+  and policies for font, img to `'self' https: data:`.
+  outputs a screenshot of the rendered DOM.
 
 - cookies
   Allows cookies listed in `settings.allowCookies` Set,
