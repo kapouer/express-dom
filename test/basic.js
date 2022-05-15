@@ -6,11 +6,10 @@ const express = require('express');
 const dom = require('../');
 
 dom.settings.stall = 5000;
-dom.settings.allow = 'all';
 dom.settings.timeout = 10000;
 dom.settings.console = true;
 
-describe("Basic functionnalities", function suite() {
+describe("Basic functionnalities", function() {
 	this.timeout(0);
 	let server, host;
 
@@ -47,6 +46,18 @@ describe("Basic functionnalities", function suite() {
 
 	it("changes DOM using inline script", async () => {
 		const { statusCode, body } = await request(`${host}/basic-inline.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /tutu/);
+	});
+
+	it("changes DOM using inline Promise.resolve", async () => {
+		const { statusCode, body } = await request(`${host}/basic-resolve.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /tutu/);
+	});
+
+	it("changes DOM using inline new Promise", async () => {
+		const { statusCode, body } = await request(`${host}/basic-promise.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /tutu/);
 	});

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>DOMContentLoaded</title>
+		<script type="text/javascript">
+			document.addEventListener('DOMContentLoaded', function() {
+				Promise.resolve().then(() => {
+					document.querySelector('.me').innerHTML = 'tu' + 'tu';
+				});
+			}, false);
+		</script>
+	</head>
+	<body>
+		<div class="me">tata</div>
+	</body>
+</html>
