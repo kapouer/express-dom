@@ -1,69 +1,64 @@
-const expect = require('expect.js');
-const request = require('request');
+const assert = require('node:assert').strict;
+const { once } = require('node:events');
+const { request } = require('undici');
 const express = require('express');
 
-const host = "http://localhost";
 const dom = require('../');
-dom.settings.stall = 900000;
-dom.settings.allow = 'all';
-dom.settings.timeout = 900000;
-dom.settings.stallTimeout = 200; // the value used in the tests
-dom.settings.console = true;
+
 dom.settings.helpers.push(dom.helpers.develop);
-dom.pool.max = 4;
 
-describe("Prepare and load", () => {
-	let server, port;
+describe("Prepare or load depending on develop", function() {
+	this.timeout(0);
+	let server, host;
 
-	before((done) => {
+	before(async () => {
 		const app = express();
 		app.set('views', __dirname + '/public');
-
-		app.get(/\.(json|js|css|png)$/, express.static(app.get('views')));
+		app.get(/\.(json|js|css|png)$/, (req, res, next) => {
+			if (req.query.delay) {
+				setTimeout(next, parseInt(req.query.delay));
+				delete req.query.delay;
+			} else {
+				next();
+			}
+		}, express.static(app.get('views')));
 		app.get(/\.html$/, dom().prepare((page, settings, request, response) => {
-			page.when('ready', () => {
-				return page.run((settings) => {
-					document.body.setAttribute('data-views', settings.views);
-				}, request.app.settings);
+			page.on('idle', () => {
+				return page.evaluate(views => {
+					document.body.setAttribute('data-views', views);
+				}, request.app.settings.views);
 			});
-		}).load());
-
-
-		server = app.listen((err) => {
-			if (err) console.error(err);
-			port = server.address().port;
-			done();
+		}).load(), (err, req, res, next) => {
+			console.error(err);
+			res.sendStatus(500);
 		});
+
+		server = app.listen();
+		await once(server, 'listening');
+		host = `http://localhost:${server.address().port}`;
 	});
 
-	after((done) => {
+	after(async () => {
 		server.close();
-		done();
+		await dom.destroy();
 	});
 
 
-	it("should prepare and load a page", (done) => {
-		request({
-			method: 'GET',
-			url: host + ':' + port + '/develop.html'
-		}, (err, res, body) => {
-			expect(res.statusCode).to.be(200);
-			expect(body.indexOf('/public</body>')).to.be.greaterThan(0);
-			expect(body.indexOf('toto')).to.be(-1);
-			done();
-		});
+
+	it("should prepare and load a page", async () => {
+		const { statusCode, body } = await request(`${host}/develop.html`);
+		assert.equal(statusCode, 200);
+		const text = await body.text();
+		assert.match(text, /\/public<\/body>/);
+		assert.doesNotMatch(text, /toto/);
 	});
 
-	it("should prepare and not load a page", (done) => {
-		request({
-			method: 'GET',
-			url: host + ':' + port + '/develop.html?develop'
-		}, (err, res, body) => {
-			expect(res.statusCode).to.be(200);
-			expect(body.indexOf('data-views="')).to.be.greaterThan(0);
-			expect(body.indexOf('toto')).to.be.greaterThan(0);
-			done();
-		});
+	it("should prepare and not load a page", async () => {
+		const { statusCode, body } = await request(`${host}/develop.html?develop`);
+		assert.equal(statusCode, 200);
+		const text = await body.text();
+		assert.match(text, /data-views="/);
+		assert.match(text, /toto/);
 	});
 
 });
