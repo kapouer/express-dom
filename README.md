@@ -24,6 +24,22 @@ There are two (optional) phases to prerender a web page:
 - load
   loads the prepared page in browser, only load and run scripts.
 
+Both methods wait for the page to settle async operations:
+
+- script/link nodes
+- DOMContentLoaded (async) listeners
+- fetch, xhr calls
+- promises
+- microtasks
+- timeouts
+- animation frame requests
+
+Once all that is done, an "idle" event is emitted on page, see below.
+
+This "idle" event tracking works quite well in many cases,
+but cannot work with scripts that don't properly
+handle promise rejections.
+
 ## Methods
 
 All arguments are optional, see below.
@@ -104,8 +120,6 @@ dom.settings.load.plugins holds the default plugins for loading a page:
 - dom.plugins.redirect
 - dom.plugins.html
 
-More plugins are provided, please check the source code.
-
 Replace default list of plugins by setting the `plugins` option:
 `dom('index').load({plugins: ['html']})`
 
@@ -141,8 +155,8 @@ It should avoid ending the response, and should instead throw an error.
 A plugin can listen to page events, change settings before the page is loaded,
 define input/output, access request/response.
 
-`function helper(mw, settings, req, res) { ... }`
-`function plugin(page, settings, req, res) { ... }`
+`async helper(mw, settings, req, res) { ... }`
+`async function plugin(page, settings, req, res) { ... }`
 
 - mw
   the current dom middleware, like the one returned by `dom()`.
@@ -151,16 +165,13 @@ define input/output, access request/response.
 - page
   Plugins get a not yet loaded playwright page instance.
   Use `page.on('idle', fn)` to run an *asynchronous* listener.
-  This idle event is emitted using a special promise-aware method,
-  not the standard synchronous emitter.
+  (An asynchronous emitter calls the registered functions.)
 
 - settings
   see above for default settings, and below for per-request settings.
 
 - req, res
   usual express middleware arguments
-
-Plugins can be asynchronous as well.
 
 One output plugin will have to set `settings.output`, see below.
 
