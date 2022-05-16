@@ -4,53 +4,8 @@
 		<title>DOMContentLoaded</title>
 
 		<script type="text/javascript">
-			const native = new class {
-				#set = new Set();
-				#count = 0;
-				creates() {
-					const id = this.#count++;
-					console.log("creates", id);
-					if (id == 3) console.trace(id)
-					this.#set.add(id);
-					return id;
-				}
-				completes(id) {
-					console.log("deletes", id);
-					this.#set.delete(id);
-					if (this.#set.size == 0) console.log('DONE');
-				}
-			};
-			const context = window;
-			native.Promise = context.Promise;
-			const it = native;
-			context.Promise = class Promise extends native.Promise {
-				#id;
-				static get [Symbol.species]() {
-					return Promise;
-				}
-				get [Symbol.toStringTag]() {
-					return 'Promise';
-				}
-				constructor(fn) {
-					let id;
-					if (!fn) super();
-					else super((ok, fail) => {
-						console.log("new");
-						id = it.creates('promise');
-						fn(v => {
-							it.completes(this.#id);
-							ok.call(this, v);
-						}, e => {
-							it.completes(this.#id);
-							fail.call(this, e);
-						});
-					});
-					this.#id = id;
-				}
-			};
-
-			document.addEventListener('DOMContentLoaded', function() {
-				new Promise(resolve => {
+			document.addEventListener('DOMContentLoaded', async function() {
+				await new Promise(resolve => {
 					const id = setInterval(() => {
 						// intervals are not tracked, so it's a good way
 						// to be sure another tracker is not counting it
@@ -59,7 +14,7 @@
 						resolve();
 					}, 500);
 				});
-				Promise.resolve("a").then(function(v) { return v; })
+				await Promise.resolve("a").then(function(v) { return v; })
 			}, false);
 		</script>
 	</head>

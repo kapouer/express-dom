@@ -44,6 +44,12 @@ describe("Basic functionnalities", function() {
 		assert.match(await body.text(), /toto/);
 	});
 
+	it("loads a simple Html page with a stylesheet", async () => {
+		const { statusCode, body } = await request(`${host}/basic-style.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /toto/);
+	});
+
 	it("changes DOM using inline script", async () => {
 		const { statusCode, body } = await request(`${host}/basic-inline.html`);
 		assert.equal(statusCode, 200);

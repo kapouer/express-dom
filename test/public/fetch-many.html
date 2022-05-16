@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Fetch many json</title>
+		<script type="text/javascript">
+			document.addEventListener('DOMContentLoaded', async () => {
+				// escape the tracker (which awaits listeners)
+				// this tests promise/fetch trackers
+
+				const node = document.querySelector('.load');
+				const many = parseInt(new URL(document.location).searchParams.get('how')) || 0;
+				for (let i = 0 ; i < many ; i++) {
+					const res = await fetch('fetch-many.json?delay=' + i);
+					const obj = await res.json();
+					node.after('c0-'+i+'\n');
+				}
+
+			});
+		</script>
+	</head>
+	<body>
+		<div class="me">tata</div>
+		<div class="load">tata</div>
+	</body>
+</html>

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<script type="text/javascript" src="jquery.js"></script>
+		<title>Fetch sub page</title>
 		<script type="text/javascript">
-			$(function() {
-				$.get('/c0.html').done(function(obj) {
-					$('.load').html(obj.indexOf("c0-98") > 0 ? "true" : "false");
-				});
+			document.addEventListener('DOMContentLoaded', async () => {
+				const node = document.querySelector('.load');
+				const res = await fetch('fetch-many.html?how=10');
+				const obj = await res.text();
+				node.textContent = obj.indexOf("c0-9") > 0 ? "true" : "false";
 			});
 		</script>
 	</head>
