@@ -5,9 +5,10 @@ const express = require('express');
 
 const dom = require('../');
 
-dom.settings.stall = 5000;
 dom.settings.timeout = 10000;
 dom.settings.console = true;
+
+dom.settings.debug = require('node:inspector').url() !== undefined;
 
 describe("Basic functionnalities", function() {
 	this.timeout(0);

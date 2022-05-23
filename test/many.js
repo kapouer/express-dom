@@ -121,7 +121,7 @@ describe("Overloads", function() {
 	it("with many sub-requested pages without deadlock", async function() {
 		this.timeout(15000);
 		const list = [];
-		const MAX = dom.pool.max * 3;
+		const MAX = dom.settings.pageMax * 3;
 		let count = MAX;
 
 		for (let i = 0; i < MAX; i++) {
