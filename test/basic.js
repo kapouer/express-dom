@@ -25,6 +25,18 @@ describe("Basic functionnalities", function() {
 				next();
 			}
 		}, express.static(app.get('views')));
+
+		app.get('/remote', dom((mw, settings, req, res) => {
+			if (req.query.url) {
+				settings.view = req.query.url;
+			}
+		}).load());
+		app.get('/status.html', dom((mw, settings, req, res) => {
+			if (req.query.status) {
+				res.status(parseInt(req.query.status));
+			}
+		}).load());
+
 		app.get(/\.html$/, dom().load());
 
 		server = app.listen();
@@ -43,6 +55,13 @@ describe("Basic functionnalities", function() {
 		const { statusCode, body } = await request(`${host}/basic-html.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /toto/);
+	});
+
+	it("should load html from a url", async () => {
+		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/status.html?status=403`));
+
+		assert.equal(statusCode, 403);
+		assert.match(await body.text(), /OuiOui/);
 	});
 
 	it("loads a simple Html page with a stylesheet", async () => {

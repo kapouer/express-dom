@@ -226,7 +226,12 @@ This is a limited list of plugins, some are used by default:
 - develop
   sets `settings.load.disable = true` if `query.develop` is defined.
 
-More can be found in source code.
+- equivs
+  Parse `meta[http-equiv]` tags and set response headers accordingly.
+  Supports http-equiv="Status".
+
+- preloads
+  Parse `link[rel=preload]` tags and set 'Link' response header.
 
 See also
 [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
