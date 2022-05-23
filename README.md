@@ -34,11 +34,14 @@ Both methods wait for the page to settle async operations:
 - timeouts
 - animation frame requests
 
-Once all that is done, an "idle" event is emitted on page, see below.
+Once all that is done, an "idle" event is emitted,
+with a custom async-aware emitter so listeners setup by
+plugins can run in order.
 
 This "idle" event tracking works quite well in many cases,
 but cannot work with scripts that don't properly
-handle promise rejections.
+handle promise rejections. One cannot guess how an async
+tree ends.
 
 ## Methods
 
@@ -95,80 +98,48 @@ output is equal to `settings.input`. See plugins source for examples.
 
 ## Options
 
-The global default values for these options can be changed using `dom.settings`.
-Phase-dependant settings can be specified globally using `dom.settings.prepare`
-or `dom.settings.load`.
+dom.helpers, dom.plugins are maps.
 
-Each dom middleware handler created using dom() keeps its own copy of `settings`,
-and each request is processed with its own copy as well.
+dom.settings holds some global, immutable configurations:
 
-dom.settings.helpers holds the default helpers:
+- browser: the playwright channel to use, defaults to locally-installed 'chrome'
+- pageMax: number of open pages per browser
+- pageUse: number of uses before recycling browser
+- timeout: async resources timeout
+- debug: show browser
+- verbose: show console logs, errors
 
-- dom.helpers.view
-- dom.helpers.prioritize (increments `settings.priority` if request is xhr)
+and instance settings:
 
-dom.settings.prepare.plugins holds the default plugins for preparing a page:
+- helpers: list of helpers names
+           defaults to 'view'
+- prepare: list of plugins for prepare, disabled if empty
+           defaults to 'hide', 'html'
+- load: list of plugins for load, disabled if empty
+           defaults to 'hide', 'prerender', 'redirect', 'html'
 
-- dom.plugins.hide
-- dom.plugins.none
-- dom.plugins.html
+## Helpers and Plugins
 
-dom.settings.load.plugins holds the default plugins for loading a page:
+`async helper(mw, settings, req, res) { ... }`
+A helper can change these settings depending on current request:
 
-- dom.plugins.hide
-- dom.plugins.prerender
-- dom.plugins.redirect
-- dom.plugins.html
-
-Replace default list of plugins by setting the `plugins` option:
-`dom('index').load({plugins: ['html']})`
-
-Prepend plugins to the default list using additional arguments:
-`dom('index').load({pool: {max:2}}, 'mount')`
-
-More on plugins below.
-
-Pool options are defined through global settings `dom.pool`
-
-- pool.max
-  the maximum number of instances in the pool, per priority.
-  By default, two pools will exist when using `prioritize` helper.
-- pool.maxloads
-  destroys pages that have loaded more than maxloads times (default 100)
-
-Default page initialization options can be set in `dom.settings`
-
-- stall: time before idle event ignores an async resource
-- timeout: time before an async resource times out
-- verbose: console on stdout / stderr
-
-## Plugins and helpers
-
-A helper can change view, location, input, settings and call prepare or load,
-depending on request.
-
-The settings object received by the helper is used as defaults for the settings
-object received by plugins.
+- input
+- location
+- prepare/load plugins
 
 It should avoid ending the response, and should instead throw an error.
 
-A plugin can listen to page events, change settings before the page is loaded,
-define input/output, access request/response.
-
-`async helper(mw, settings, req, res) { ... }`
 `async function plugin(page, settings, req, res) { ... }`
+A plugin can change the page instance before it starts loading.
 
 - mw
-  the current dom middleware, like the one returned by `dom()`.
-  Exposes `prepare` and `load` methods.
+  the current dom middleware, like the one returned by `dom()`,
+  so `mw.prepare` and `mw.load` are callable.
 
 - page
-  Plugins get a not yet loaded playwright page instance.
-  Use `page.on('idle', fn)` to run an *asynchronous* listener.
-  (An asynchronous emitter calls the registered functions.)
+  Use `page.on('idle', fn)` to run asynchronous listeners.
 
-- settings
-  see above for default settings, and below for per-request settings.
+- settings (see below)
 
 - req, res
   usual express middleware arguments
@@ -180,10 +151,12 @@ A few options are added to settings:
 - view
   supports: url string, location, express view name,
   string starting with "<", buffer, stream.
+  Only used by helpers.
 
 - views (string or array)
   the root public dir(s) for the default helper plugin
   defaults to app.get('views')
+  Only used by helpers.
 
 - location
   whatwg url, will be used to set document location;
@@ -231,17 +204,15 @@ This is a limited list of plugins, some are used by default:
   Sets headers.referer to express req.get('referrer')
 
 - prerender
-  `document.visibilityState == 'prerender'`
-  sets policies for script, connect to 'self' 'unsafe-inline'.
+  Force `document.visibilityState == "hidden"`
+  sets policies for script and connect to `'self' 'unsafe-inline'`.
 
 - redirect
   catch navigation and use it for redirection, see below
 
 - hide
-  ensures `document.hidden == true`;
   adds user stylesheet to keep rendering to minimum;
-  aborts stylesheet, image, font loading;
-  can be disabled by a previous plugin using `settings.hide = false`.
+  Honors `settings.hide` boolean, if set by a previous plugin.
 
 - png
   sets policies for script, connect, style to 'self' 'unsafe-inline',
