@@ -31,7 +31,7 @@ describe("Basic functionnalities", function() {
 				settings.view = req.query.url;
 			}
 		}).load());
-		app.get('/status.html', dom((mw, settings, req, res) => {
+		app.get('/plugin-status.html', dom((mw, settings, req, res) => {
 			if (req.query.status) {
 				res.status(parseInt(req.query.status));
 			}
@@ -58,7 +58,7 @@ describe("Basic functionnalities", function() {
 	});
 
 	it("should load html from a url", async () => {
-		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/status.html?status=403`));
+		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/plugin-status.html?status=403`));
 
 		assert.equal(statusCode, 403);
 		assert.match(await body.text(), /OuiOui/);
