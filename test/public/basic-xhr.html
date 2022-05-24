@@ -5,7 +5,7 @@
 		<script type="text/javascript">
 			document.addEventListener('DOMContentLoaded', function() {
 				const xhr = new XMLHttpRequest();
-				xhr.open("get", "a4.json?delay=100");
+				xhr.open("get", "data.json?delay=100");
 				xhr.responseType = 'json';
 				xhr.addEventListener('load', () => {
 					const obj = xhr.response;
