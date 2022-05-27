@@ -1,8 +1,7 @@
 # express-dom
 
-Express middleware (pre)rendering web pages in a hosted web browser.
-
-Since version 6, uses [playwright](https://playwright.dev/docs/api/) as backend.
+Express middleware for rendering web pages with [playwright](https://playwright.dev/docs/api/),
+with a focus on prerender and performance.
 
 ## Synopsis
 
@@ -16,27 +15,24 @@ app.get('*.html', dom().load());
 
 ```
 
-There are two (optional) phases to prerender a web page:
+There are two optional phases to render a web page:
 
-- prepare
-  loads the page in browser, does not load or run any resources.
-  Useful for applying plugins to an html template.
-- load
-  loads the prepared page in browser, only load and run scripts.
+- prepare: only external plugins can manipulate the DOM
+- load: by default, wait for scripts to change the DOM.
 
-Both methods wait for the page to settle async operations:
+Both methods wait for the page to settle after async operations:
 
 - script/link nodes
 - DOMContentLoaded (async) listeners
 - fetch, xhr calls
-- promises
 - microtasks
 - timeouts
 - animation frame requests
+- anything that makes sense
+- custom plugins can easily wait for client scripts to settle
 
-Once all that is done, an "idle" event is emitted,
-with a custom async-aware emitter so listeners setup by
-plugins can run in order.
+An asynchronous-aware "idle" event is emitted after client async operations.
+Thus, plugins listening to "idle" can execute in order.
 
 This "idle" event tracking works quite well in many cases,
 but cannot work with scripts that don't properly
