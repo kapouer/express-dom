@@ -103,7 +103,7 @@ dom.settings holds some global, immutable configurations:
 - pageUse: number of uses before recycling browser
 - timeout: async resources timeout
 - debug: show browser
-- verbose: show console logs, errors
+- console: boolean, or level (info, log, warn, error) - requires 'console' plugin.
 
 and instance settings:
 
