@@ -103,7 +103,7 @@ dom.settings holds some global, immutable configurations:
 - pageUse: number of uses before recycling browser
 - timeout: async resources timeout
 - debug: show browser
-- console: boolean, or level (info, log, warn, error) - requires 'console' plugin.
+- console: boolean, or level (info, log, warn, error)
 
 and instance settings:
 
@@ -196,24 +196,17 @@ A few options are added to settings:
 
 This is a limited list of plugins, some are used by default:
 
-- referrer
-  Sets headers.referer to express req.get('referrer')
+- console
+  Report browser console to node console.
+  Depends on settings.console value.
 
 - prerender
   Force `document.visibilityState == "hidden"`
   sets policies for script and connect to `'self' 'unsafe-inline'`.
 
-- redirect
-  catch navigation and use it for redirection, see below
-
 - hide
   adds user stylesheet to keep rendering to minimum;
   Honors `settings.hide` boolean, if set by a previous plugin.
-
-- png
-  sets policies for script, connect, style to 'self' 'unsafe-inline',
-  and policies for font, img to `'self' https: data:`.
-  outputs a screenshot of the rendered DOM.
 
 - cookies
   Allows cookies listed in `settings.allowCookies` Set,
@@ -228,6 +221,17 @@ This is a limited list of plugins, some are used by default:
 
 - preloads
   Parse `link[rel=preload]` tags and set 'Link' response header.
+
+- referrer
+  Sets headers.referer to express req.get('referrer')
+
+- redirect
+  catch navigation and use it for redirection, see below
+
+- png
+  sets policies for script, connect, style to 'self' 'unsafe-inline',
+  and policies for font, img to `'self' https: data:`.
+  outputs a screenshot of the rendered DOM.
 
 See also
 [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
