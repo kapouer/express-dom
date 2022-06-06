@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>tracker debugging</title>
+	<script>
+		window.module = {};
+	</script>
+	<script src="tracker.js"></script>
+	<script>
+		window.module.exports("tracker", console.log);
+
+		document.addEventListener('DOMContentLoaded', () => {
+			(async function() {
+				await syncFn();
+			})();
+
+			Promise.resolve(3).then(() => {
+				window.toto = 2;
+			});
+			const list = [];
+			for (let i = 0; i < 100; i++) {
+				list.push(new Promise(async resolve => {
+					await one();// one() is called immediately but
+					// this runs in a next microtask
+					const res = await fetch('tracker.json', {
+						headers: { accept: 'application/json' }
+					});
+					const obj = await res.json();
+					resolve(obj);
+				}));
+			}
+			Promise.all(list).then(([obj]) => {
+				console.log(obj);
+			})
+		});
+
+		function syncFn() {
+			window.toto = 1;
+		}
+
+		async function one() {
+			const p = new Promise(resolve => {
+				resolve();
+			});
+			await p;
+			return true;
+		}
+	</script>
+</head>
+
+<body>
+
+</body>
+
+</html>
