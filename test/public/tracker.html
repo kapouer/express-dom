@@ -8,6 +8,7 @@
 	</script>
 	<script src="tracker.js"></script>
 	<script>
+
 		window.module.exports("tracker", console.log);
 
 		document.addEventListener('DOMContentLoaded', () => {
@@ -15,15 +16,18 @@
 				await syncFn();
 			})();
 
+			const fnf = () => {};
+			fnf.yes = true;
+
 			Promise.resolve(3).then(() => {
 				window.toto = 2;
-			});
+			}).catch(fnf);
 			const list = [];
-			for (let i = 0; i < 100; i++) {
+			for (let i = 0; i < 1000; i++) {
 				list.push(new Promise(async resolve => {
 					await one();// one() is called immediately but
 					// this runs in a next microtask
-					const res = await fetch('tracker.json', {
+					const res = await fetch('tracker.json?t=' + Date.now(), {
 						headers: { accept: 'application/json' }
 					});
 					const obj = await res.json();
