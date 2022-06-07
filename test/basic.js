@@ -76,65 +76,6 @@ describe("Basic functionnalities", function() {
 		assert.match(await body.text(), /toto/);
 	});
 
-	it("changes DOM using inline script", async () => {
-		const { statusCode, body } = await request(`${host}/basic-inline.html`);
-		assert.equal(statusCode, 200);
-		assert.match(await body.text(), /tutu/);
-	});
-
-	it("changes DOM using inline Promise.resolve", async () => {
-		const { statusCode, body } = await request(`${host}/basic-resolve.html`);
-		assert.equal(statusCode, 200);
-		assert.match(await body.text(), /tutu/);
-	});
-
-	it("changes DOM using inline new Promise", async () => {
-		const { statusCode, body } = await request(`${host}/basic-promise.html`);
-		assert.equal(statusCode, 200);
-		assert.match(await body.text(), /tutu/);
-	});
-
-	it("changes DOM using script", async () => {
-		// race conditions are tricky, let's run this many times
-		for (let i = 0; i < 10; i++) {
-			const { statusCode, body } = await request(`${host}/basic-script.html`);
-			assert.equal(statusCode, 200);
-			assert.match(await body.text(), /tutu/);
-		}
-	});
-
-	it("changes DOM using async script", async () => {
-		// race conditions are tricky, let's run this many times
-		for (let i = 0; i < 10; i++) {
-			const { statusCode, body } = await request(`${host}/basic-script-async.html`);
-			assert.equal(statusCode, 200);
-			assert.match(await body.text(), /tutu/);
-		}
-	});
-
-	it("changes DOM using data script", async () => {
-		// race conditions are tricky, let's run this many times
-		for (let i = 0; i < 10; i++) {
-			const { statusCode, body } = await request(`${host}/basic-script-data.html`);
-			assert.equal(statusCode, 200);
-			assert.match(await body.text(), /tutu/);
-		}
-	});
-
-	it("changes DOM using data loaded by xhr", async () => {
-		const { statusCode, body } = await request(`${host}/basic-xhr.html`);
-		assert.equal(statusCode, 200);
-		assert.match(await body.text(), /tarte/);
-	});
-
-	it("changes DOM using data loaded by fetch", async () => {
-		for (let i = 0; i < 10; i++) {
-			const { statusCode, body } = await request(`${host}/basic-fetch.html`);
-			assert.equal(statusCode, 200);
-			assert.match(await body.text(), /tarte/);
-		}
-	});
-
 	it("redirects using navigation", async () => {
 		const {
 			statusCode,

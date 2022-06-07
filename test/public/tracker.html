@@ -6,7 +6,7 @@
 	<script>
 		window.module = {};
 	</script>
-	<script src="tracker.js"></script>
+	<script src="js/tracker.js"></script>
 	<script>
 
 		window.module.exports("tracker", console.log);
@@ -27,7 +27,7 @@
 				list.push(new Promise(async resolve => {
 					await one();// one() is called immediately but
 					// this runs in a next microtask
-					const res = await fetch('tracker.json?t=' + Date.now(), {
+					const res = await fetch('js/tracker.json?t=' + Date.now(), {
 						headers: { accept: 'application/json' }
 					});
 					const obj = await res.json();
