@@ -108,11 +108,11 @@ dom.settings holds some global, immutable configurations:
 and instance settings:
 
 - helpers: list of helpers names
-           defaults to 'view'
+  defaults to 'view'
 - prepare: list of plugins for prepare, disabled if empty
-           defaults to 'hide', 'html'
+  defaults to 'hide', 'html'
 - load: list of plugins for load, disabled if empty
-           defaults to 'hide', 'prerender', 'redirect', 'html'
+  defaults to 'console', 'hide', 'cookies', 'prerender', 'referrer', 'redirect', 'html'
 
 ## Helpers and Plugins
 
