@@ -209,8 +209,9 @@ This is a limited list of plugins, some are used by default:
   Honors `settings.hide` boolean, if set by a previous plugin.
 
 - cookies
-  Allows cookies listed in `settings.allowCookies` Set,
-  or all cookies if no such setting exists.
+  If `settings.load.cookies` is true, allow all cookies,
+  else allow cookies with names in this Set.
+  Defaults to an empty Set.
 
 - develop
   sets `settings.load.disable = true` if `query.develop` is defined.
