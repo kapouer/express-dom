@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>fetch with cookie</title>
+
+	</head>
+	<body>
+		<div class="me">hops</div>
+		<script>
+			fetch("protected.json").then(async res => {
+				const obj = await res.json();
+				document.querySelector('.me').textContent = obj.protected;
+			});
+		</script>
+	</body>
+</html>
