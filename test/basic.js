@@ -57,6 +57,12 @@ describe("Basic functionnalities", function() {
 		assert.match(await body.text(), /toto/);
 	});
 
+	it("loads a simple UTF8 Html page", async () => {
+		const { statusCode, body } = await request(`${host}/basic-utf8.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /modifié/);
+	});
+
 	it("should load html from a url", async () => {
 		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/plugin-status.html?status=403`));
 
