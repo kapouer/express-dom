@@ -5,39 +5,45 @@ const express = require('express');
 
 const dom = require('../');
 
-dom.settings.timeout = 10000;
-dom.settings.console = true;
+dom.defaults.timeout = 10000;
+dom.defaults.console = true;
 
-dom.settings.debug = require('node:inspector').url() !== undefined;
+dom.debug = require('node:inspector').url() !== undefined;
 
 describe("Basic functionnalities", function() {
 	this.timeout(0);
 	let server, host;
+	const requests = new Set();
 
 	before(async () => {
 		const app = express();
-		app.set('views', __dirname + '/public');
+		const staticMw = express.static(__dirname + '/public');
+
 		app.get(/\.(json|js|css|png)$/, (req, res, next) => {
+			requests.add(req.path);
 			if (req.query.delay) {
 				setTimeout(next, parseInt(req.query.delay));
 				delete req.query.delay;
 			} else {
 				next();
 			}
-		}, express.static(app.get('views')));
+		}, staticMw);
 
-		app.get('/remote', dom((mw, settings, req, res) => {
+		app.get('/remote', dom(({ location }, req) => {
 			if (req.query.url) {
-				settings.view = req.query.url;
+				location.href = req.query.url;
 			}
-		}).load());
-		app.get('/plugin-status.html', dom((mw, settings, req, res) => {
+		}));
+		app.get('/plugin-status.html', dom((opts, req, res) => {
 			if (req.query.status) {
 				res.status(parseInt(req.query.status));
 			}
-		}).load());
+		}));
 
-		app.get(/\.html$/, dom().load());
+		app.get(/\.html$/, dom(), (err, req, res, next) => {
+			if (err) console.error(err);
+			else next();
+		}, staticMw);
 
 		server = app.listen();
 		await once(server, 'listening');
@@ -64,6 +70,13 @@ describe("Basic functionnalities", function() {
 	});
 
 	it("should load html from a url", async () => {
+		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/plugin-status.html`));
+
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /OuiOui/);
+	});
+
+	it("should load html from a url that sets status", async () => {
 		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/plugin-status.html?status=403`));
 
 		assert.equal(statusCode, 403);
@@ -73,6 +86,7 @@ describe("Basic functionnalities", function() {
 	it("loads a simple Html page with a stylesheet", async () => {
 		const { statusCode, body } = await request(`${host}/basic-style.html`);
 		assert.equal(statusCode, 200);
+		assert.ok(!requests.has('/css/style.css'));
 		assert.match(await body.text(), /toto/);
 	});
 

@@ -1,196 +1,139 @@
 # express-dom
 
-Express middleware for rendering web pages with [playwright](https://playwright.dev/docs/api/),
-with a focus on prerender and performance.
+Express middleware for (pre)rendering web pages with [playwright](https://playwright.dev/docs/api/).
 
 ## Synopsis
 
-The simplest example for web page rendering is:
-
 ```js
-const app = require('express')();
+const express = require('express');
+const app = express();
 const dom = require('express-dom');
 
-app.get('*.html', dom().load());
-
+app.get('*.html', dom(), express.static('public/'));
 ```
 
-There are two optional phases to render a web page:
-
-- prepare: only external plugins can manipulate the DOM
-- load: by default, wait for scripts to change the DOM.
-
-Both methods wait for the page to settle after async operations:
-
-- script/link nodes
-- DOMContentLoaded (async) listeners
-- fetch, xhr calls
-- microtasks
-- timeouts
-- animation frame requests
-- anything that makes sense
-- custom plugins can easily wait for client scripts to settle
-
-An asynchronous-aware "idle" event is emitted after client async operations.
-Thus, plugins listening to "idle" can execute in order.
-
-This "idle" event tracking works quite well in many cases,
-but cannot work with scripts that don't properly
-handle promise rejections. One cannot guess how an async
-tree ends.
-
-## Methods
-
-All arguments are optional, see below.
-
-Return express middlewares:
-
-- dom(helper1, helper2, ...)
-  The default helper resolves to the current request express view file path.
-  Additional helper functions can return a promise, see below.
-
-- dom(...).prepare(opts, plugin1, plugin2, ...)
-  Set options and/or plugins for DOM loading without running embedded
-  scripts not loading resources.
-  Plugins are appended to the list of plugins (opts.plugins or default list).
-  Prepare is meant to modify the DOM from server-side.
-
-- dom(...).load(opts, plugin1, plugin2, ...)
-  Set options and/or plugins for DOM loading and runs embedded scripts;
-  does not load resources by default.
-  Plugins are appended to the list of plugins (opts.plugins or default list).
-  Load is meant to modify the DOM using client scripts.
-
-A special form is available for rendering outside express:
+or for quick rendering outside express:
 
 ```js
-const { status, body } = await dom(...).load(...)(url);
+const { statusCode, body } = await dom()(url);
 ```
 
-## Input and output
+Two phases are available to render a web page:
 
-Custom helpers are run before the final helper, which resolves `settings.view`
-into `settings.input` if not already done by a custom helper. Input is then
-loaded into DOM by prepare or load methods, with `settings.location` as the
-document location.
+- offline: no resources are loaded, optional
+- online: resources are loaded on the live page
 
-`view` can be a buffer, a readable stream, a string that starts with `<`,
-or a local file path, or a remote url, or a parsed url object.
+Requests phases goes like this:
 
-If it is a parsed url object, it is passed as argument for `request()`,
-so more options can be added to it.
+- client requests a url
+- online phase requests next phase using ?develop
+- offline phase requests next phase using ?develop=source
+- next middleware sends the text file
+- offline page is prerendered and sent
+- online page is prerendered and sent
 
-If it resolves as a remote url (string or parsed), the statusCode of the
-remote url will set the statusCode of the current response.
+Plugins can change settings before the page is loaded,
+and can run scripts when the page is 'idle'.
 
-If no input data can be resolved:
+A phase is skipped if it has no registered plugins.
 
-- if no prepare or load calls are done, the response is 501 Not Implemented
-- else the response is 404 Not Found
+The 'idle' event is emitted on the `page` after async operations:
 
-The final express-dom handler does not send a response if
-`settings.output === false`. If prepare or load methods weren't called,
-output is equal to `settings.input`. See plugins source for examples.
+- loading of script/link nodes
+- DOMContentLoaded listeners
+- fetch, xhr calls
+- timeouts
+- animation frame requests
+- microtasks
+
+The listeners of that event are themselves run serially.
+
+For more subtle situations, a custom plugin can wait for a client promise to resolve.
 
 ## Options
 
-dom.helpers, dom.plugins are maps.
+dom holds some global settings:
 
-dom.settings holds some global, immutable configurations:
-
-- browser: the playwright channel to use, defaults to locally-installed 'chrome'
+- browser: the playwright channel to use, defaults to 'chrome'
 - pageMax: number of open pages per browser
 - pageUse: number of uses before recycling browser
-- timeout: async resources timeout
-- debug: show browser
+- debug: show browser, disables timeout. Also set by `PWDEBUG=1`.
+- defaults: per-instance settings
+- plugins: map of plugins functions
+- online, offline: per-phase settings defaults
+
+Per-instance settings:
+
 - console: boolean, or level (info, log, warn, error)
+- timeout: async resources timeout
+- scale: change page dpi
+- cookies (used only with cookies plugin)
 
-and instance settings:
+Phase settings (merged with instance settings):
 
-- helpers: list of helpers names
-  defaults to 'view'
-- prepare: list of plugins for prepare, disabled if empty
-  defaults to 'hide', 'html'
-- load: list of plugins for load, disabled if empty
-  defaults to 'console', 'hide', 'cookies', 'prerender', 'referrer', 'redirect', 'html'
+- policies: object for configuring Content-Security-Policies
+- enabled: boolean
+- styles: list of css strings
+- scripts: list of [function, arg?] pairs
+- plugins: list (set) of names
 
-## Helpers and Plugins
+Default offline settings:
 
-`async helper(mw, settings, req, res) { ... }`
-A helper can change these settings depending on current request:
+- enabled: false
+- plugins: console, hidden, html
+- policies: default: "'none'"
 
-- input
-- location
-- prepare/load plugins
+Default online settings:
 
-It should avoid ending the response, and should instead throw an error.
+- enabled: true
+- plugins: console, hidden, cookies, referer, redirect, html
+- policies:
+  - default: "'none'"
+  - script: "'self' 'unsafe-inline'"
+  - connect: "'self'"
 
-`async function plugin(page, settings, req, res) { ... }`
-A plugin can change the page instance before it starts loading.
+## Helper
 
-- mw
-  the current dom middleware, like the one returned by `dom()`,
-  so `mw.prepare` and `mw.load` are callable.
+Per-route configuration can be set using an helper function:
 
-- page
-  Use `page.on('idle', fn)` to run asynchronous listeners.
+```js
+app.get('*.html', dom(({ location, online, offline }, req, res) => {
+  if (req.query.url) {
+    // overwrite default location
+    location.href = req.query.url;
+  } else if (req.query.develop === '') {
+    res.type('html');
+    res.send('<html><script src="asset.js"></script></html>');
+  }
+}));
+```
 
-- settings (see below)
+## Plugins
 
-- req, res
-  usual express middleware arguments
+Plugins are asynchronous functions, executed in order.
 
-One output plugin will have to set `settings.output`, see below.
+```js
+dom.plugins.fragment = async (page, settings, req, res) => {
+  settings.timeout = 30000;
+  page.on('idle', async () => {
+    const html = await page.evaluate(sel => {
+      return document.querySelector(sel)?.outerHTML;
+    }, req.query.fragment);
+    if (html) {
+      res.type('html');
+      res.send(html);
+    } else {
+      // html plugin will send page content
+    }
+  });
+};
+dom.online.plugins.delete('html').add('fragment').add('html');
+app.get('*.html', dom(), express.static(app.get('views')));
+```
 
-A few options are added to settings:
-
-- view
-  supports: url string, location, express view name,
-  string starting with "<", buffer, stream.
-  Only used by helpers.
-
-- views (string or array)
-  the root public dir(s) for the default helper plugin
-  defaults to app.get('views')
-  Only used by helpers.
-
-- location
-  whatwg url, will be used to set document location;
-  and defaults to the current request url.
-
-- headers
-  additional page request headers set by plugins.
-
-- input
-  the data obtained from the view or the view itself if it was given as data.
-
-- output
-  If `output !== false`, express-dom writes or pipe it to the response.
-  A plugin can set response status, `output` and let other plugins change it,
-  or can directly handle response and set `output` to false (or do nothing).
-
-- filters
-  Array of filter: request => bool functions.
-  If a filter returns *false*, the request is aborted.
-
-- policies
-  map of Content-Security-Policy Fetch directives (without -src suffix).
-  Defaults to `{ default: "'none'" }`.
-
-- priority (integer, default 0)
-  This defines separate pools (and queues) for allocating instances.
-  Used in conjonction with `prioritize` helper (installed by default), it helps
-  avoiding deadlocks when a page needs other pages during its prerending.
-
-- prepare.disable
-  Disable prepare phase.
-  Can be set per request (by helper),
-  or as default.
-
-- load.disable
-  Disable load phase. Only the prepare phase will run.
-  Can be set per request (by a prepare plugin or helper),
-  or as default (dom.settings.develop sets dom.settings.load.disable).
+`page` is a playwright page instance, with additional
+`page.location`, a URL instance that can be modified
+synchronously.
 
 ## Bundled plugins
 
@@ -200,21 +143,15 @@ This is a limited list of plugins, some are used by default:
   Report browser console to node console.
   Depends on settings.console value.
 
-- prerender
-  Force `document.visibilityState == "hidden"`
-  sets policies for script and connect to `'self' 'unsafe-inline'`.
-
-- hide
-  adds user stylesheet to keep rendering to minimum;
-  Honors `settings.hide` boolean, if set by a previous plugin.
+- hidden
+  Force `document.visibilityState == "hidden"`.
+  Adds user stylesheet to keep rendering to minimum;
+  Honors `settings.hidden` boolean, if set by a previous plugin.
 
 - cookies
-  If `settings.load.cookies` is true, allow all cookies,
+  If `settings.cookies` is true, allow all cookies,
   else allow cookies with names in this Set.
   Defaults to an empty Set.
-
-- develop
-  sets `settings.load.disable = true` if `query.develop` is defined.
 
 - equivs
   Parse `meta[http-equiv]` tags and set response headers accordingly.
@@ -223,33 +160,23 @@ This is a limited list of plugins, some are used by default:
 - preloads
   Parse `link[rel=preload]` tags and set 'Link' response header.
 
-- referrer
+- referrer, referer
   Sets headers.referer to express req.get('referrer')
 
 - redirect
-  catch navigation and use it for redirection, see below
+  catch navigation requests and instead sends a 302 redirection
 
 - png
-  sets policies for script, connect, style to 'self' 'unsafe-inline',
-  and policies for font, img to `'self' https: data:`.
-  outputs a screenshot of the rendered DOM.
+  style policy: `'self' 'unsafe-inline'`,
+  font, img policies: `'self' https: data:`.
+  Outputs a screenshot of the rendered DOM.
 
 See also
 [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
-which also shows that a helper can configure plugins by writing
-`mw.load({plugins: [mypluginA, mypluginB]});`.
 
-## Redirection on navigation
-
-dom.plugins.redirect listens to navigate events and emits
-`res.redirect(302, location)` accordingly.
-
-## Logs and debug
-
-Useful env vars to know:
+## Logs
 
 - `DEBUG=express-dom`
-- `PWDEBUG=1`
 
 ## Backend
 

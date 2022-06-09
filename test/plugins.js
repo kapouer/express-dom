@@ -5,11 +5,11 @@ const express = require('express');
 
 const dom = require('../');
 
-dom.settings.timeout = 10000;
-dom.settings.console = true;
-dom.settings.load.cookies.add('mycookiename');
+dom.defaults.timeout = 10000;
+dom.defaults.console = true;
+dom.defaults.cookies.add('mycookiename');
 
-dom.settings.debug = require('node:inspector').url() !== undefined;
+dom.debug = require('node:inspector').url() !== undefined;
 
 describe("Plugins", function() {
 	this.timeout(0);
@@ -18,6 +18,7 @@ describe("Plugins", function() {
 	before(async () => {
 		const app = express();
 		app.set('views', __dirname + '/public');
+		const staticMw = express.static(app.get('views'));
 		app.use((req, res, next) => {
 			const header = req.get('cookie');
 			req.cookies = header ? Object.fromEntries( // poor man's cookie parser
@@ -41,13 +42,19 @@ describe("Plugins", function() {
 			} else {
 				next();
 			}
-		}, express.static(app.get('views')));
+		}, staticMw);
 
-		app.get('/plugin-status.html', dom().load({ plugins: ['equivs'] }));
-		app.get('/plugin-preload.html', dom().load({ plugins: ['preloads'] }));
-		app.get('/plugin-cookie.html', dom().load());
+		app.get('/plugin-status.html', dom(({ online }) => {
+			online.plugins.delete('html');
+			online.plugins.add('equivs').add('html');
+		}), staticMw);
+		app.get('/plugin-preload.html', dom(({ online }) => {
+			online.plugins.delete('html');
+			online.plugins.add('preloads').add('html');
+		}), staticMw);
+		app.get('/plugin-cookie.html', dom(), staticMw);
 
-		app.get(/\.html$/, dom().load());
+		app.get(/\.html$/, dom(), staticMw);
 
 		server = app.listen();
 		await once(server, 'listening');

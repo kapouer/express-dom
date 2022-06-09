@@ -5,13 +5,22 @@ const express = require('express');
 
 const dom = require('..');
 
-describe("Overloads", function() {
+dom.plugins.testEval = (page, settings, req) => {
+	page.on('idle', async () => {
+		await page.evaluate(views => {
+			document.body.setAttribute('data-views', views);
+		}, req.app.get('views'));
+	});
+};
+
+describe("Busy", function() {
 	this.timeout(0);
 	let server, host;
 
 	before(async () => {
 		const app = express();
 		app.set('views', __dirname + '/public');
+		const staticMw = express.static(app.get('views'));
 		app.get(/\/json\/c0-(\d+)\.json$/, (req, res) => {
 			const obj = {};
 			obj[req.params[0]] = "c0-" + req.params[0];
@@ -24,17 +33,16 @@ describe("Overloads", function() {
 			} else {
 				next();
 			}
-		}, express.static(app.get('views')));
-		app.get(/\.html$/, dom().prepare((page, settings, req, res) => {
-			page.on('idle', () => {
-				return page.evaluate(views => {
-					document.body.setAttribute('data-views', views);
-				}, req.app.settings.views);
-			});
-		}).load(), (err, req, res, next) => {
+		}, staticMw);
+		app.get(/\.html$/, dom({
+			offline: {
+				enabled: true,
+				plugins: ['hidden', 'testEval', 'html']
+			}
+		}), (err, req, res, next) => {
 			console.error(err);
 			res.sendStatus(500);
-		});
+		}, staticMw);
 
 		server = app.listen();
 		await once(server, 'listening');
@@ -86,7 +94,7 @@ describe("Overloads", function() {
 				count--;
 			});
 			list.push(async () => {
-				const { statusCode, body } = await request(`${host}/basic-script-async.html?${i}`);
+				const { statusCode, body } = await request(`${host}/script-async.html?${i}`);
 				assert.equal(statusCode, 200);
 				const text = await body.text();
 				assert.match(text, /tutu/);
@@ -100,7 +108,7 @@ describe("Overloads", function() {
 				count--;
 			});
 			list.push(async () => {
-				const { statusCode, body } = await request(`${host}/basic-script-data.html?${i}`);
+				const { statusCode, body } = await request(`${host}/script-data.html?${i}`);
 				assert.equal(statusCode, 200);
 				const text = await body.text();
 				assert.match(text, /tutu/);
@@ -121,7 +129,7 @@ describe("Overloads", function() {
 	it("with many sub-requested pages without deadlock", async function() {
 		this.timeout(15000);
 		const list = [];
-		const MAX = dom.settings.pageMax * 3;
+		const MAX = dom.pageMax * 3;
 		let count = MAX;
 
 		for (let i = 0; i < MAX; i++) {

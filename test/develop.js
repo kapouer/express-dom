@@ -4,8 +4,8 @@ const { request } = require('undici');
 const express = require('express');
 
 const dom = require('../');
-
-dom.settings.helpers.push(dom.helpers.develop);
+dom.defaults.console = true;
+dom.defaults.timeout = 1e8;
 
 describe("Prepare or load depending on develop", function() {
 	this.timeout(0);
@@ -14,6 +14,8 @@ describe("Prepare or load depending on develop", function() {
 	before(async () => {
 		const app = express();
 		app.set('views', __dirname + '/public');
+		const staticMw = express.static(app.get('views'));
+
 		app.get(/\.(json|js|css|png)$/, (req, res, next) => {
 			if (req.query.delay) {
 				setTimeout(next, parseInt(req.query.delay));
@@ -21,17 +23,26 @@ describe("Prepare or load depending on develop", function() {
 			} else {
 				next();
 			}
-		}, express.static(app.get('views')));
-		app.get(/\.html$/, dom().prepare((page, settings, request, response) => {
+		}, staticMw);
+
+		dom.plugins.testView = (page, settings, req, res) => {
 			page.on('idle', () => {
 				return page.evaluate(views => {
 					document.body.setAttribute('data-views', views);
-				}, request.app.settings.views);
+				}, req.app.get('views'));
 			});
-		}).load(), (err, req, res, next) => {
-			console.error(err);
-			res.sendStatus(500);
-		});
+		};
+		app.get(/\.html$/, dom({
+			offline: {
+				enabled: true,
+				plugins: ['console', 'hidden', 'testView', 'html']
+			}
+		}), (err, req, res, next) => {
+			if (err) {
+				console.error(err);
+				res.sendStatus(500);
+			} else next();
+		}, staticMw);
 
 		server = app.listen();
 		await once(server, 'listening');
