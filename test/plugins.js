@@ -48,10 +48,34 @@ describe("Plugins", function() {
 			online.plugins.delete('html');
 			online.plugins.add('equivs').add('html');
 		}), staticMw);
+
+		app.get('/plugin-fail.html', dom(({ online }) => {
+			online.plugins.delete('html');
+			online.plugins.add('fail').add('html');
+		}), (err, req, res, next) => {
+			res.status(500);
+			res.send(err.message);
+		}, staticMw);
+
+		app.get('/plugin-throws.html', dom(({ plugins, online }) => {
+			online.plugins.delete('html');
+			online.plugins.add('throws').add('html');
+			plugins.throws = () => {
+				return new Promise((resolve, reject) => {
+					setTimeout(() => reject(new Error("THROWED")), 50);
+				});
+			};
+
+		}), (err, req, res, next) => {
+			res.status(500);
+			res.send(err.message);
+		}, staticMw);
+
 		app.get('/plugin-preload.html', dom(({ online }) => {
 			online.plugins.delete('html');
 			online.plugins.add('preloads').add('html');
 		}), staticMw);
+
 		app.get('/plugin-cookie.html', dom(), staticMw);
 
 		app.get(/\.html$/, dom(), staticMw);
@@ -88,5 +112,17 @@ describe("Plugins", function() {
 		});
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /mycookievalue/);
+	});
+
+	it("fails because plugin is missing", async () => {
+		const { statusCode, body } = await request(`${host}/plugin-fail.html`);
+		assert.equal(statusCode, 500);
+		assert.equal(await body.text(), 'plugin not found: fail');
+	});
+
+	it("fails because plugin throws", async () => {
+		const { statusCode, body } = await request(`${host}/plugin-throws.html`);
+		assert.equal(statusCode, 500);
+		assert.equal(await body.text(), 'THROWED');
 	});
 });
