@@ -69,7 +69,7 @@ describe("Busy", function() {
 
 
 	it("with many pages", async function() {
-		this.timeout(10000);
+		this.timeout(20000);
 		const list = [];
 		const MAX = 10;
 		const NUM = 6;
