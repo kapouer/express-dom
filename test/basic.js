@@ -40,6 +40,12 @@ describe("Basic functionnalities", function() {
 			}
 		}));
 
+		app.get('/basic-offline.html', dom((opts, req, res) => {
+			opts.location.pathname = '/basic-inline.html';
+			opts.offline.enabled = true;
+			opts.online.enabled = false;
+		}), staticMw);
+
 		app.get(/\.html$/, dom(), (err, req, res, next) => {
 			if (err) console.error(err);
 			else next();
@@ -83,11 +89,17 @@ describe("Basic functionnalities", function() {
 		assert.match(await body.text(), /OuiOui/);
 	});
 
-	it("loads a simple Html page with a stylesheet", async () => {
+	it("loads a simple Html page and not its stylesheet", async () => {
 		const { statusCode, body } = await request(`${host}/basic-style.html`);
 		assert.equal(statusCode, 200);
 		assert.ok(!requests.has('/css/style.css'));
 		assert.match(await body.text(), /toto/);
+	});
+
+	it("loads an offline page and not its inline script", async () => {
+		const { statusCode, body } = await request(`${host}/basic-offline.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /tata/);
 	});
 
 	it("redirects using navigation", async () => {
