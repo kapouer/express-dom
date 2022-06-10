@@ -37,7 +37,11 @@ and can run scripts when the page is 'idle'.
 
 A phase is skipped if it has no registered plugins.
 
-The 'idle' event is emitted on the `page` after async operations:
+The 'idle' event is emitted on the `page` after DOMContentLoaded,
+and after requests have settled.
+
+If phase setting `track` is true,
+the idle event also waits for async operations:
 
 - loading of script/link nodes
 - DOMContentLoaded listeners
@@ -73,6 +77,7 @@ Phase settings (merged with instance settings):
 
 - policies: object for configuring Content-Security-Policies
 - enabled: boolean
+- track: boolean
 - styles: list of css strings
 - scripts: list of [function, arg?] pairs
 - plugins: list (set) of names
@@ -80,12 +85,14 @@ Phase settings (merged with instance settings):
 Default offline settings:
 
 - enabled: false
+- track: false
 - plugins: console, hidden, html
 - policies: default: "'none'"
 
 Default online settings:
 
 - enabled: true
+- track: true
 - plugins: console, hidden, cookies, referer, redirect, html
 - policies:
   - default: "'none'"
