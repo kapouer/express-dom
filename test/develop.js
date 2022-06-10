@@ -4,7 +4,7 @@ const { request } = require('undici');
 const express = require('express');
 
 const dom = require('../');
-dom.defaults.console = true;
+dom.defaults.log = true;
 dom.defaults.timeout = 1e8;
 
 describe("Prepare or load depending on develop", function() {

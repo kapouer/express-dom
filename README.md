@@ -64,7 +64,7 @@ dom holds some global settings:
 
 Per-instance settings:
 
-- console: boolean, or level (info, log, warn, error)
+- log: boolean, or level (info, log, warn, error)
 - timeout: async resources timeout
 - scale: change page dpi
 - cookies (used only with cookies plugin)
@@ -141,7 +141,7 @@ This is a limited list of plugins, some are used by default:
 
 - console
   Report browser console to node console.
-  Depends on settings.console value.
+  Depends on settings.log value.
 
 - hidden
   Force `document.visibilityState == "hidden"`.

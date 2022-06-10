@@ -6,7 +6,7 @@ const express = require('express');
 const dom = require('../');
 
 dom.defaults.timeout = 10000;
-dom.defaults.console = true;
+dom.defaults.log = true;
 dom.defaults.cookies.add('mycookiename');
 
 dom.debug = require('node:inspector').url() !== undefined;
