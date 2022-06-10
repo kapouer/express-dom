@@ -65,7 +65,7 @@ describe("Prepare or load depending on develop", function() {
 	});
 
 	it("should prepare and not load a page", async () => {
-		const { statusCode, body } = await request(`${host}/develop.html?develop`);
+		const { statusCode, body } = await request(`${host}/develop.html?develop=on`);
 		assert.equal(statusCode, 200);
 		const text = await body.text();
 		assert.match(text, /data-views="/);
