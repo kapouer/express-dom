@@ -18,6 +18,7 @@ describe("Idle tracker waits for", function() {
 		const app = express();
 		app.set('views', __dirname + '/public');
 		const staticMw = express.static(app.get('views'));
+
 		app.get(/\.(json|js|css|png)$/, (req, res, next) => {
 			if (req.query.delay) {
 				setTimeout(next, parseInt(req.query.delay));
@@ -108,6 +109,14 @@ describe("Idle tracker waits for", function() {
 			assert.equal(statusCode, 200);
 			assert.match(await body.text(), /tarte/);
 		}
+	});
+
+	it("fetch with returning promise to be complete", async () => {
+		await Promise.all(Array.from(Array(10)).map(async () => {
+			const { statusCode, body } = await request(`${host}/basic-return.html`);
+			assert.equal(statusCode, 200);
+			assert.match(await body.text(), /tarte/);
+		}));
 	});
 
 	it("async script with await", async () => {
