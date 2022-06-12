@@ -11,7 +11,7 @@ dom.defaults.log = true;
 dom.debug = require('node:inspector').url() !== undefined;
 
 describe("Idle tracker waits for", function() {
-	this.timeout(0);
+	this.timeout(10000);
 	let server, host;
 
 	before(async () => {
