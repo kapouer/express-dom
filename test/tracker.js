@@ -4,6 +4,7 @@ const { request } = require('undici');
 const express = require('express');
 
 const dom = require('..');
+const { writeFile, unlink } = require('node:fs/promises');
 
 dom.defaults.timeout = 10000;
 dom.defaults.log = true;
@@ -13,6 +14,8 @@ dom.debug = require('node:inspector').url() !== undefined;
 describe("Idle tracker waits for", function() {
 	this.timeout(10000);
 	let server, host;
+
+	const bigJson = __dirname + '/public/js/big.json';
 
 	before(async () => {
 		const app = express();
@@ -27,6 +30,12 @@ describe("Idle tracker waits for", function() {
 				next();
 			}
 		}, staticMw);
+
+		const obj = { test: "tarte" };
+		for (let i = 0; i < 100000; i++) {
+			obj["a" + Math.round(Math.random() * 1000000)] = "b" + i;
+		}
+		await writeFile(bigJson, JSON.stringify(obj, null, ' '));
 
 		app.get('/remote', dom((loc, opts, req) => {
 			if (req.query.url) {
@@ -49,6 +58,7 @@ describe("Idle tracker waits for", function() {
 	after(async () => {
 		server.close();
 		await dom.destroy();
+		await unlink(bigJson);
 	});
 
 
@@ -111,9 +121,9 @@ describe("Idle tracker waits for", function() {
 		}
 	});
 
-	it("fetch with returning promise to be complete", async () => {
+	it("fetch with json method", async () => {
 		await Promise.all(Array.from(Array(10)).map(async () => {
-			const { statusCode, body } = await request(`${host}/basic-return.html`);
+			const { statusCode, body } = await request(`${host}/basic-json.html`);
 			assert.equal(statusCode, 200);
 			assert.match(await body.text(), /tarte/);
 		}));
