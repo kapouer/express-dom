@@ -18,22 +18,25 @@ or for quick rendering outside express:
 const { statusCode, body } = await dom()(url);
 ```
 
-Two phases are available to render a web page:
+Three phases are available to render a web page:
 
 - offline: no resources are loaded, optional
 - online: resources are loaded on the live page
+- none: the static file is returned by the server
 
 Requests phases goes like this:
 
 - client requests a url
-- online phase requests next phase using ?develop
-- offline phase requests next phase using ?develop=source
+- online phase requests next phase using a HTTP request header (dom.header.name)
+- offline phase requests none phase
 - next middleware sends the text file
 - offline page is prerendered and sent
 - online page is prerendered and sent
 
 Plugins can change settings before the page is loaded,
 and can run scripts when the page is 'idle'.
+
+If using a caching proxy, it MUST support "Vary" http response headers.
 
 A phase is skipped if it has no registered plugins.
 
@@ -104,16 +107,19 @@ Default online settings:
 Per-route configuration can be set using an helper function:
 
 ```js
-app.get('*.html', dom(({ location, online, offline }, req, res) => {
+app.get('*.html', dom(({ phase, location, online, offline }, req, res) => {
   if (req.query.url) {
     // overwrite default location
     location.href = req.query.url;
-  } else if (req.query.develop === '') {
+  } else if (phase) {
     res.type('html');
     res.send('<html><script src="asset.js"></script></html>');
   }
 }));
 ```
+
+The source `phase` is non-null only when the client is the one doing prerendering.
+It can be dom.header.on or dom.header.off.
 
 ## Plugins
 
