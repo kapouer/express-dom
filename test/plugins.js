@@ -2,6 +2,7 @@ const assert = require('node:assert').strict;
 const { once } = require('node:events');
 const { request } = require('undici');
 const express = require('express');
+const cookie = require('cookie');
 
 const dom = require('../');
 
@@ -20,10 +21,7 @@ describe("Plugins", function() {
 		app.set('views', __dirname + '/public');
 		const staticMw = express.static(app.get('views'));
 		app.use((req, res, next) => {
-			const header = req.get('cookie');
-			req.cookies = header ? Object.fromEntries( // poor man's cookie parser
-				header.split(';').map(str => str.split('='))
-			) : {};
+			req.cookies = cookie.parse(req.get('cookie') ?? "");
 			next();
 		});
 		app.get('/protected.json', (req, res, next) => {
