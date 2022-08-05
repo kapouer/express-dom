@@ -127,7 +127,7 @@ describe("Busy", function() {
 	});
 
 	it("with many sub-requested pages without deadlock", async function() {
-		this.timeout(15000);
+		this.timeout(30000);
 		const list = [];
 		const MAX = dom.pageMax * 3;
 		let count = MAX;
