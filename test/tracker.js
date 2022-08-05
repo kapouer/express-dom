@@ -12,7 +12,7 @@ dom.defaults.log = true;
 dom.debug = require('node:inspector').url() !== undefined;
 
 describe("Idle tracker waits for", function() {
-	this.timeout(10000);
+	this.timeout(dom.debug ? 0 : 10000);
 	let server, host;
 
 	const bigJson = __dirname + '/public/js/big.json';
