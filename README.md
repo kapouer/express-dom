@@ -20,9 +20,10 @@ const { statusCode, body } = await dom()(url);
 
 Three phases are available to render a web page:
 
-- offline: no resources are loaded, optional
-- online: resources are loaded on the live page
-- none: the static file is returned by the server
+- source: the static file is returned by the server
+- offline: all resources are blocked (even inline scripts),
+  skipped unless `settings.offline.enabled = true`.
+- online: resources are loaded on the page
 
 Requests phases goes like this:
 
@@ -162,8 +163,8 @@ This is a limited list of plugins, some are used by default:
   Honors `settings.hidden` boolean, if set by a previous plugin.
 
 - cookies
-  If `settings.cookies` is true, allow all cookies,
-  else allow cookies with names in this Set.
+  If `settings.cookies` is true, copy all cookies,
+  else only copy cookies with names in this Set.
   Defaults to an empty Set.
 
 - equivs
