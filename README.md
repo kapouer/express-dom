@@ -18,20 +18,19 @@ or for quick rendering outside express:
 const { statusCode, body } = await dom()(url);
 ```
 
-Three phases are available to render a web page:
+A page is requested by a browser for three purposes:
 
-- source: the static file is returned by the server
-- offline: all resources are blocked (even inline scripts),
-  skipped unless `settings.offline.enabled = true`.
-- online: resources are loaded on the page
+- prepare: building the web page from the outside, offline and hidden
+- prerender: building the web page from inside, online, but hidden
+- render: show the web page to the user
 
 Requests phases goes like this:
 
-- client requests a url
-- online phase requests next phase using a HTTP request header (dom.header.name)
-- offline phase requests none phase
-- next middleware sends the text file
-- offline page is prerendered and sent
+- user loads a web page: requests the url to the server.
+- express-dom loads it for prerendering
+- express-dom loads it for preparing (optional)
+- next middleware sends the html file
+- offline page is prepared and sent (optional)
 - online page is prerendered and sent
 
 Plugins can change settings before the page is loaded,
@@ -120,7 +119,7 @@ app.get('*.html', dom(({ phase, location, online, offline }, req, res) => {
 ```
 
 The source `phase` is non-null only when the client is the one doing prerendering.
-It can be dom.header.on or dom.header.off.
+It can be dom.header.online or dom.header.offline.
 
 ## Plugins
 

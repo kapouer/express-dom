@@ -7,7 +7,7 @@ const dom = require('../');
 dom.defaults.log = true;
 dom.defaults.timeout = 1e8;
 
-describe("Prepare or load depending on X-DOM", function() {
+describe("Prepare or load depending on header", function() {
 	this.timeout(0);
 	let server, host;
 
@@ -65,7 +65,7 @@ describe("Prepare or load depending on X-DOM", function() {
 	});
 
 	it("should prepare and not load a page", async () => {
-		const { statusCode, body } = await request(`${host}/develop.html`, { headers: { [dom.header.name]: dom.header.on }});
+		const { statusCode, body } = await request(`${host}/develop.html`, { headers: { [dom.header.name]: dom.header.online }});
 		assert.equal(statusCode, 200);
 		const text = await body.text();
 		assert.match(text, /data-views="/);
