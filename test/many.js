@@ -35,9 +35,13 @@ describe("Busy", function() {
 			}
 		}, staticMw);
 		app.get(/\.html$/, dom({
+			online: {
+				timeout: 30000
+			},
 			offline: {
+				timeout: 30000,
 				enabled: true,
-				plugins: ['hidden', 'testEval', 'html']
+				plugins: new Set(['hidden', 'testEval', 'html'])
 			}
 		}), (err, req, res, next) => {
 			console.error(err);
@@ -127,7 +131,7 @@ describe("Busy", function() {
 	});
 
 	it("with many sub-requested pages without deadlock", async function() {
-		this.timeout(30000);
+		this.timeout(40000);
 		const list = [];
 		const MAX = dom.pageMax * 3;
 		let count = MAX;

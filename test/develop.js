@@ -35,7 +35,7 @@ describe("Prepare or load depending on header", function() {
 		app.get(/\.html$/, dom({
 			offline: {
 				enabled: true,
-				plugins: ['console', 'hidden', 'testView', 'html']
+				plugins: new Set(['console', 'hidden', 'testView', 'html'])
 			}
 		}), (err, req, res, next) => {
 			if (err) {
@@ -65,7 +65,7 @@ describe("Prepare or load depending on header", function() {
 	});
 
 	it("should prepare and not load a page", async () => {
-		const { statusCode, body } = await request(`${host}/develop.html`, { headers: { [dom.header.name]: dom.header.online }});
+		const { statusCode, body } = await request(`${host}/develop.html`, { headers: { [dom.header]: dom.online.header }});
 		assert.equal(statusCode, 200);
 		const text = await body.text();
 		assert.match(text, /data-views="/);

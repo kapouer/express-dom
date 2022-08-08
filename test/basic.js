@@ -29,21 +29,22 @@ describe("Basic functionnalities", function() {
 			}
 		}, staticMw);
 
-		app.get('/remote', dom(({ location }, req) => {
+		app.get('/remote', dom().route(({ location }, req) => {
 			if (req.query.url) {
 				location.href = req.query.url;
 			}
 		}));
-		app.get('/plugin-status.html', dom((opts, req, res) => {
+		app.get('/plugin-status.html', dom().route((phase, req, res) => {
 			if (req.query.status) {
 				res.status(parseInt(req.query.status));
 			}
 		}));
 
-		app.get('/basic-offline.html', dom((opts, req, res) => {
-			opts.location.pathname = '/basic-inline.html';
-			opts.offline.enabled = true;
-			opts.online.enabled = false;
+		app.get('/basic-offline.html', dom({
+			online: { enabled: false },
+			offline: { enabled: true }
+		}).route(({ location }) => {
+			location.pathname = '/basic-inline.html';
 		}), staticMw);
 
 		app.get(/\.html$/, dom(), (err, req, res, next) => {

@@ -37,12 +37,12 @@ describe("Idle tracker waits for", function() {
 		}
 		await writeFile(bigJson, JSON.stringify(obj, null, ' '));
 
-		app.get('/remote', dom((loc, opts, req) => {
+		app.get('/remote', dom().route(({ location }, req) => {
 			if (req.query.url) {
-				loc.href = req.query.url;
+				location.href = req.query.url;
 			}
 		}));
-		app.get('/plugin-status.html', dom((opts, req, res) => {
+		app.get('/plugin-status.html', dom().route((phase, req, res) => {
 			if (req.query.status) {
 				res.status(parseInt(req.query.status));
 			}

@@ -20,23 +20,21 @@ const { statusCode, body } = await dom()(url);
 
 A page is requested by a browser for three purposes:
 
-- prepare: building the web page from the outside, offline and hidden
-- prerender: building the web page from inside, online, but hidden
-- render: show the web page to the user
+- offline: hidden offline web page changed by outside scripts
+- online: hidden online web page built by its own scripts
+- visible: show the web page to the user
 
-Requests phases goes like this:
+The offline phase is done only on the server, while the online phase
+is typical prerendering and can be done on the server or the user browser.
 
-- user loads a web page: requests the url to the server.
-- express-dom loads it for prerendering
-- express-dom loads it for preparing (optional)
-- next middleware sends the html file
-- offline page is prepared and sent (optional)
-- online page is prerendered and sent
+Configuration functions can setup a handler instance,
+valid for all requests on that handler.
 
-Plugins can change settings before the page is loaded,
+Routers can change settings depending on the current request.
+(Using a router is somewhat tricky).
+
+Plugins can change page settings before it is loaded,
 and can run scripts when the page is 'idle'.
-
-If using a caching proxy, it MUST support "Vary" http response headers.
 
 A phase is skipped if it has no registered plugins.
 
@@ -55,7 +53,7 @@ the idle event also waits for async operations:
 
 The listeners of that event are themselves run serially.
 
-For more subtle situations, a custom plugin can wait for a client promise to resolve.
+Other use cases might require a custom plugin to decide when page prerendering is finished.
 
 ## Options
 
@@ -69,14 +67,18 @@ dom holds some global settings:
 - plugins: map of plugins functions
 - online, offline: per-phase settings defaults
 
-Per-instance settings:
+Middleware settings:
 
 - log: boolean, or level (info, log, warn, error)
 - timeout: async resources timeout
 - scale: change page dpi
 - cookies (used only with cookies plugin)
 
-Phase settings (merged with instance settings):
+Handler properties:
+
+- online, offline, visible: custom phase settings, takes precedence
+
+Phase settings:
 
 - policies: object for configuring Content-Security-Policies
 - enabled: boolean
@@ -102,26 +104,49 @@ Default online settings:
   - script: "'self' 'unsafe-inline'"
   - connect: "'self'"
 
-## Helper
+Mind that policies of the requesting phase are obtained from settings
+of the responding phase: route handler cannot change policies of current phase.
 
-Per-route configuration can be set using an helper function:
+## Route settings
+
+Route-dependent configuration can be done by passing to `dom()`:
+
+- an object with `{ online, offline, visible }` settings
+- a function accepting a `handler` instance as argument
+
+## Phase settings
+
+Configuration depending on the route and the phase can be set using a router function accepting (phase, req, res) as argument.
 
 ```js
-app.get('*.html', dom(({ phase, location, online, offline }, req, res) => {
-  if (req.query.url) {
+dom().route((phase, req, res) => {
+  // change phase.settings.plugins depending on req
+})
+```
+
+phase has the following properties:
+
+- visible, online, offline: booleans, purpose of the requesting phase
+- settings: current phase settings
+- policies: requesting phase policies
+- location: parse url of the current phase
+
+```js
+app.get('*.html', dom().route((phase, req, res) => {
+  if (phase.visible && req.query.url) {
     // overwrite default location
     location.href = req.query.url;
-  } else if (phase) {
+  } else if (phase.online) {
     res.type('html');
     res.send('<html><script src="asset.js"></script></html>');
   }
 }));
 ```
 
-The source `phase` is non-null only when the client is the one doing prerendering.
-It can be dom.header.online or dom.header.offline.
+- `dom().route(dom.routers.png)` to setup png rendering
+- see also [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
 
-## Plugins
+## Page settings and plugins
 
 Plugins are asynchronous functions, executed in order.
 
@@ -179,13 +204,10 @@ This is a limited list of plugins, some are used by default:
 - redirect
   catch navigation requests and instead sends a 302 redirection
 
-- png
-  style policy: `'self' 'unsafe-inline'`,
-  font, img policies: `'self' https: data:`.
-  Outputs a screenshot of the rendered DOM.
+## Compatibility with caching proxies
 
-See also
-[express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
+express-dom currently uses `Vary: Sec-Purpose` response header,
+so all proxies should be okay with that.
 
 ## Logs
 
