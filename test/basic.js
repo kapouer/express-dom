@@ -34,11 +34,12 @@ describe("Basic functionnalities", function() {
 				location.href = req.query.url;
 			}
 		}));
-		app.get('/plugin-status.html', dom().route((phase, req, res) => {
+		app.get('/plugin-status.html', (req, res, next) => {
 			if (req.query.status) {
 				res.status(parseInt(req.query.status));
 			}
-		}));
+			next('route');
+		});
 
 		app.get('/basic-offline.html', dom({
 			online: { enabled: false },
