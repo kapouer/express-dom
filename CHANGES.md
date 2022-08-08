@@ -2,7 +2,7 @@
 
 ## Version 8
 
-Inner requests are now made using a HTTP request header:
-
-- no longer uses ?develop query parameter
-- sets Vary: <dom.header.name> in response headers.
+- inner requests are now made using a standard HTTP request header,
+  and no longer uses ?develop query parameter. Proxies must support Vary.
+- separation between configuration of routes and requests
+- and other api changes...
