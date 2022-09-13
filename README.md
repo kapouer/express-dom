@@ -71,7 +71,7 @@ Middleware settings:
 
 - log: boolean, or level (info, log, warn, error)
 - timeout: async resources timeout
-- scale: change page dpi
+- scale: changes window.devicePixelRatio
 - cookies (used only with cookies plugin)
 
 Handler properties:
