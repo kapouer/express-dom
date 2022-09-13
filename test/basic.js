@@ -40,6 +40,13 @@ describe("Basic functionnalities", function() {
 			}
 			next('route');
 		});
+		app.get('/scaled.html', dom({
+			online: { scale: 4 }
+		}), (req, res, next) => {
+			res.send(`<!DOCTYPE html><html>
+			<body onload="document.body.innerHTML = window.devicePixelRatio">0</body>
+			</html>`);
+		});
 
 		app.get('/basic-offline.html', dom({
 			online: { enabled: false },
@@ -111,6 +118,12 @@ describe("Basic functionnalities", function() {
 		} = await request(`${host}/basic-redirect.html`);
 		assert.equal(statusCode, 302);
 		assert.equal(location, `${host}/basic-redirect-loc.html`);
+	});
+
+	it("changes window.devicePixelRatio using settings.scale", async () => {
+		const { statusCode, body } = await request(`${host}/scaled.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), />4</);
 	});
 
 });
