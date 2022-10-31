@@ -215,7 +215,7 @@ so all proxies should be okay with that.
 
 ## Backend
 
-The playwright backend is configured to use system-installed chrome.
+express-dom installs playwright-core and expects a system-installed chrome browser to be available.
 
 ## License
 
