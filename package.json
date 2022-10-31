@@ -24,19 +24,19 @@
     "url": "https://github.com/kapouer/express-dom/issues"
   },
   "dependencies": {
-    "bl": "^5.0.0",
+    "bl": "^6.0.0",
     "browser-pool": "^3.1.4",
     "class-deferred": "^1.0.1",
     "clone": "^2.1.2",
     "debug": "^4.3.4",
-    "playwright-core": "^1.24.2",
-    "undici": "^5.8.1"
+    "playwright-core": "^1.27.1",
+    "undici": "^5.12.0"
   },
   "devDependencies": {
-    "@kapouer/eslint-config": "^1.7.5",
+    "@kapouer/eslint-config": "^1.8.0",
     "cookie": "^0.5.0",
-    "express": "^4.18.1",
-    "mocha": "^10.0.0"
+    "express": "^4.18.2",
+    "mocha": "^10.1.0"
   },
   "mocha": {
     "exit": true
