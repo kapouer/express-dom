@@ -186,6 +186,9 @@ This is a limited list of plugins, some are used by default:
   Adds user stylesheet to keep rendering to minimum;
   Honors `settings.hidden` boolean, if set by a previous plugin.
 
+- media
+  Sets `media` options, see [playwright doc](https://playwright.dev/docs/api/class-page#page-emulate-media).
+
 - cookies
   If `settings.cookies` is true, copy all cookies,
   else only copy cookies with names in this Set.
