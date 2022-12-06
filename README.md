@@ -24,25 +24,20 @@ A page is requested by a browser for three purposes:
 - online: hidden online web page built by its own scripts
 - visible: show the web page to the user
 
-The offline phase is done only on the server, while the online phase
-is typical prerendering and can be done on the server or the user browser.
+The offline phase is done only on the server, while the online phase is typical prerendering and can be done on the server or the user browser.
 
-Configuration functions can setup a handler instance,
-valid for all requests on that handler.
+Configuration functions can setup a handler instance, valid for all requests on that handler.
 
 Routers can change settings depending on the current request.
 (Using a router is somewhat tricky).
 
-Plugins can change page settings before it is loaded,
-and can run scripts when the page is 'idle'.
+Plugins can change page settings before it is loaded, and can run scripts when the page is 'idle'.
 
 A phase is skipped if it has no registered plugins.
 
-The 'idle' event is emitted on the `page` after DOMContentLoaded,
-and after requests have settled.
+The 'idle' event is emitted on the `page` after DOMContentLoaded, and after requests have settled.
 
-If phase setting `track` is true,
-the idle event also waits for async operations:
+If phase setting `track` is true, the idle event also waits for async operations:
 
 - loading of script/link nodes
 - DOMContentLoaded listeners
@@ -104,8 +99,7 @@ Default online settings:
   - script: "'self' 'unsafe-inline'"
   - connect: "'self'"
 
-Mind that policies of the requesting phase are obtained from settings
-of the responding phase: route handler cannot change policies of current phase.
+Mind that policies of the requesting phase are obtained from settings of the responding phase: route handler cannot change policies of current phase.
 
 ## Route settings
 
@@ -209,8 +203,7 @@ This is a limited list of plugins, some are used by default:
 
 ## Compatibility with caching proxies
 
-express-dom currently uses `Vary: Sec-Purpose` response header,
-so all proxies should be okay with that.
+express-dom currently uses `Sec-Purpose` request header, and set `Vary: Sec-Purpose` response headers, so all proxies should be okay with that.
 
 ## Logs
 
