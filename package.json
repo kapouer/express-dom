@@ -29,8 +29,8 @@
     "class-deferred": "^1.0.1",
     "clone": "^2.1.2",
     "debug": "^4.3.4",
-    "playwright-core": "^1.27.1",
-    "undici": "^5.12.0"
+    "playwright-core": "^1.28.1",
+    "undici": "^5.13.0"
   },
   "devDependencies": {
     "@kapouer/eslint-config": "^1.8.0",
