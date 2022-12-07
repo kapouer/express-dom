@@ -29,7 +29,6 @@ The offline phase is done only on the server, while the online phase is typical 
 Configuration functions can setup a handler instance, valid for all requests on that handler.
 
 Routers can change settings depending on the current request.
-(Using a router is somewhat tricky).
 
 Plugins can change page settings before it is loaded, and can run scripts when the page is 'idle'.
 
@@ -114,7 +113,7 @@ Configuration depending on the route and the phase can be set using a router fun
 
 ```js
 dom().route((phase, req, res) => {
-  // change phase.settings.plugins depending on req
+  // change phase.settings.plugins depending on req and phase.online/offline/visible
 })
 ```
 
