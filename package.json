@@ -29,7 +29,7 @@
     "class-deferred": "^1.0.1",
     "clone": "^2.1.2",
     "debug": "^4.3.4",
-    "playwright-core": "^1.31.1",
+    "playwright-core": "^1.31.2",
     "undici": "^5.20.0"
   },
   "devDependencies": {
