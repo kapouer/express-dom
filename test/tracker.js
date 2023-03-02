@@ -107,6 +107,14 @@ describe("Idle tracker waits for", function() {
 		}
 	});
 
+	it("append script", async () => {
+		for (let i = 0; i < 10; i++) {
+			const { statusCode, body } = await request(`${host}/script-append.html`);
+			assert.equal(statusCode, 200);
+			assert.match(await body.text(), /data-test="2"/);
+		}
+	});
+
 	it("xhr to be complete", async () => {
 		const { statusCode, body } = await request(`${host}/basic-xhr.html`);
 		assert.equal(statusCode, 200);
