@@ -126,5 +126,11 @@ describe("Basic functionnalities", function() {
 		assert.match(await body.text(), />4</);
 	});
 
+	it("loads a page with query", async () => {
+		const { statusCode, body } = await request(`${host}/basic-query.html?data=[test.enc]`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /\[test.enc\]/);
+	});
+
 });
 
