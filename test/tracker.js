@@ -48,6 +48,18 @@ describe("Idle tracker waits for", function() {
 			}
 		}), staticMw);
 
+		app.get('/custom-tracker.html', dom({
+			online: {
+				timeout: 3000,
+				track: async function(context) {
+					context.test = "tata";
+					return new Promise(resolve => {
+						context.addEventListener('myidle', () => resolve());
+					});
+				}
+			}
+		}), staticMw);
+
 		app.get(/\.html$/, dom(), staticMw);
 
 		server = app.listen();
@@ -141,6 +153,12 @@ describe("Idle tracker waits for", function() {
 		const { statusCode, body } = await request(`${host}/script-await.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /tutu/);
+	});
+
+	it("custom async tracker", async () => {
+		const { statusCode, body } = await request(`${host}/custom-tracker.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), />tata</);
 	});
 
 });

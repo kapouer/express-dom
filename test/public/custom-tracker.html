@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>no script</title>
+		<script>
+			setTimeout(() => {
+				document.body.innerHTML = window.test;
+				window.dispatchEvent(new Event('myidle'));
+			}, 1000);
+		</script>
+	</head>
+	<body>
+		toto
+	</body>
+</html>

@@ -34,20 +34,9 @@ Plugins can change page settings before it is loaded, and can run scripts when t
 
 A phase is skipped if it has no registered plugins.
 
-The 'idle' event is emitted on the `page` after DOMContentLoaded, and after requests have settled.
+The 'idle' event is emitted on the `page` instance after DOMContentLoaded, and after requests have settled and custom or default tracker has resolved.
 
-If phase setting `track` is true, the idle event also waits for async operations:
-
-- loading of script/link nodes
-- DOMContentLoaded listeners
-- fetch, xhr calls
-- timeouts
-- animation frame requests
-- microtasks
-
-The listeners of that event are themselves run serially.
-
-Other use cases might require a custom plugin to decide when page prerendering is finished.
+The listeners of the 'idle' event can be asynchronous and are run serially.
 
 ## Options
 
@@ -76,7 +65,7 @@ Phase settings:
 
 - policies: object for configuring Content-Security-Policies
 - enabled: boolean
-- track: boolean
+- track: boolean, or custom track function (see below)
 - styles: list of css strings
 - scripts: list of [function, arg?] pairs
 - plugins: list (set) of names
@@ -99,6 +88,21 @@ Default online settings:
   - connect: "'self'"
 
 Mind that policies of the requesting phase are obtained from settings of the responding phase: route handler cannot change policies of current phase.
+
+## tracker
+
+If phase setting `track` is true, the default tracker waits for async operations:
+
+- loading of script/link nodes
+- DOMContentLoaded listeners
+- fetch, xhr calls
+- timeouts (capped by page timeout)
+- animation frame requests
+- microtasks
+
+Otherwise, `track` can be a custom async function that is evaluated by the default tracker to determine when the page has settled.
+
+When `track` is false, the idle event just wait for first batch of files to be loaded.
 
 ## Route settings
 
