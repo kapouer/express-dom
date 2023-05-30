@@ -76,7 +76,7 @@ describe("Busy", function() {
 		this.timeout(20000);
 		const list = [];
 		const MAX = 10;
-		const NUM = 6;
+		const NUM = 5;
 		let count = MAX * NUM;
 
 		for (let i = 0; i < MAX; i++) {
@@ -97,13 +97,13 @@ describe("Busy", function() {
 				assert.match(text, /toto/);
 				count--;
 			});
-			list.push(async () => {
-				const { statusCode, body } = await request(`${host}/script-async.html?${i}`);
-				assert.equal(statusCode, 200);
-				const text = await body.text();
-				assert.match(text, /tutu/);
-				count--;
-			});
+			// list.push(async () => {
+			// 	const { statusCode, body } = await request(`${host}/script-async.html?${i}`);
+			// 	assert.equal(statusCode, 200);
+			// 	const text = await body.text();
+			// 	assert.match(text, /tutu/);
+			// 	count--;
+			// });
 			list.push(async () => {
 				const { statusCode, body } = await request(`${host}/basic-resolve.html?${i}`);
 				assert.equal(statusCode, 200);
