@@ -25,11 +25,11 @@
   },
   "dependencies": {
     "bl": "^6.0.3",
-    "@crawlee/browser-pool": "^3.4.2",
+    "@crawlee/browser-pool": "^3.5.0",
     "class-deferred": "^1.0.1",
     "clone": "^2.1.2",
     "debug": "^4.3.4",
-    "playwright-core": "^1.36.1",
+    "playwright-core": "^1.36.2",
     "undici": "^5.22.1"
   },
   "devDependencies": {
