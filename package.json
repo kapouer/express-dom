@@ -24,13 +24,13 @@
     "url": "https://github.com/kapouer/express-dom/issues"
   },
   "dependencies": {
-    "bl": "^6.0.3",
-    "@crawlee/browser-pool": "^3.5.0",
+    "bl": "^6.0.6",
+    "@crawlee/browser-pool": "^3.5.1",
     "class-deferred": "^1.0.1",
     "clone": "^2.1.2",
     "debug": "^4.3.4",
-    "playwright-core": "^1.36.2",
-    "undici": "^5.22.1"
+    "playwright-core": "^1.37.1",
+    "undici": "^5.23.0"
   },
   "devDependencies": {
     "@kapouer/eslint-config": "^1.9.1",
