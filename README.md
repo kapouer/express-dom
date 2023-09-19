@@ -195,6 +195,10 @@ This is a limited list of plugins, some are used by default:
   Parse `meta[http-equiv]` tags and set response headers accordingly.
   Supports http-equiv="Status".
 
+- languages
+  Parses request `Accept-Language` and sets `navigator.languages`.
+  Sets `Content-Language` to the lang attribute found on documentElement.
+
 - preloads
   Parse `link[rel=preload]` tags and set 'Link' response header.
 
