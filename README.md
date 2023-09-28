@@ -2,6 +2,8 @@
 
 Express middleware for (pre)rendering web pages with [playwright](https://playwright.dev/docs/api/).
 
+Uses system-installed chromium by default.
+
 ## Synopsis
 
 ```js
