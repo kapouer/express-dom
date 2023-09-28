@@ -43,6 +43,7 @@ The listeners of the 'idle' event can be asynchronous and are run serially.
 dom holds some global settings:
 
 - browser: the playwright channel to use, defaults to 'chrome'
+- executable: the path to executable, defaults to /usr/bin/chromium
 - pageMax: number of open pages per browser
 - pageUse: number of uses before recycling browser
 - debug: show browser, disables timeout. Also set by `PWDEBUG=1`.

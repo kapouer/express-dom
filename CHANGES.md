@@ -1,4 +1,4 @@
-# Breaking changes
+# changes
 
 ## Version 8
 
@@ -6,3 +6,7 @@
   and no longer uses ?develop query parameter. Proxies must support Vary.
 - separation between configuration of routes and requests
 - and other api changes...
+
+### Version 8.10.0
+
+- Dom.executable defaults to /usr/bin/chromium
