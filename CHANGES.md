@@ -15,3 +15,7 @@
 
 - Dom.executable can be set to a custom value.
   Otherwise, when null, it uses available chromium or google-chrome in that order.
+
+### Version 8.11.0
+
+Support "manual" modes.

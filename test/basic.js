@@ -1,5 +1,6 @@
 const assert = require('node:assert').strict;
 const { once } = require('node:events');
+const { promises: fs } = require('node:fs');
 const { request } = require('undici');
 const express = require('express');
 
@@ -10,9 +11,11 @@ dom.defaults.log = true;
 
 dom.debug = require('node:inspector').url() !== undefined;
 
+let server, host;
+
 describe("Basic functionnalities", function() {
 	this.timeout(0);
-	let server, host;
+
 	const requests = new Set();
 
 	before(async () => {
@@ -34,7 +37,7 @@ describe("Basic functionnalities", function() {
 				location.href = req.query.url;
 			}
 		}));
-		app.get('/manual', async (req, res) => {
+		app.get('/partial', async (req, res) => {
 			req.url = '/basic-manual.html';
 			try {
 				const ret = await dom()(req);
@@ -93,10 +96,27 @@ describe("Basic functionnalities", function() {
 		assert.match(await body.text(), /toto/);
 	});
 
-	it("loads a simple Html page using manual mode", async () => {
-		const { statusCode, body } = await request(`${host}/manual`);
+	it("loads a simple Html page using manual response", async () => {
+		const { statusCode, body } = await request(`${host}/partial`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /toto/);
+	});
+
+	it("render a given Html page using manual request url", async () => {
+		const { statusCode, headers, body } = await dom()(host + '/basic-manual.html');
+		assert.equal(statusCode, 200);
+		assert.equal(headers['Content-Type'], 'text/html');
+		assert.match(body, /toto/);
+	});
+
+	it("render a given Html page using manual request body", async () => {
+		const { statusCode, headers, body } = await dom()({
+			url: host + '/fullmanual',
+			body: await fs.readFile(__dirname + '/public/basic-html.html')
+		});
+		assert.equal(statusCode, 200);
+		assert.equal(headers['Content-Type'], 'text/html');
+		assert.match(body, /toto/);
 	});
 
 	it("loads a simple UTF8 Html page", async () => {

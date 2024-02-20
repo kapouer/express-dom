@@ -14,10 +14,14 @@ const dom = require('express-dom');
 app.get('*.html', dom(), express.static('public/'));
 ```
 
-or for quick rendering outside express:
+To do rendering outside express middleware:
 
 ```js
-const { statusCode, body } = await dom()(url);
+// obj can be a url string, or an IncomingMessage,
+// or an object with { url, status?, headers?, body? } properties
+// status defaults to 200, headers to { Content-Type: 'text/html' }
+
+const { statusCode, headers, body } = await dom()(obj);
 ```
 
 A page is requested by a browser for three purposes:
