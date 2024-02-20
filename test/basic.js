@@ -34,6 +34,19 @@ describe("Basic functionnalities", function() {
 				location.href = req.query.url;
 			}
 		}));
+		app.get('/manual', async (req, res) => {
+			req.url = '/basic-manual.html';
+			try {
+				const ret = await dom()(req);
+				for (const header in ret.headers) {
+					res.setHeader(header, ret.headers[header]);
+				}
+				res.status(ret.statusCode);
+				res.send(ret.body);
+			} catch (ex) {
+				console.error(ex);
+			}
+		});
 		app.get('/plugin-status.html', (req, res, next) => {
 			if (req.query.status) {
 				res.status(parseInt(req.query.status));
@@ -55,6 +68,8 @@ describe("Basic functionnalities", function() {
 			location.pathname = '/basic-inline.html';
 		}), staticMw);
 
+		app.get('/basic-manual.html', staticMw);
+
 		app.get(/\.html$/, dom(), (err, req, res, next) => {
 			if (err) console.error(err);
 			else next();
@@ -74,6 +89,12 @@ describe("Basic functionnalities", function() {
 
 	it("loads a simple Html page", async () => {
 		const { statusCode, body } = await request(`${host}/basic-html.html`);
+		assert.equal(statusCode, 200);
+		assert.match(await body.text(), /toto/);
+	});
+
+	it("loads a simple Html page using manual mode", async () => {
+		const { statusCode, body } = await request(`${host}/manual`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /toto/);
 	});
