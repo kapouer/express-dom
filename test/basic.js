@@ -103,20 +103,20 @@ describe("Basic functionnalities", function() {
 	});
 
 	it("render a given Html page using manual request url", async () => {
-		const { statusCode, headers, body } = await dom()(host + '/basic-manual.html');
-		assert.equal(statusCode, 200);
-		assert.equal(headers['Content-Type'], 'text/html');
-		assert.match(body, /toto/);
+		const res = await dom()(host + '/basic-manual.html');
+		assert.equal(res.statusCode, 200);
+		assert.equal(res.get('Content-Type'), 'text/html');
+		assert.match(res.body, /toto/);
 	});
 
 	it("render a given Html page using manual request body", async () => {
-		const { statusCode, headers, body } = await dom()({
+		const res = await dom()({
 			url: host + '/fullmanual',
 			body: await fs.readFile(__dirname + '/public/basic-html.html')
 		});
-		assert.equal(statusCode, 200);
-		assert.equal(headers['Content-Type'], 'text/html');
-		assert.match(body, /toto/);
+		assert.equal(res.statusCode, 200);
+		assert.equal(res.get('Content-Type'), 'text/html');
+		assert.match(res.body, /toto/);
 	});
 
 	it("loads a simple UTF8 Html page", async () => {
