@@ -21,7 +21,8 @@ To do rendering outside express middleware:
 // or an object with { url, status?, headers?, body? } properties
 // status defaults to 200, headers to { Content-Type: 'text/html' }
 
-const { statusCode, headers, body } = await dom()(obj);
+const res = await dom()(obj);
+const { statusCode, headers, body } = res;
 ```
 
 A page is requested by a browser for three purposes:
