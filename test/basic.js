@@ -114,6 +114,7 @@ describe("Basic functionnalities", function() {
 			url: host + '/fullmanual',
 			body: await fs.readFile(__dirname + '/public/basic-html.html')
 		});
+		assert.equal(res.req, undefined);
 		assert.equal(res.statusCode, 200);
 		assert.equal(res.get('Content-Type'), 'text/html');
 		assert.match(res.body, /toto/);
