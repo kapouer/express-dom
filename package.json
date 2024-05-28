@@ -1,6 +1,6 @@
 {
   "name": "express-dom",
-  "version": "8.11.2",
+  "version": "8.11.3",
   "description": "Prepare, render web pages - express middleware",
   "main": "index.js",
   "files": [
