@@ -27,13 +27,13 @@
     "url": "https://github.com/kapouer/express-dom/issues"
   },
   "dependencies": {
-    "@crawlee/browser-pool": "^3.9.1",
+    "@crawlee/browser-pool": "^3.10.1",
     "bl": "^6.0.12",
     "class-deferred": "^1.0.1",
     "clone": "^2.1.2",
     "debug": "^4.3.4",
-    "playwright-core": "^1.43.1",
-    "undici": "^6.13.0",
+    "playwright-core": "^1.44.1",
+    "undici": "^6.18.1",
     "which": "^4.0.0"
   },
   "devDependencies": {
