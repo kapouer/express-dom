@@ -27,11 +27,11 @@ const { statusCode, headers, body } = res;
 
 A page is requested by a browser for three purposes:
 
-- offline: hidden offline web page changed by outside scripts
-- online: hidden online web page built by its own scripts
-- visible: show the web page to the user
-
-The offline phase is done only on the server, while the online phase is typical prerendering and can be done on the server or the user browser.
+- offline: hidden offline web page changed by outside scripts. Only done on server.
+- online: hidden online web page built by its own scripts. Typical prerendering,
+  can be done on the server, or delegated to the user browser.
+- visible: fully rendered page, usually happens on the user browser, is typically needed for
+  pdf rendering (see express-dom-pdf).
 
 Configuration functions can setup a handler instance, valid for all requests on that handler.
 
