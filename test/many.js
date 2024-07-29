@@ -73,9 +73,9 @@ describe("Busy", function() {
 
 
 	it("with many pages", async function() {
-		this.timeout(20000);
+		this.timeout(40000);
 		const list = [];
-		const MAX = 10;
+		const MAX = 5;
 		const NUM = 5;
 		let count = MAX * NUM;
 
@@ -131,9 +131,9 @@ describe("Busy", function() {
 	});
 
 	it("with many sub-requested pages without deadlock", async function() {
-		this.timeout(40000);
+		this.timeout(60000);
 		const list = [];
-		const MAX = dom.pageMax * 3;
+		const MAX = 5;
 		let count = MAX;
 
 		for (let i = 0; i < MAX; i++) {

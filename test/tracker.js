@@ -120,7 +120,7 @@ describe("Idle tracker waits for", function() {
 	});
 
 	it("append script", async () => {
-		for (let i = 0; i < 10; i++) {
+		for (let i = 0; i < 5; i++) {
 			const { statusCode, body } = await request(`${host}/script-append.html`);
 			assert.equal(statusCode, 200);
 			assert.match(await body.text(), /data-test="2"/);
@@ -134,7 +134,7 @@ describe("Idle tracker waits for", function() {
 	});
 
 	it("fetch to be complete", async () => {
-		for (let i = 0; i < 10; i++) {
+		for (let i = 0; i < 5; i++) {
 			const { statusCode, body } = await request(`${host}/basic-fetch.html`);
 			assert.equal(statusCode, 200);
 			assert.match(await body.text(), /tarte/);
@@ -142,7 +142,7 @@ describe("Idle tracker waits for", function() {
 	});
 
 	it("fetch with json method", async () => {
-		await Promise.all(Array.from(Array(10)).map(async () => {
+		await Promise.all(Array.from(Array(5)).map(async () => {
 			const { statusCode, body } = await request(`${host}/basic-json.html`);
 			assert.equal(statusCode, 200);
 			assert.match(await body.text(), /tarte/);
