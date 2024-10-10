@@ -25,3 +25,8 @@ Support "manual" modes.
 Drops browser-pool in favor of a simpler pooling solution.
 
 Switch to new headless chrome.
+
+### Version 8.13.0
+
+Fix ManualRequest handler. Now expects an object with url and headers: { host },
+or an absolute url.

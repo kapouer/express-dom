@@ -11,7 +11,7 @@ dom.defaults.log = true;
 
 dom.debug = require('node:inspector').url() !== undefined;
 
-let server, host;
+let server, host, origin;
 
 describe("Basic functionnalities", function() {
 	this.timeout(0);
@@ -80,7 +80,8 @@ describe("Basic functionnalities", function() {
 
 		server = app.listen();
 		await once(server, 'listening');
-		host = `http://localhost:${server.address().port}`;
+		origin = `http://localhost:${server.address().port}`;
+		host = `localhost:${server.address().port}`;
 	});
 
 	after(async () => {
@@ -91,19 +92,19 @@ describe("Basic functionnalities", function() {
 
 
 	it("loads a simple Html page", async () => {
-		const { statusCode, body } = await request(`${host}/basic-html.html`);
+		const { statusCode, body } = await request(`${origin}/basic-html.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /toto/);
 	});
 
 	it("loads a simple Html page using manual response", async () => {
-		const { statusCode, body } = await request(`${host}/partial`);
+		const { statusCode, body } = await request(`${origin}/partial`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /toto/);
 	});
 
 	it("render a given Html page using manual request url", async () => {
-		const res = await dom()(host + '/basic-manual.html');
+		const res = await dom()(origin + '/basic-manual.html');
 		assert.equal(res.statusCode, 200);
 		assert.equal(res.get('Content-Type'), 'text/html');
 		assert.match(res.body, /toto/);
@@ -111,7 +112,9 @@ describe("Basic functionnalities", function() {
 
 	it("render a given Html page using manual request body", async () => {
 		const res = await dom()({
-			url: host + '/fullmanual',
+			headers: { host },
+			protocol: 'http',
+			url: '/fullmanual',
 			body: await fs.readFile(__dirname + '/public/basic-html.html')
 		});
 		assert.equal(res.req, undefined);
@@ -121,34 +124,34 @@ describe("Basic functionnalities", function() {
 	});
 
 	it("loads a simple UTF8 Html page", async () => {
-		const { statusCode, body } = await request(`${host}/basic-utf8.html`);
+		const { statusCode, body } = await request(`${origin}/basic-utf8.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /modifié/);
 	});
 
 	it("should load html from a url", async () => {
-		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/plugin-status.html`));
+		const { statusCode, body } = await request(`${origin}/remote?url=` + encodeURIComponent(`${origin}/plugin-status.html`));
 
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /OuiOui/);
 	});
 
 	it("should load html from a url that sets status", async () => {
-		const { statusCode, body } = await request(`${host}/remote?url=` + encodeURIComponent(`${host}/plugin-status.html?status=403`));
+		const { statusCode, body } = await request(`${origin}/remote?url=` + encodeURIComponent(`${origin}/plugin-status.html?status=403`));
 
 		assert.equal(statusCode, 403);
 		assert.match(await body.text(), /OuiOui/);
 	});
 
 	it("loads a simple Html page and not its stylesheet", async () => {
-		const { statusCode, body } = await request(`${host}/basic-style.html`);
+		const { statusCode, body } = await request(`${origin}/basic-style.html`);
 		assert.equal(statusCode, 200);
 		assert.ok(!requests.has('/css/style.css'));
 		assert.match(await body.text(), /toto/);
 	});
 
 	it("loads an offline page and not its inline script", async () => {
-		const { statusCode, body } = await request(`${host}/basic-offline.html`);
+		const { statusCode, body } = await request(`${origin}/basic-offline.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /tata/);
 	});
@@ -157,19 +160,19 @@ describe("Basic functionnalities", function() {
 		const {
 			statusCode,
 			headers: { location }
-		} = await request(`${host}/basic-redirect.html`);
+		} = await request(`${origin}/basic-redirect.html`);
 		assert.equal(statusCode, 302);
-		assert.equal(location, `${host}/basic-redirect-loc.html`);
+		assert.equal(location, `${origin}/basic-redirect-loc.html`);
 	});
 
 	it("changes window.devicePixelRatio using settings.scale", async () => {
-		const { statusCode, body } = await request(`${host}/scaled.html`);
+		const { statusCode, body } = await request(`${origin}/scaled.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), />4</);
 	});
 
 	it("loads a page with query", async () => {
-		const { statusCode, body } = await request(`${host}/basic-query.html?data=[test.enc]`);
+		const { statusCode, body } = await request(`${origin}/basic-query.html?data=[test.enc]`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), /\[test.enc\]/);
 	});
