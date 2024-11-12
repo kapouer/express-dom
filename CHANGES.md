@@ -30,3 +30,8 @@ Switch to new headless chrome.
 
 Fix ManualRequest handler. Now expects an object with url and headers: { host },
 or an absolute url.
+
+### Version 8.14.0
+
+- Plugins can now change headers of page response.
+- Use that to fix languages plugin.
