@@ -75,6 +75,7 @@ Phase settings:
 - track: boolean, or custom track function (see below)
 - styles: list of css strings
 - scripts: list of [function, arg?] pairs
+- headers: object of response headers to add to page route
 - plugins: list (set) of names
 
 Default offline settings:
@@ -203,7 +204,7 @@ This is a limited list of plugins, some are used by default:
   Supports http-equiv="Status".
 
 - languages
-  Parses request `Accept-Language` and sets `navigator.languages`.
+  Pass current request `Accept-Language` to page route headers.
   Sets `Content-Language` to the lang attribute found on documentElement.
 
 - preloads
