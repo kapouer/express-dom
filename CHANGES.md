@@ -46,3 +46,6 @@ with { url, body }.
 
 equivs keeps meta node when the name is listed in the `equivs` option array.
 
+### Version 8.14.3
+
+equivs: better support for comma-separated fields, and for arrays of headers.
