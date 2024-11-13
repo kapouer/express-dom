@@ -35,3 +35,9 @@ or an absolute url.
 
 - Plugins can now change headers of page response.
 - Use that to fix languages plugin.
+
+### Version 8.14.1
+
+Revert partially the change in ManualRequest.
+Supports an absolute url, or an object with headers: {host}, or an object
+with { url, body }.
