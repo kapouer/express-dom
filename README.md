@@ -202,6 +202,8 @@ This is a limited list of plugins, some are used by default:
 - equivs
   Parse `meta[http-equiv]` tags and set response headers accordingly.
   Supports http-equiv="Status".
+  Removes the meta nodes, except when the names are listed in the
+  `settings.equivs` array.
 
 - languages
   Pass current request `Accept-Language` to page route headers.

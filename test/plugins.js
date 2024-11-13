@@ -45,6 +45,7 @@ describe("Plugins", function() {
 		app.get('/plugin-status.html', dom(({ online }) => {
 			online.plugins.delete('html');
 			online.plugins.add('equivs').add('html');
+			online.equivs = ["X-Test"];
 		}), staticMw);
 
 		app.get('/plugin-fail.html', dom(({ online }) => {
@@ -91,9 +92,14 @@ describe("Plugins", function() {
 
 
 	it("equivs should change status code", async () => {
-		const { statusCode, body } = await request(`${host}/plugin-status.html`);
+		const { statusCode, body, headers } = await request(`${host}/plugin-status.html`);
 		assert.equal(statusCode, 401);
-		assert.match(await body.text(), /OuiOui/);
+		const text = await body.text();
+		assert.match(text, /OuiOui/);
+		assert.equal(headers['x-test'], "yes");
+		assert.equal(headers['x-not'], "yes");
+		assert.match(text, /X-Test/);
+		assert.doesNotMatch(text, /X-Not/);
 	});
 
 	it("preloads should set Link response header", async () => {

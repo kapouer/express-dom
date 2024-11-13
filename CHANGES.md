@@ -41,3 +41,8 @@ or an absolute url.
 Revert partially the change in ManualRequest.
 Supports an absolute url, or an object with headers: {host}, or an object
 with { url, body }.
+
+### Version 8.14.2
+
+equivs keeps meta node when the name is listed in the `equivs` option array.
+
