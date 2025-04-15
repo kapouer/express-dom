@@ -49,3 +49,8 @@ equivs keeps meta node when the name is listed in the `equivs` option array.
 ### Version 8.14.3
 
 equivs: better support for comma-separated fields, and for arrays of headers.
+
+### Version 8.15.0
+
+Better short name detection for CSP policies object.
+One case use the long name without risks.

@@ -97,6 +97,8 @@ Default online settings:
 
 Mind that policies of the requesting phase are obtained from settings of the responding phase: route handler cannot change policies of current phase.
 
+Policies names that end with `-src` can be written without that suffix.
+
 ## tracker
 
 If phase setting `track` is true, the default tracker waits for async operations:
