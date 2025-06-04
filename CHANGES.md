@@ -54,3 +54,9 @@ equivs: better support for comma-separated fields, and for arrays of headers.
 
 Better short name detection for CSP policies object.
 One case use the long name without risks.
+
+### Version 8.16.0
+
+Use req.host instead of req.headers.host.
+
+This might break some things, however it shouldn't, and it's better at supporting proxies and X-Forwarded-Host.
