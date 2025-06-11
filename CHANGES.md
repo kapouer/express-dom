@@ -1,5 +1,14 @@
 # Changes
 
+## Version 9.0.0
+
+Switch to puppeteer.
+
+Support using firefox or chrom(e|ium) through the "browser" phase settings,
+or defaults.
+
+Rename "scale" to "devicePixelRatio".
+
 ## Version 8.16.0
 
 Use req.host instead of req.headers.host.

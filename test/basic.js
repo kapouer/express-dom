@@ -57,7 +57,7 @@ describe("Basic functionnalities", function() {
 			next('route');
 		});
 		app.get('/scaled.html', dom({
-			online: { scale: 4 }
+			online: { devicePixelRatio: 4 }
 		}), (req, res, next) => {
 			res.send(`<!DOCTYPE html><html>
 			<body onload="document.body.innerHTML = window.devicePixelRatio">0</body>

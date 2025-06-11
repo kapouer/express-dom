@@ -49,11 +49,10 @@ The listeners of the 'idle' event can be asynchronous and are run serially.
 
 dom holds some global settings:
 
-- browser: the playwright channel to use, defaults to 'chrome'
-- executable: the path to a browser executable (optional)
+- browser: default browser to use
+- browsers: map of additional browser options { args, path }
 - debug: show browser, disables timeout. Also set by `PWDEBUG=1`.
 - defaults: per-instance settings
-- pools: pages pools. Vary on visible and scale.
 - plugins: map of plugins functions
 - online, offline: per-phase settings defaults
 
@@ -61,7 +60,8 @@ Middleware settings:
 
 - log: boolean, or level (info, log, warn, error)
 - timeout: async resources timeout
-- scale: changes window.devicePixelRatio
+- devicePixelRatio: changes window.devicePixelRatio
+- browser: changes which browser is used (chromium or firefox)
 - cookies (used only with cookies plugin)
 
 Handler properties:
@@ -176,7 +176,7 @@ dom.online.plugins.delete('html').add('fragment').add('html');
 app.get('*.html', dom(), express.static(app.get('views')));
 ```
 
-`page` is a playwright page instance, with additional
+`page` is a puppeteer page instance, with additional
 `page.location`, a URL instance that can be modified
 synchronously.
 
@@ -192,9 +192,6 @@ This is a limited list of plugins, some are used by default:
   Force `document.visibilityState == "hidden"`.
   Adds user stylesheet to keep rendering to minimum;
   Honors `settings.hidden` boolean, if set by a previous plugin.
-
-- media
-  Sets `media` options, see [playwright doc](https://playwright.dev/docs/api/class-page#page-emulate-media).
 
 - cookies
   If `settings.cookies` is true, copy all cookies,
@@ -230,7 +227,9 @@ express-dom currently uses `Sec-Purpose` request header, and set `Vary: Sec-Purp
 
 ## Backend
 
-express-dom installs playwright-core and expects a system-installed chrome browser to be available.
+express-dom installs puppeteer-core.
+
+It is best to install chromium and firefox (on linux, using the package manager).
 
 ## License
 

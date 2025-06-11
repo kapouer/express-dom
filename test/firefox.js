@@ -11,8 +11,6 @@ dom.defaults.log = true;
 
 dom.debug = require('node:inspector').url() !== undefined;
 
-dom.browser = "firefox";
-
 let server, origin;
 
 describe("Using firefox", function() {
@@ -24,7 +22,9 @@ describe("Using firefox", function() {
 
 		app.get(/\.(json|js|css|png)$/, staticMw);
 
-		app.get(/\.html$/, dom(), (err, req, res, next) => {
+		app.get(/\.html$/, dom().route((phase, req) => {
+			phase.settings.browser = req.query.browser ?? "chromium";
+		}), (err, req, res, next) => {
 			if (err) console.error(err);
 			else next();
 		}, staticMw);
@@ -42,10 +42,18 @@ describe("Using firefox", function() {
 
 
 	it("loads a page in firefox", async () => {
-		const { statusCode, body } = await request(`${origin}/firefox.html`);
+		const { statusCode, body } = await request(`${origin}/firefox.html?browser=firefox`);
 		assert.equal(statusCode, 200);
 		const txt = await body.text();
 		assert.ok(txt.includes('Firefox'));
+	});
+
+	it("loads a page in firefox and then in chromium", async () => {
+		const { body: firefoxBody } = await request(`${origin}/firefox.html?browser=firefox`);
+		assert.ok((await firefoxBody.text()).includes('Firefox'));
+
+		const { body: chromiumBody } = await request(`${origin}/firefox.html?browser=chrome`);
+		assert.ok((await chromiumBody.text()).includes('HeadlessChrome'));
 	});
 
 });

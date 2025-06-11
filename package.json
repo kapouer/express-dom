@@ -32,14 +32,13 @@
     "clone": "^2.1.2",
     "debug": "^4.4.1",
     "lightning-pool": "^4.11.1",
-    "playwright-core": "^1.52.0",
-    "which": "^5.0.0"
+    "puppeteer-core": "^24.10.0"
   },
   "devDependencies": {
     "@kapouer/eslint-config": "^2.1.1",
     "cookie": "^1.0.2",
     "express": "^5.1.0",
-    "mocha": "^11.4.0",
+    "mocha": "^11.6.0",
     "undici": "^7.10.0"
   },
   "mocha": {
