@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>fetch with cookie</title>
+
+	</head>
+	<body>
+		<script>
+			fetch("protected.json").then(async res => {
+				const obj = await res.json();
+				document.body.textContent = JSON.stringify(obj);
+			});
+		</script>
+	</body>
+</html>
