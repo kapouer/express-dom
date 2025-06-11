@@ -1,6 +1,5 @@
 const assert = require('node:assert').strict;
 const { once } = require('node:events');
-const { promises: fs } = require('node:fs');
 const { request } = require('undici');
 const express = require('express');
 
