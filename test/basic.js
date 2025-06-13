@@ -165,7 +165,7 @@ describe("Basic functionnalities", function() {
 		assert.equal(location, `${origin}/basic-redirect-loc.html`);
 	});
 
-	it("changes window.devicePixelRatio using settings.scale", async () => {
+	it("changes window.devicePixelRatio", async () => {
 		const { statusCode, body } = await request(`${origin}/scaled.html`);
 		assert.equal(statusCode, 200);
 		assert.match(await body.text(), />4</);
