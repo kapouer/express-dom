@@ -29,10 +29,10 @@
   "dependencies": {
     "bl": "^6.1.0",
     "class-deferred": "^1.0.1",
-    "clone": "^2.1.2",
     "debug": "^4.4.1",
     "lightning-pool": "^4.11.1",
     "puppeteer-core": "^24.10.0"
+    "lodash.mergewith": "^4.6.2",
   },
   "devDependencies": {
     "@kapouer/eslint-config": "^2.1.1",
