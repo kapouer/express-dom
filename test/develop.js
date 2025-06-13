@@ -25,14 +25,16 @@ describe("Prepare or load depending on header", function() {
 			}
 		}, staticMw);
 
-		dom.plugins.testView = (page, settings, req, res) => {
-			page.on('idle', () => {
-				return page.evaluate(views => {
-					document.body.setAttribute('data-views', views);
-				}, req.app.get('views'));
-			});
-		};
 		app.get(/\.html$/, dom({
+			plugins: {
+				testView(page, settings, req, res) {
+					page.on('idle', () => {
+						return page.evaluate(views => {
+							document.body.setAttribute('data-views', views);
+						}, req.app.get('views'));
+					});
+				}
+			},
 			offline: {
 				enabled: true,
 				plugins: new Set(['console', 'hidden', 'testView', 'html'])
@@ -65,7 +67,9 @@ describe("Prepare or load depending on header", function() {
 	});
 
 	it("should prepare and not load a page", async () => {
-		const { statusCode, body } = await request(`${host}/develop.html`, { headers: { [dom.header]: dom.online.header }});
+		const { statusCode, body } = await request(`${host}/develop.html`, {
+			headers: { [dom.header]: dom.defaults.online.header }
+		});
 		assert.equal(statusCode, 200);
 		const text = await body.text();
 		assert.match(text, /data-views="/);

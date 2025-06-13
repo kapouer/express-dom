@@ -8,7 +8,7 @@ const dom = require('../');
 
 dom.defaults.timeout = 10000;
 dom.defaults.log = true;
-dom.defaults.cookies.add('mycookiename');
+dom.defaults.online.cookies.add('mycookiename');
 
 dom.debug = require('node:inspector').url() !== undefined;
 
@@ -56,7 +56,7 @@ describe("Plugins", function() {
 			res.send(err.message);
 		}, staticMw);
 
-		app.get('/plugin-throws.html', dom(({ plugins, online }) => {
+		app.get('/plugin-throws.html', dom(({ online, plugins }) => {
 			online.plugins.delete('html');
 			online.plugins.add('throws').add('html');
 			plugins.throws = () => {
@@ -93,8 +93,8 @@ describe("Plugins", function() {
 
 	it("equivs should change status code", async () => {
 		const { statusCode, body, headers } = await request(`${host}/plugin-status.html`);
-		assert.equal(statusCode, 401);
 		const text = await body.text();
+		assert.equal(statusCode, 401);
 		assert.match(text, /OuiOui/);
 		assert.equal(headers['x-test'], "yes");
 		assert.equal(headers['x-not'], "yes");

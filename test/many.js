@@ -5,14 +5,6 @@ const express = require('express');
 
 const dom = require('..');
 
-dom.plugins.testEval = (page, settings, req) => {
-	page.on('idle', async () => {
-		await page.evaluate(views => {
-			document.body.setAttribute('data-views', views);
-		}, req.app.get('views'));
-	});
-};
-
 describe("Busy", function() {
 	this.timeout(0);
 	let server, host;
@@ -35,6 +27,15 @@ describe("Busy", function() {
 			}
 		}, staticMw);
 		app.get(/\.html$/, dom({
+			plugins: {
+				testEval(page, settings, req) {
+					page.on('idle', async () => {
+						await page.evaluate(views => {
+							document.body.setAttribute('data-views', views);
+						}, req.app.get('views'));
+					});
+				}
+			},
 			online: {
 				timeout: 30000
 			},

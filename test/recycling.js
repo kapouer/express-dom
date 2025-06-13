@@ -7,7 +7,7 @@ const cookie = require('cookie');
 const dom = require('..');
 
 dom.debug = require('node:inspector').url() !== undefined;
-dom.defaults.pool.minIdle = dom.defaults.pool.max = 1;
+
 let server, origin;
 
 describe("Recycling", function() {
@@ -28,6 +28,10 @@ describe("Recycling", function() {
 		app.get(/\.(json|js|css|png)$/, staticMw);
 
 		app.get(/\.html$/, dom({
+			pool: {
+				minIdle: 1,
+				max: 1
+			},
 			timeout: 1000,
 			log: true,
 			online: {

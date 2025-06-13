@@ -1,8 +1,6 @@
 # express-dom
 
-Express middleware for (pre)rendering web pages with [playwright](https://playwright.dev/docs/api/).
-
-Uses system-installed chromium or google-chrome.
+Express middleware for (pre)rendering web pages using real browsers.
 
 ## Synopsis
 
@@ -27,79 +25,38 @@ const { statusCode, headers, body } = res;
 
 A page is requested by a browser for three purposes:
 
-- offline: hidden offline web page changed by outside scripts. Only done on server.
+- offline: hidden offline web page changed by outside scripts.
+  This phase can't fetch resources and doesn't run page own scripts.
 - online: hidden online web page built by its own scripts. Typical prerendering,
   can be done on the server, or delegated to the user browser.
-- visible: fully rendered page, usually happens on the user browser, is typically needed for
-  pdf rendering (see express-dom-pdf).
+- visible: fully rendered page, usually happens on the user browser,
+  or on server for pdf/png rendering. See also express-dom-pdf.
 
-Configuration functions can setup a handler instance, valid for all requests on that handler.
+Each phase has its own set of plugins, named after the `plugins` settings map.
 
-Routers can change settings depending on the current request.
-
-Plugins can change page settings before it is loaded, and can run scripts when the page is 'idle'.
+Plugins can change page settings before the page is loaded,
+and can run scripts when the page is 'idle'.
 
 A phase is skipped if it has no registered plugins.
 
-The 'idle' event is emitted on the `page` instance after DOMContentLoaded, and after requests have settled and custom or default tracker has resolved.
+The 'idle' event is emitted on the `page` instance after DOMContentLoaded,
+and after requests have settled and custom or default tracker has resolved.
 
-The listeners of the 'idle' event can be asynchronous and are run serially.
+The listeners of the 'idle' event are asynchronous and run serially.
 
 ## Options
 
-dom holds some global settings:
-
-- browser: default browser to use
-- browsers: map of additional browser options { args, path }
-- debug: show browser, disables timeout. Also set by `PWDEBUG=1`.
-- defaults: per-instance settings
-- plugins: map of plugins functions
-- online, offline: per-phase settings defaults
-
-Middleware settings:
-
-- log: boolean, or level (info, log, warn, error)
-- timeout: async resources timeout
-- devicePixelRatio: changes window.devicePixelRatio
-- browser: changes which browser is used (chromium or firefox)
-- cookies (used only with cookies plugin)
-
-Handler properties:
-
-- online, offline, visible: custom phase settings, takes precedence
-
-Phase settings:
-
-- policies: object for configuring Content-Security-Policies
-- enabled: boolean
-- track: boolean, or custom track function (see below)
-- styles: list of css strings
-- scripts: list of [function, arg?] pairs
-- headers: object of response headers to add to page route
-- plugins: list (set) of names
-
-Default offline settings:
-
-- enabled: false
-- track: false
-- plugins: console, hidden, html
-- policies: default: "'none'"
-
-Default online settings:
-
-- enabled: true
-- track: true
-- plugins: console, hidden, cookies, referer, redirect, html
-- policies:
-  - default: "'none'"
-  - script: "'self' 'unsafe-inline'"
-  - connect: "'self'"
+dom.defaults holds defaults settings, see source code.
 
 Mind that policies of the requesting phase are obtained from settings of the responding phase: route handler cannot change policies of current phase.
 
-Policies names that end with `-src` can be written without that suffix.
+CSP names that end with `-src` can be written without that suffix.
 
 ## tracker
+
+The tracker is experimental, it is best to use a custom tracker.
+
+Set `[phase].track` setting to a custom async function that resolves when the page is ready.
 
 If phase setting `track` is true, the default tracker waits for async operations:
 
@@ -110,16 +67,15 @@ If phase setting `track` is true, the default tracker waits for async operations
 - animation frame requests
 - microtasks
 
-Otherwise, `track` can be a custom async function that is evaluated by the default tracker to determine when the page has settled.
-
 When `track` is false, the idle event just wait for first batch of files to be loaded.
 
-## Route settings
+## Changing settings
 
-Route-dependent configuration can be done by passing to `dom()`:
+Change `dom.defaults` for all instances and phases, otherwise,
+pass an object to `dom(opts)` that will be merged with the defaults.
 
-- an object with `{ online, offline, visible }` settings
-- a function accepting a `handler` instance as argument
+It is also possible to pass a function to `dom(mycustomconfig)` that
+will receive the `(opts, { plugins, routers })` as argument.
 
 ## Phase settings
 
@@ -128,7 +84,7 @@ Configuration depending on the route and the phase can be set using a router fun
 ```js
 dom().route((phase, req, res) => {
   // change phase.settings.plugins depending on req and phase.online/offline/visible
-})
+}) // returns the express middleware
 ```
 
 phase has the following properties:
@@ -150,7 +106,7 @@ app.get('*.html', dom().route((phase, req, res) => {
 }));
 ```
 
-- `dom().route(dom.routers.png)` to setup png rendering
+- `dom().route(dom.defaults.routers.png)` to setup png rendering
 - see also [express-dom-pdf plugin](https://github.com/kapouer/express-dom-pdf)
 
 ## Page settings and plugins
@@ -158,7 +114,7 @@ app.get('*.html', dom().route((phase, req, res) => {
 Plugins are asynchronous functions, executed in order.
 
 ```js
-dom.plugins.fragment = async (page, settings, req, res) => {
+dom.defaults.plugins.fragment = async (page, settings, req, res) => {
   settings.timeout = 30000;
   page.on('idle', async () => {
     const html = await page.evaluate(sel => {
@@ -172,7 +128,7 @@ dom.plugins.fragment = async (page, settings, req, res) => {
     }
   });
 };
-dom.online.plugins.delete('html').add('fragment').add('html');
+dom.defaults.online.plugins.delete('html').add('fragment').add('html');
 app.get('*.html', dom(), express.static(app.get('views')));
 ```
 
@@ -194,7 +150,7 @@ This is a limited list of plugins, some are used by default:
   Honors `settings.hidden` boolean, if set by a previous plugin.
 
 - cookies
-  If `settings.cookies` is true, copy all cookies,
+  If online `settings.cookies` is true, copy all cookies,
   else only copy cookies with names in this Set.
   Defaults to an empty Set.
 
