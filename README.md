@@ -150,7 +150,7 @@ This is a limited list of plugins, some are used by default:
   Honors `settings.hidden` boolean, if set by a previous plugin.
 
 - cookies
-  If online `settings.cookies` is true, copy all cookies,
+  If online `settings.online.cookies` is true, copy all cookies,
   else only copy cookies with names in this Set.
   Defaults to an empty Set.
 

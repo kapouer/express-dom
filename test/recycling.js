@@ -34,9 +34,7 @@ describe("Recycling", function() {
 			},
 			timeout: 1000,
 			log: true,
-			online: {
-				cookies: new Set(['cookie1', 'cookie2'])
-			}
+			online: { cookies: new Set(['cookie1', 'cookie2']) }
 		}), (err, req, res, next) => {
 			if (err) console.error(err);
 			else next();
