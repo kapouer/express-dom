@@ -4,11 +4,11 @@
 
 - Switch to puppeteer.
 - Drop media plugin, breaks webDriverBiDi and is somewhat useless.
-- Support using firefox or chrome through the "browser" setting.
+- Support using firefox or chrome through the "browser" setting. Defaults to chrome.
 - Rename "scale" to "devicePixelRatio".
 - The cookies plugin only sets cookies in online phase, thus it only
 exposes online.cookies settings.
-
+- pages are recycled instead of being destroyed and recreated.
 
 ## Version 8.16.0
 
