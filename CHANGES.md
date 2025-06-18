@@ -1,5 +1,9 @@
 # Changes
 
+## Version 9.0.1
+
+- Fix browsers lifecycle in case of disconnection.
+
 ## Version 9.0.0
 
 - Switch to puppeteer.
