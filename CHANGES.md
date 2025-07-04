@@ -4,7 +4,8 @@
 
 - switch to webDriverBiDi protocol, to avoid bug with CDP and chromium:
 https://github.com/puppeteer/puppeteer/issues/12219
-- increase idleTimeoutMillis because it won't time out
+- Fix pools map
+- Stop recycling pages, it's impossible with current bugs in puppeteer
 
 ## Version 9.0.1
 
