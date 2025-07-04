@@ -1,5 +1,11 @@
 # Changes
 
+## Version 9.0.2
+
+- switch to webDriverBiDi protocol, to avoid bug with CDP and chromium:
+https://github.com/puppeteer/puppeteer/issues/12219
+- increase idleTimeoutMillis because it won't time out
+
 ## Version 9.0.1
 
 - Fix browsers lifecycle in case of disconnection.
