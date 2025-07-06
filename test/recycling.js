@@ -29,7 +29,8 @@ describe("Recycling", function() {
 
 		app.get(/\.html$/, dom({
 			pool: {
-				minIdle: 1,
+				minIdle: 0,
+				min:0,
 				max: 1
 			},
 			timeout: 1000,
