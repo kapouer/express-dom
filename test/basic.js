@@ -91,10 +91,12 @@ describe("Basic functionnalities", function() {
 
 
 
-	it("loads a simple Html page", async () => {
+	it("prerender a simple Html page, being hidden", async () => {
 		const { statusCode, body } = await request(`${origin}/basic-html.html`);
 		assert.equal(statusCode, 200);
-		assert.match(await body.text(), /toto/);
+		const html = await body.text();
+		assert.match(html, /\btoto\b/);
+		assert.match(html, /\bhidden\b/);
 	});
 
 	it("loads a simple Html page using manual response", async () => {
