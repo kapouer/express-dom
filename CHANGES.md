@@ -1,5 +1,9 @@
 # Changes
 
+## Version 9.0.5
+
+- fix page lifecycle in the pool
+
 ## Version 9.0.4
 
 - fix document.hidden/visibilityState and style during prerendering.
