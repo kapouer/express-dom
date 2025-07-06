@@ -1,5 +1,9 @@
 # Changes
 
+## Version 9.0.4
+
+- fix document.hidden/visibilityState and style during prerendering.
+
 ## Version 9.0.2
 
 - switch to webDriverBiDi protocol, to avoid bug with CDP and chromium:
