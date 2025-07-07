@@ -5,7 +5,6 @@ const express = require('express');
 
 const dom = require('..');
 
-dom.defaults.timeout = 5000;
 dom.defaults.log = true;
 
 dom.debug = require('node:inspector').url() !== undefined;
@@ -21,7 +20,13 @@ describe("Browser lifecycle", function() {
 
 		app.get(/\.(json|js|css|png)$/, staticMw);
 
-		app.get(/\.html$/, dom().route((phase, req) => {
+		app.get(/\.html$/, dom({
+			pool: {
+				min: 0,
+				minIdle: 0,
+				max: 1
+			}
+		}).route((phase, req) => {
 			phase.settings.browser = req.query.browser ?? "chrome";
 		}), (err, req, res, next) => {
 			if (err) console.error(err);
@@ -38,11 +43,10 @@ describe("Browser lifecycle", function() {
 		await dom.destroy();
 	});
 
-
-
-	it("loads a page wait protocolTimeout, loads another page", async () => {
+	it("loads a page, disconnect browser manually, loads another page", async () => {
 		assert.equal((await request(`${origin}/basic-html.html`)).statusCode, 200);
-		await new Promise(resolve => setTimeout(resolve, 300000));
+		await dom.disconnectBrowser("chrome");
+		await new Promise(resolve => setTimeout(resolve, 1000));
 		assert.equal((await request(`${origin}/basic-inline.html`)).statusCode, 200);
 	});
 
