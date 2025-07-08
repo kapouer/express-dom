@@ -1,5 +1,9 @@
 # Changes
 
+## Version 9.0.6
+
+- try to support disconnected event for browser
+
 ## Version 9.0.5
 
 - fix page lifecycle in the pool
