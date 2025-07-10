@@ -10,7 +10,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "prepare": "postinstall"
   },
   "repository": {
     "type": "git",
@@ -32,7 +33,9 @@
     "debug": "^4.4.1",
     "lightning-pool": "^4.11.1",
     "lodash.mergewith": "^4.6.2",
-    "puppeteer-core": "^24.11.2"
+    "postinstall": "^0.11.2",
+    "postinstall-patch": "^0.7.2",
+    "puppeteer-core": "^24.12.1"
   },
   "devDependencies": {
     "@kapouer/eslint-config": "^2.1.1",
@@ -56,5 +59,8 @@
         }
       }
     ]
+  },
+  "prepare": {
+    "puppeteer-core": "patch patches/puppeteer-maxpayload.patch"
   }
 }

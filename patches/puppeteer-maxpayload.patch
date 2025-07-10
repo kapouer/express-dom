@@ -1,0 +1,11 @@
+--- node/NodeWebSocketTransport.js	2025-07-10 13:19:23.399846674 +0200
++++ node/NodeWebSocketTransport.js	2025-07-10 13:20:02.663197448 +0200
+@@ -22,7 +22,7 @@
+                 followRedirects: true,
+                 perMessageDeflate: false,
+                 allowSynchronousEvents: false,
+-                maxPayload: 256 * 1024 * 1024, // 256Mb
++                maxPayload: 1024 * 1024 * 1024, // 1024Mb
+                 headers: {
+                     'User-Agent': `Puppeteer ${version_js_1.packageVersion}`,
+                     ...headers,
