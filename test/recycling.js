@@ -36,6 +36,8 @@ describe("Recycling", function() {
 			timeout: 1000,
 			log: true,
 			online: { cookies: new Set(['cookie1', 'cookie2']) }
+		}).route((phase, req) => {
+			phase.settings.browser = req.query.browser ?? "chrome";
 		}), (err, req, res, next) => {
 			if (err) console.error(err);
 			else next();
@@ -51,7 +53,7 @@ describe("Recycling", function() {
 		await dom.destroy();
 	});
 
-	it("sets cookie for inner request", async () => {
+	it("sets cookie for inner request with chrome", async () => {
 		const { statusCode, body } = await request(`${origin}/cookies.html`, {
 			headers: {
 				cookie: 'cookie1=1;cookie3=3;cookie2=2'
@@ -63,8 +65,39 @@ describe("Recycling", function() {
 		assert.match(text, /cookie2/);
 	});
 
-	it("does not leak cookies", async () => {
+	it("does not leak cookies with chrome", async () => {
 		const { body } = await request(`${origin}/cookies.html`, {
+			headers: {
+				cookie: 'cookie1=1a'
+			}
+		});
+		const text = await body.text();
+		assert.match(text, /cookie1/);
+
+		const { body: body2 } = await request(`${origin}/cookies.html`, {
+			headers: {
+				cookie: 'cookie2=2a'
+			}
+		});
+		const text2 = await body2.text();
+		assert.doesNotMatch(text2, /cookie1/);
+		assert.match(text2, /cookie2/);
+	});
+
+	it("sets cookie for inner request with firefox", async () => {
+		const { statusCode, body } = await request(`${origin}/cookies.html?browser=firefox`, {
+			headers: {
+				cookie: 'cookie1=1;cookie3=3;cookie2=2'
+			}
+		});
+		assert.equal(statusCode, 200);
+		const text = await body.text();
+		assert.match(text, /cookie1/);
+		assert.match(text, /cookie2/);
+	});
+
+	it("does not leak cookies with firefox", async () => {
+		const { body } = await request(`${origin}/cookies.html?browser=firefox`, {
 			headers: {
 				cookie: 'cookie1=1a'
 			}
