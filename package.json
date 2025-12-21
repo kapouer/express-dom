@@ -28,21 +28,21 @@
     "url": "https://github.com/kapouer/express-dom/issues"
   },
   "dependencies": {
-    "bl": "^6.1.0",
+    "bl": "^6.1.6",
     "class-deferred": "^1.0.1",
-    "debug": "^4.4.1",
-    "lightning-pool": "^4.11.1",
+    "debug": "^4.4.3",
+    "lightning-pool": "^4.12.0",
     "lodash.mergewith": "^4.6.2",
     "postinstall": "^0.11.2",
     "postinstall-patch": "^0.7.2",
-    "puppeteer-core": "^24.12.1"
+    "puppeteer-core": "^24.34.0"
   },
   "devDependencies": {
-    "@kapouer/eslint-config": "^2.1.1",
-    "cookie": "^1.0.2",
-    "express": "^5.1.0",
-    "mocha": "^11.7.1",
-    "undici": "^7.11.0"
+    "@kapouer/eslint-config": "^2.2.2",
+    "cookie": "^1.1.1",
+    "express": "^5.2.1",
+    "mocha": "^11.7.5",
+    "undici": "^7.16.0"
   },
   "mocha": {
     "exit": true
